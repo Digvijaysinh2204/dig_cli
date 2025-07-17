@@ -210,16 +210,8 @@ Future<Map<String, String>> _promptBuildNameAndLocation(String ext) async {
   if (location == null || location.isEmpty) {
     location = await _getDesktopPath();
   }
-  final now = DateTime.now();
-  final date =
-      '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
-  final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
-  final minute = now.minute.toString().padLeft(2, '0');
-  final ampm = now.hour >= 12 ? 'PM' : 'AM';
-  final time = '$hour.$minute$ampm';
-  final filename = '$buildName-$date-$time.$ext';
-  kLog('Final output filename: $filename', type: 'success');
-  return {'buildName': buildName, 'location': location, 'filename': filename};
+  // No filename construction here
+  return {'buildName': buildName, 'location': location};
 }
 
 Future<void> _showInteractiveMenu() async {
@@ -252,14 +244,14 @@ Future<void> _showInteractiveMenu() async {
     'label': 'Build APK',
     'action': () async {
       final result = await _promptBuildNameAndLocation('apk');
-      await _createBuild(result['location']!, result['filename']!);
+      await _createBuild(result['location']!, result['buildName']!);
     }
   };
   menuOptions[idx++] = {
     'label': 'Build AAB',
     'action': () async {
       final result = await _promptBuildNameAndLocation('aab');
-      await _createBundle(result['location']!, result['filename']!);
+      await _createBundle(result['location']!, result['buildName']!);
     }
   };
   menuOptions[idx++] = {
@@ -456,16 +448,17 @@ Future<void> _createBuild(String outputDir, String? customName) async {
 
     final now = DateTime.now();
     final date =
-        '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
-    final time = _formatTime(now).replaceAll(':', '.');
-    final filename = '$projectName-$date-$time.apk';
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    final filename = '$projectName-$date-$hour-$minute.apk';
     final src =
         p.join('build', 'app', 'outputs', 'flutter-apk', 'app-release.apk');
 
     kLog('🚧 Building APK (release)...', type: 'info');
     kLog('📱 Project: $projectName', type: 'info');
     kLog('📅 Date: $date', type: 'info');
-    kLog('⏰ Time: $time', type: 'info');
+    kLog('⏰ Time: $hour:$minute', type: 'info');
 
     final result = await Process.run('flutter', ['build', 'apk', '--release']);
     if (result.exitCode != 0) {
@@ -519,16 +512,17 @@ Future<void> _createBundle(String outputDir, String? customName) async {
 
     final now = DateTime.now();
     final date =
-        '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
-    final time = _formatTime(now).replaceAll(':', '.');
-    final filename = '$projectName-$date-$time.aab';
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final hour = now.hour.toString().padLeft(2, '0');
+    final minute = now.minute.toString().padLeft(2, '0');
+    final filename = '$projectName-$date-$hour-$minute.aab';
     final src = p.join(
         'build', 'app', 'outputs', 'bundle', 'release', 'app-release.aab');
 
     kLog('🚧 Building App Bundle (release)...', type: 'info');
     kLog('📱 Project: $projectName', type: 'info');
     kLog('📅 Date: $date', type: 'info');
-    kLog('⏰ Time: $time', type: 'info');
+    kLog('⏰ Time: $hour:$minute', type: 'info');
 
     final result =
         await Process.run('flutter', ['build', 'appbundle', '--release']);
