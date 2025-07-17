@@ -1,5 +1,7 @@
 # 🛠️ dig_cli
 
+> **Note:** The default command is `dig_cli`. If you want to use a shorter command, you must set up an alias (see the 'Setup Alias' section below).
+
 A powerful Flutter CLI tool for building APKs and AABs with automatic timestamped filenames, cleaning build artifacts, and organizing output — all from your terminal.
 
 [![pub package](https://img.shields.io/pub/v/dig_cli.svg)](https://pub.dev/packages/dig_cli)  
@@ -46,7 +48,7 @@ dart pub global activate --source git https://github.com/Digvijaysinh2204/dig_cl
 ### Build APK
 
 ```bash
-dig create build
+dig_cli create build
 ```
 
 Output (Desktop): `yourproject-25-12-2025-02.30PM.apk`
@@ -54,7 +56,7 @@ Output (Desktop): `yourproject-25-12-2025-02.30PM.apk`
 ### Build AAB
 
 ```bash
-dig create bundle
+dig_cli create bundle
 ```
 
 Output (Desktop): `yourproject-25-12-2025-02.30PM.aab`
@@ -62,13 +64,13 @@ Output (Desktop): `yourproject-25-12-2025-02.30PM.aab`
 ### Clean Project
 
 ```bash
-dig clean
+dig_cli clean
 ```
 
 Or:
 
 ```bash
-dig clear build
+dig_cli clear build
 ```
 
 This cleans:
@@ -81,14 +83,19 @@ This cleans:
 ## 🧪 Examples
 
 ```bash
-dig create build --name MyApp
+dig_cli create build --name MyApp
 # Builds MyApp-DD-MM-YYYY-HH.MMAM.apk to Desktop
 
-dig create bundle -o ./output
+dig_cli create bundle -o ./output
 # Builds AAB to ./output folder
 
-dig clean
+dig_cli clean
 # Fully cleans Android and iOS artifacts
+
+# Build APK with custom name and output directory
+
+dig_cli create apk --name MyApp --output ~/Downloads
+# Builds MyApp-DD-MM-YYYY-HH.MMAM.apk to your Downloads folder
 ```
 
 ---
@@ -126,14 +133,14 @@ These are automatically moved to your Desktop (or a specified output directory).
 
 ## 🔧 Setup Alias (Optional)
 
-To shorten the command, you can create a terminal alias:
+By default, use `dig_cli` in your terminal. If you prefer a shorter command, you can set up an alias:
 
 ```bash
 # Add this to ~/.zshrc or ~/.bashrc
-alias dig="dig_cli"
+alias myflutter="dig_cli"
 ```
 
-Then restart your terminal or run `source ~/.zshrc`.
+- You can use any alias name you like. After adding the alias and restarting your terminal (or running `source ~/.zshrc`), you can use your chosen alias (e.g., `myflutter`) instead of `dig_cli` in all commands.
 
 ---
 
