@@ -246,91 +246,88 @@ Future<void> _showInteractiveMenu() async {
   final isBeta = await _isBetaInstalled();
   final canSwitchBetaToStable = isBeta && latestStable != null;
 
-  while (true) {
-    kLog('\n=== DIG CLI MENU ===', type: 'info');
-    final menuOptions = <int, Map<String, dynamic>>{};
-    int idx = 1;
+  final menuOptions = <int, Map<String, dynamic>>{};
+  int idx = 1;
+  menuOptions[idx++] = {
+    'label': 'Build APK',
+    'action': () async {
+      final result = await _promptBuildNameAndLocation('apk');
+      await _createBuild(result['location']!, result['filename']!);
+    }
+  };
+  menuOptions[idx++] = {
+    'label': 'Build AAB',
+    'action': () async {
+      final result = await _promptBuildNameAndLocation('aab');
+      await _createBundle(result['location']!, result['filename']!);
+    }
+  };
+  menuOptions[idx++] = {
+    'label': 'Clean Project',
+    'action': () async => await _clearBuild(),
+  };
+  menuOptions[idx++] = {
+    'label': 'Show Version',
+    'action': () async => await _showVersion(),
+  };
+  if (showStableUpdate) {
     menuOptions[idx++] = {
-      'label': 'Build APK',
+      'label': 'Update to latest STABLE (pub.dev) [$latestStable]',
       'action': () async {
-        final result = await _promptBuildNameAndLocation('apk');
-        await _createBuild(result['location']!, result['filename']!);
+        kLog('Updating dig_cli to latest STABLE from pub.dev...', type: 'info');
+        final result = await Process.run('flutter', ['pub', 'global', 'activate', 'dig_cli']);
+        kLog(result.stdout.toString(), type: 'info');
+        kLog('Update complete! Please restart the CLI.', type: 'success');
+        exit(0);
       }
     };
+  }
+  if (showBetaUpdate) {
     menuOptions[idx++] = {
-      'label': 'Build AAB',
+      'label': 'Update to latest BETA (GitHub) [$latestBeta]',
       'action': () async {
-        final result = await _promptBuildNameAndLocation('aab');
-        await _createBundle(result['location']!, result['filename']!);
+        kLog('Updating dig_cli to latest BETA from GitHub...', type: 'info');
+        final result = await Process.run('flutter', [
+          'pub',
+          'global',
+          'activate',
+          '--source',
+          'git',
+          'https://github.com/Digvijaysinh2204/dig_cli.git'
+        ]);
+        kLog(result.stdout.toString(), type: 'info');
+        kLog('Update complete! Please restart the CLI.', type: 'success');
+        exit(0);
       }
     };
+  }
+  if (canSwitchBetaToStable) {
     menuOptions[idx++] = {
-      'label': 'Clean Project',
-      'action': () async => await _clearBuild(),
+      'label': 'Switch from BETA to STABLE (pub.dev)',
+      'action': () async {
+        kLog('Switching from BETA to STABLE (pub.dev)...', type: 'info');
+        final result = await Process.run('flutter', ['pub', 'global', 'activate', 'dig_cli']);
+        kLog(result.stdout.toString(), type: 'info');
+        kLog('Switched to STABLE! Please restart the CLI.', type: 'success');
+        exit(0);
+      }
     };
-    menuOptions[idx++] = {
-      'label': 'Show Version',
-      'action': () async => await _showVersion(),
-    };
-    if (showStableUpdate) {
-      menuOptions[idx++] = {
-        'label': 'Update to latest STABLE (pub.dev) [$latestStable]',
-        'action': () async {
-          kLog('Updating dig_cli to latest STABLE from pub.dev...', type: 'info');
-          final result = await Process.run('flutter', ['pub', 'global', 'activate', 'dig_cli']);
-          kLog(result.stdout.toString(), type: 'info');
-          kLog('Update complete! Please restart the CLI.', type: 'success');
-          exit(0);
-        }
-      };
-    }
-    if (showBetaUpdate) {
-      menuOptions[idx++] = {
-        'label': 'Update to latest BETA (GitHub) [$latestBeta]',
-        'action': () async {
-          kLog('Updating dig_cli to latest BETA from GitHub...', type: 'info');
-          final result = await Process.run('flutter', [
-            'pub',
-            'global',
-            'activate',
-            '--source',
-            'git',
-            'https://github.com/Digvijaysinh2204/dig_cli.git'
-          ]);
-          kLog(result.stdout.toString(), type: 'info');
-          kLog('Update complete! Please restart the CLI.', type: 'success');
-          exit(0);
-        }
-      };
-    }
-    if (canSwitchBetaToStable) {
-      menuOptions[idx++] = {
-        'label': 'Switch from BETA to STABLE (pub.dev)',
-        'action': () async {
-          kLog('Switching from BETA to STABLE (pub.dev)...', type: 'info');
-          final result = await Process.run('flutter', ['pub', 'global', 'activate', 'dig_cli']);
-          kLog(result.stdout.toString(), type: 'info');
-          kLog('Switched to STABLE! Please restart the CLI.', type: 'success');
-          exit(0);
-        }
-      };
-    }
-    for (final entry in menuOptions.entries) {
-      kLog('${entry.key}. ${entry.value['label']}', type: 'info');
-    }
-    kLog('0. Exit', type: 'info');
-    stdout.write('Enter your choice (0-${menuOptions.keys.isEmpty ? 0 : menuOptions.keys.last}): ');
-    final input = stdin.readLineSync();
-    if (input == '0') {
-      kLog('Exiting...', type: 'info');
-      exit(0);
-    }
-    final selected = int.tryParse(input ?? '');
-    if (selected != null && menuOptions.containsKey(selected)) {
-      await menuOptions[selected]!['action']();
-    } else {
-      kLog('Invalid choice. Please try again.', type: 'warning');
-    }
+  }
+  for (final entry in menuOptions.entries) {
+    kLog('${entry.key}. ${entry.value['label']}', type: 'info');
+  }
+  kLog('0. Exit', type: 'info');
+  stdout.write('Enter your choice (0-${menuOptions.keys.isEmpty ? 0 : menuOptions.keys.last}): ');
+  final input = stdin.readLineSync();
+  if (input == '0') {
+    kLog('Exiting...', type: 'info');
+    exit(0);
+  }
+  final selected = int.tryParse(input ?? '');
+  if (selected != null && menuOptions.containsKey(selected)) {
+    await menuOptions[selected]!['action']();
+  } else {
+    kLog('Invalid choice. Please try again.', type: 'warning');
   }
 }
 
