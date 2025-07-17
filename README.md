@@ -83,6 +83,10 @@ This cleans:
 ## 🧪 Examples
 
 ```bash
+dig_cli create apk
+dig_cli create build
+# Builds PubSpecName-DD-MM-YYYY-HH.MMAM.apk to Desktop
+
 dig_cli create build --name MyApp
 # Builds MyApp-DD-MM-YYYY-HH.MMAM.apk to Desktop
 
