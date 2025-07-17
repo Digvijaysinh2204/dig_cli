@@ -9,18 +9,40 @@ import 'package:yaml/yaml.dart';
 import 'package:path/path.dart' as p;
 
 const String appName = 'dig_cli';
-const String appVersion = '0.0.1';
 const String minFlutterVersion = '3.0.0';
 
-final AnsiPen infoPen = AnsiPen()..blue();
-final AnsiPen successPen = AnsiPen()..green();
-final AnsiPen warningPen = AnsiPen()..yellow();
-final AnsiPen errorPen = AnsiPen()..red();
+final AnsiPen _infoPen = AnsiPen()..blue();
+final AnsiPen _successPen = AnsiPen()..green();
+final AnsiPen _warningPen = AnsiPen()..yellow();
+final AnsiPen _errorPen = AnsiPen()..red();
 
-void printInfo(String message) => print(infoPen(message));
-void printSuccess(String message) => print(successPen(message));
-void printWarning(String message) => print(warningPen(message));
-void printError(String message) => stderr.writeln(errorPen(message));
+void kLog(String message, {String type = 'info'}) {
+  switch (type) {
+    case 'success':
+      print(_successPen(message));
+      break;
+    case 'warning':
+      print(_warningPen(message));
+      break;
+    case 'error':
+      stderr.writeln(_errorPen(message));
+      break;
+    default:
+      print(_infoPen(message));
+  }
+}
+
+Future<String> _getVersion() async {
+  try {
+    final pubspecFile = File('pubspec.yaml');
+    if (!await pubspecFile.exists()) return 'unknown';
+    final content = await pubspecFile.readAsString();
+    final yaml = loadYaml(content);
+    return yaml['version']?.toString() ?? 'unknown';
+  } catch (_) {
+    return 'unknown';
+  }
+}
 
 Future<void> main(List<String> arguments) async {
   // Flutter version check
@@ -41,8 +63,8 @@ Future<void> main(List<String> arguments) async {
   try {
     argResults = parser.parse(arguments);
   } catch (e) {
-    printError('❌ Invalid arguments: $e');
-    printInfo(parser.usage);
+    kLog('❌ Invalid arguments: $e', type: 'error');
+    kLog(parser.usage, type: 'info');
     exit(64);
   }
 
@@ -90,7 +112,7 @@ Future<void> main(List<String> arguments) async {
       _showUsage();
     }
   } catch (e) {
-    printError('❌ Error: $e');
+    kLog('❌ Error: $e', type: 'error');
     _showUsage();
     exit(1);
   }
@@ -100,24 +122,26 @@ Future<bool> _checkFlutterVersion({required String minRequired}) async {
   try {
     final result = await Process.run('flutter', ['--version', '--machine']);
     if (result.exitCode != 0) {
-      printWarning('⚠️ Unable to run Flutter to check version.');
+      kLog('⚠️ Unable to run Flutter to check version.', type: 'warning');
       return false;
     }
     final jsonResult = jsonDecode(result.stdout);
     final versionString = jsonResult['frameworkVersion'] as String?;
     if (versionString == null) {
-      printWarning('⚠️ Flutter version info not found.');
+      kLog('⚠️ Flutter version info not found.', type: 'warning');
       return false;
     }
     if (_compareVersion(versionString, minRequired) < 0) {
-      printWarning(
-          '⚠️ Your Flutter version ($versionString) is older than required ($minRequired).');
-      printWarning('Please consider updating Flutter for best compatibility.');
+      kLog(
+          '⚠️ Your Flutter version ($versionString) is older than required ($minRequired).',
+          type: 'warning');
+      kLog('Please consider updating Flutter for best compatibility.',
+          type: 'warning');
       return false;
     }
     return true;
   } catch (e) {
-    printWarning('⚠️ Failed to check Flutter version: $e');
+    kLog('⚠️ Failed to check Flutter version: $e', type: 'warning');
     return false;
   }
 }
@@ -141,14 +165,15 @@ int _compareVersion(String v1, String v2) {
 }
 
 Future<void> _showVersion() async {
-  printInfo(
-      '''\n📦 $appName v$appVersion\n🚀 Flutter CLI Tool for Building & Cleaning Projects\n📱 Cross-platform support (Windows, macOS, Linux)\n⏰ Built with Dart & Flutter\n''');
+  final version = await _getVersion();
+  kLog('''\n📦 $appName v$version\n🚀 Flutter CLI Tool for Building & Cleaning Projects\n📱 Cross-platform support (Windows, macOS, Linux)\n⏰ Built with Dart & Flutter\n''');
 }
 
 Future<void> _showHelp(String usage) async {
-  printInfo('''\n📖 $appName Help (v$appVersion)\n
+  final version = await _getVersion();
+  kLog('''\n📖 $appName Help (v$version)\n
 USAGE:
-  dig_cli <command> [options]
+  dig <command> [options]
 
 COMMANDS:
   create apk      Build APK with date-time, move to Desktop or custom directory
@@ -167,10 +192,10 @@ OPTIONS:
   -n, --name      Custom name prefix for output file (overrides project name)
 
 EXAMPLES:
-  dig_cli create apk --name MyApp      # Build APK with custom prefix
-  dig_cli create bundle                # Build AAB with project name prefix
-  dig_cli clean                       # Clean project
-  dig_cli alias                       # Setup custom alias
+  dig create apk --name MyApp      # Build APK with custom prefix
+  dig create bundle                # Build AAB with project name prefix
+  dig clean                       # Clean project
+  dig alias                       # Setup custom alias
 
 For more information, visit: https://github.com/yourusername/dig_cli
 $usage
@@ -181,10 +206,12 @@ Future<void> _createBuild(String outputDir, String? customName) async {
   try {
     final projectName = customName ?? await _getProjectName();
     if (projectName == null || projectName.isEmpty) {
-      printError(
-          '❗ Project name not found in pubspec.yaml and no custom name provided!');
-      printWarning(
-          '💡 Make sure you provide --name option or run inside a Flutter project.');
+      kLog(
+          '❗ Project name not found in pubspec.yaml and no custom name provided!',
+          type: 'error');
+      kLog(
+          '💡 Make sure you provide --name option or run inside a Flutter project.',
+          type: 'warning');
       exit(1);
     }
 
@@ -196,23 +223,24 @@ Future<void> _createBuild(String outputDir, String? customName) async {
     final src =
         p.join('build', 'app', 'outputs', 'flutter-apk', 'app-release.apk');
 
-    printInfo('🚧 Building APK (release)...');
-    printInfo('📱 Project: $projectName');
-    printInfo('📅 Date: $date');
-    printInfo('⏰ Time: $time');
+    kLog('🚧 Building APK (release)...', type: 'info');
+    kLog('📱 Project: $projectName', type: 'info');
+    kLog('📅 Date: $date', type: 'info');
+    kLog('⏰ Time: $time', type: 'info');
 
     final result = await Process.run('flutter', ['build', 'apk', '--release']);
     if (result.exitCode != 0) {
-      printError('❗ Build failed: ${result.stderr}');
-      printWarning(
-          '💡 Check your Flutter installation and project configuration.');
+      kLog('❗ Build failed: ${result.stderr}', type: 'error');
+      kLog(
+          '💡 Check your Flutter installation and project configuration.',
+          type: 'warning');
       exit(1);
     }
 
     final srcFile = File(src);
     if (!await srcFile.exists()) {
-      printError('❗ Build failed. APK not found at: $src');
-      printWarning('💡 Check if the build completed successfully.');
+      kLog('❗ Build failed. APK not found at: $src', type: 'error');
+      kLog('💡 Check if the build completed successfully.', type: 'warning');
       exit(1);
     }
 
@@ -223,11 +251,11 @@ Future<void> _createBuild(String outputDir, String? customName) async {
     final fileSize = await destFile.length();
     final sizeInMB = (fileSize / (1024 * 1024)).toStringAsFixed(2);
 
-    printSuccess('✅ APK created successfully!');
-    printInfo('📁 Location: ${destFile.path}');
-    printInfo('📊 Size: ${sizeInMB}MB');
+    kLog('✅ APK created successfully!', type: 'success');
+    kLog('📁 Location: ${destFile.path}', type: 'info');
+    kLog('📊 Size: ${sizeInMB}MB', type: 'info');
   } catch (e) {
-    printError('❌ Error during APK build: $e');
+    kLog('❌ Error during APK build: $e', type: 'error');
     exit(1);
   }
 }
@@ -236,10 +264,12 @@ Future<void> _createBundle(String outputDir, String? customName) async {
   try {
     final projectName = customName ?? await _getProjectName();
     if (projectName == null || projectName.isEmpty) {
-      printError(
-          '❗ Project name not found in pubspec.yaml and no custom name provided!');
-      printWarning(
-          '💡 Make sure you provide --name option or run inside a Flutter project.');
+      kLog(
+          '❗ Project name not found in pubspec.yaml and no custom name provided!',
+          type: 'error');
+      kLog(
+          '💡 Make sure you provide --name option or run inside a Flutter project.',
+          type: 'warning');
       exit(1);
     }
 
@@ -251,24 +281,25 @@ Future<void> _createBundle(String outputDir, String? customName) async {
     final src = p.join(
         'build', 'app', 'outputs', 'bundle', 'release', 'app-release.aab');
 
-    printInfo('🚧 Building App Bundle (release)...');
-    printInfo('📱 Project: $projectName');
-    printInfo('📅 Date: $date');
-    printInfo('⏰ Time: $time');
+    kLog('🚧 Building App Bundle (release)...', type: 'info');
+    kLog('📱 Project: $projectName', type: 'info');
+    kLog('📅 Date: $date', type: 'info');
+    kLog('⏰ Time: $time', type: 'info');
 
     final result =
         await Process.run('flutter', ['build', 'appbundle', '--release']);
     if (result.exitCode != 0) {
-      printError('❗ Build failed: ${result.stderr}');
-      printWarning(
-          '💡 Check your Flutter installation and project configuration.');
+      kLog('❗ Build failed: ${result.stderr}', type: 'error');
+      kLog(
+          '💡 Check your Flutter installation and project configuration.',
+          type: 'warning');
       exit(1);
     }
 
     final srcFile = File(src);
     if (!await srcFile.exists()) {
-      printError('❗ Build failed. Bundle not found at: $src');
-      printWarning('💡 Check if the build completed successfully.');
+      kLog('❗ Build failed. Bundle not found at: $src', type: 'error');
+      kLog('💡 Check if the build completed successfully.', type: 'warning');
       exit(1);
     }
 
@@ -279,11 +310,11 @@ Future<void> _createBundle(String outputDir, String? customName) async {
     final fileSize = await destFile.length();
     final sizeInMB = (fileSize / (1024 * 1024)).toStringAsFixed(2);
 
-    printSuccess('✅ App Bundle created successfully!');
-    printInfo('📁 Location: ${destFile.path}');
-    printInfo('📊 Size: ${sizeInMB}MB');
+    kLog('✅ App Bundle created successfully!', type: 'success');
+    kLog('📁 Location: ${destFile.path}', type: 'info');
+    kLog('📊 Size: ${sizeInMB}MB', type: 'info');
   } catch (e) {
-    printError('❌ Error during AAB build: $e');
+    kLog('❌ Error during AAB build: $e', type: 'error');
     exit(1);
   }
 }
@@ -294,37 +325,39 @@ Future<void> _clearBuild() async {
     final startTime =
         '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year} ${_formatTime(now)}';
 
-    printInfo('🚀 Flutter iOS + Android Project Cleaner');
-    printInfo('⏰ Started at $startTime');
-    printInfo('🗂 Current Directory: ${Directory.current.path}');
-    printInfo(
-        '🖥️ Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}');
+    kLog('🚀 Flutter iOS + Android Project Cleaner', type: 'info');
+    kLog('⏰ Started at $startTime', type: 'info');
+    kLog('🗂 Current Directory: ${Directory.current.path}', type: 'info');
+    kLog(
+        '🖥️ Platform: ${Platform.operatingSystem} ${Platform.operatingSystemVersion}',
+        type: 'info');
 
     final pubspecFile = File('pubspec.yaml');
     if (!await pubspecFile.exists()) {
-      printWarning(
-          '⚠️ Warning: No pubspec.yaml found. Are you in a Flutter project?');
+      kLog(
+          '⚠️ Warning: No pubspec.yaml found. Are you in a Flutter project?',
+          type: 'warning');
     }
 
-    printInfo('📦 Pre-caching Flutter iOS artifacts...');
+    kLog('📦 Pre-caching Flutter iOS artifacts...', type: 'info');
     await Process.run('flutter', ['precache', '--ios']);
 
-    printInfo('🧹 Cleaning Flutter...');
+    kLog('🧹 Cleaning Flutter...', type: 'info');
     await Process.run('flutter', ['clean']);
 
     final buildDir = Directory('build');
     if (await buildDir.exists()) {
       await buildDir.delete(recursive: true);
-      printInfo('🗑️ Removed build directory');
+      kLog('🗑️ Removed build directory', type: 'info');
     }
 
-    printInfo('📦 Getting Dart packages...');
+    kLog('📦 Getting Dart packages...', type: 'info');
     await Process.run('flutter', ['pub', 'get']);
 
     if (Platform.isMacOS) {
       final iosDir = Directory('ios');
       if (await iosDir.exists()) {
-        printInfo('🧼 iOS: Cleaning workspace, Pods, build, symlinks...');
+        kLog('🧼 iOS: Cleaning workspace, Pods, build, symlinks...', type: 'info');
         final iosPath = iosDir.path;
         await _deleteIfExists(p.join(iosPath, '.symlinks'));
         await _deleteIfExists(p.join(iosPath, 'Podfile.lock'));
@@ -334,10 +367,10 @@ Future<void> _clearBuild() async {
         final derivedDataDir = Directory(p.join(iosPath, 'DerivedData'));
         if (await derivedDataDir.exists()) {
           await derivedDataDir.delete(recursive: true);
-          printInfo('✅ Removed local iOS/DerivedData inside ios/');
+          kLog('✅ Removed local iOS/DerivedData inside ios/', type: 'info');
         }
 
-        printInfo('📥 Installing CocoaPods...');
+        kLog('📥 Installing CocoaPods...', type: 'info');
         await Process.run('pod', ['install'], workingDirectory: iosPath);
       }
 
@@ -348,18 +381,18 @@ Future<void> _clearBuild() async {
         );
         if (await globalDerivedData.exists()) {
           await globalDerivedData.delete(recursive: true);
-          printInfo('✅ Removed global Xcode DerivedData');
+          kLog('✅ Removed global Xcode DerivedData', type: 'info');
         } else {
-          printInfo('ℹ️ No global DerivedData found');
+          kLog('ℹ️ No global DerivedData found', type: 'info');
         }
       }
     } else {
-      printInfo('ℹ️ Skipping iOS cleanup (not on macOS)');
+      kLog('ℹ️ Skipping iOS cleanup (not on macOS)', type: 'info');
     }
 
     final androidDir = Directory('android');
     if (await androidDir.exists()) {
-      printInfo('🧼 Android: Removing build and cache directories...');
+      kLog('🧼 Android: Removing build and cache directories...', type: 'info');
       await _deleteIfExists(p.join('android', '.gradle'));
       await _deleteIfExists(p.join('android', '.kotlin'));
       await _deleteIfExists(p.join('android', 'app', '.cxx'));
@@ -367,10 +400,10 @@ Future<void> _clearBuild() async {
       await _deleteIfExists(p.join('android', 'app', 'build'));
     }
 
-    printSuccess('✅ All Clean! Flutter, iOS & Android project reset complete.');
-    printSuccess('🎉 Your project is ready for a fresh build!');
+    kLog('✅ All Clean! Flutter, iOS & Android project reset complete.', type: 'success');
+    kLog('🎉 Your project is ready for a fresh build!', type: 'success');
   } catch (e) {
-    printError('❌ Error during cleanup: $e');
+    kLog('❌ Error during cleanup: $e', type: 'error');
     exit(1);
   }
 }
@@ -426,26 +459,31 @@ String _formatTime(DateTime time) {
 }
 
 void _showUsage() {
-  printError('❓ Unknown command');
-  printError('Usage:');
-  printError(
-      '  dig_cli create apk      # Build APK with date-time, move to Desktop');
-  printError(
-      '  dig_cli create build    # Same as create apk (for backward compatibility)');
-  printError(
-      '  dig_cli create bundle   # Build app bundle (AAB) with date-time, move to Desktop');
-  printError(
-      '  dig_cli clear build     # Clean Flutter iOS and Android builds');
-  printError('  dig_cli clean           # Same as \'dig_cli clear build\'');
-  printError('  dig_cli help            # Show detailed help');
-  printError('  dig_cli version         # Show version information');
-  printError('  dig_cli --output <dir>  # Specify output directory [optional]');
-  printError(
-      '  dig_cli --name <name>   # Custom name prefix for build output [optional]');
+  kLog('❓ Unknown command', type: 'error');
+  kLog('Usage:', type: 'error');
+  kLog(
+      '  dig create apk      # Build APK with date-time, move to Desktop',
+      type: 'error');
+  kLog(
+      '  dig create build    # Same as create apk (for backward compatibility)',
+      type: 'error');
+  kLog(
+      '  dig create bundle   # Build app bundle (AAB) with date-time, move to Desktop',
+      type: 'error');
+  kLog(
+      '  dig clear build     # Clean Flutter iOS and Android builds',
+      type: 'error');
+  kLog('  dig clean           # Same as \'dig clear build\'', type: 'error');
+  kLog('  dig help            # Show detailed help', type: 'error');
+  kLog('  dig version         # Show version information', type: 'error');
+  kLog('  dig --output <dir>  # Specify output directory [optional]', type: 'error');
+  kLog(
+      '  dig --name <name>   # Custom name prefix for build output [optional]',
+      type: 'error');
 }
 
 void _printAliasInstructions() {
-  printInfo('''
+  kLog('''
 To use this tool with a custom command (alias), add this to your shell profile:
 
   alias dig="dig_cli"
