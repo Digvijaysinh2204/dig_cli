@@ -34,6 +34,24 @@ Future<String> _getVersion() async {
   return kDigCliVersion;
 }
 
+Future<bool> _isFlutterProject() async {
+  final pubspecFile = File('pubspec.yaml');
+  if (!await pubspecFile.exists()) return false;
+  final content = await pubspecFile.readAsString();
+  final yaml = loadYaml(content);
+  // Check for flutter dependency
+  final dependencies = yaml['dependencies'];
+  if (dependencies is Map && dependencies.containsKey('flutter')) {
+    return true;
+  }
+  // Check for flutter SDK in environment
+  final environment = yaml['environment'];
+  if (environment is Map && environment.containsKey('flutter')) {
+    return true;
+  }
+  return false;
+}
+
 Future<void> main(List<String> arguments) async {
   // Flutter version check
   await _checkFlutterVersion(minRequired: kMinFlutterVersion);
@@ -194,6 +212,11 @@ $usage
 }
 
 Future<void> _createBuild(String outputDir, String? customName) async {
+  if (!await _isFlutterProject()) {
+    kLog('❗ This command must be run inside a Flutter project.', type: 'error');
+    kLog('💡 Make sure pubspec.yaml contains a flutter dependency or SDK.', type: 'warning');
+    exit(1);
+  }
   try {
     final projectName = customName ?? await _getProjectName();
     if (projectName == null || projectName.isEmpty) {
@@ -251,6 +274,11 @@ Future<void> _createBuild(String outputDir, String? customName) async {
 }
 
 Future<void> _createBundle(String outputDir, String? customName) async {
+  if (!await _isFlutterProject()) {
+    kLog('❗ This command must be run inside a Flutter project.', type: 'error');
+    kLog('💡 Make sure pubspec.yaml contains a flutter dependency or SDK.', type: 'warning');
+    exit(1);
+  }
   try {
     final projectName = customName ?? await _getProjectName();
     if (projectName == null || projectName.isEmpty) {
@@ -309,6 +337,11 @@ Future<void> _createBundle(String outputDir, String? customName) async {
 }
 
 Future<void> _clearBuild() async {
+  if (!await _isFlutterProject()) {
+    kLog('❗ This command must be run inside a Flutter project.', type: 'error');
+    kLog('💡 Make sure pubspec.yaml contains a flutter dependency or SDK.', type: 'warning');
+    exit(1);
+  }
   try {
     final now = DateTime.now();
     final startTime =
