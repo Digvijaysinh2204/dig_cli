@@ -244,7 +244,7 @@ Future<void> _showInteractiveMenu() async {
   }
 
   final isBeta = await _isBetaInstalled();
-  final canSwitchBetaToStable = isBeta && latestStable != null && isUpdateAvailable(kDigCliVersion, latestStable);
+  final canSwitchBetaToStable = isBeta && latestStable != null;
 
   while (true) {
     kLog('\n=== DIG CLI MENU ===', type: 'info');
