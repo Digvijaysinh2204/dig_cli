@@ -34,6 +34,11 @@ cd dig_cli
 flutter pub global activate --source path .
 ```
 
+Install globally via Git:
+
+```bash
+dart pub global activate --source git https://github.com/Digvijaysinh2204/dig_cli.git
+```
 ---
 
 ## ⚙️ Usage
