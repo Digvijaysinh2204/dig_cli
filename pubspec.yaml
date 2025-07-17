@@ -1,27 +1,22 @@
 name: dig_cli
 description: >
   A Flutter CLI tool for building APKs, AABs, and cleaning Flutter projects with date-time naming and advanced automation options.
-version: 0.0.5
+version: 1.0.0
 homepage: https://github.com/Digvijaysinh2204/dig_cli
 
 environment:
   sdk: ">=2.19.0 <4.0.0"
-  flutter: ">=3.0.0"
 
 dependencies:
-  flutter:
-    sdk: flutter
-  args: any
-  ansicolor: any
-  yaml: any
-  path: any
-  http: ^0.13.0
+  args: ^2.7.0
+  ansicolor: ^2.0.3
+  yaml: ^3.1.3
+  path: ^1.9.1
+  http: ^1.4.0
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^6.0.0
-  test: ^1.20.0
+  test: ^1.26.2
+  lints: ^6.0.0
 
 executables:
   dig_cli: dig_cli
