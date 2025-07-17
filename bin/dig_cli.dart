@@ -53,6 +53,17 @@ Future<bool> _isFlutterProject() async {
   return false;
 }
 
+Future<bool> _isBetaInstalled() async {
+  // Try to detect if installed from GitHub (beta)
+  // Option 1: Check if version string contains 'beta'
+  final version = await _getVersion();
+  if (version.toLowerCase().contains('beta')) return true;
+  // Option 2: Check pub cache path for 'git' (fallback)
+  final execPath = Platform.resolvedExecutable;
+  if (execPath.contains('git')) return true;
+  return false;
+}
+
 Future<void> main(List<String> arguments) async {
   // Flutter version check
   await _checkFlutterVersion(minRequired: kMinFlutterVersion);
@@ -111,7 +122,8 @@ Future<void> main(List<String> arguments) async {
   final subcommand = argResults.rest.length > 1 ? argResults.rest[1] : null;
 
   try {
-    if (command == 'create' && (subcommand == 'build' || subcommand == 'apk')) {
+    if (command == 'create' &&
+        (subcommand == 'build' || subcommand == 'apk')) {
       await _createBuild(outputDir, customName);
     } else if (command == 'create' && subcommand == 'bundle') {
       await _createBundle(outputDir, customName);
@@ -159,6 +171,33 @@ Future<String?> _getLatestBetaVersion() async {
   return null;
 }
 
+Future<Map<String, String>> _promptBuildNameAndLocation(String ext) async {
+  String defaultBuildName = (await _getProjectName()) ?? 'MyBuild';
+  stdout.write(
+      'Enter build name (or press Enter to use default [$defaultBuildName]): ');
+  String? buildName = stdin.readLineSync();
+  buildName = buildName?.trim();
+  if (buildName == null || buildName.isEmpty) {
+    buildName = defaultBuildName;
+  }
+  stdout.write('Enter location path to save (or press Enter for Desktop): ');
+  String? location = stdin.readLineSync();
+  location = location?.trim();
+  if (location == null || location.isEmpty) {
+    location = await _getDesktopPath();
+  }
+  final now = DateTime.now();
+  final date =
+      '${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}';
+  final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
+  final minute = now.minute.toString().padLeft(2, '0');
+  final ampm = now.hour >= 12 ? 'PM' : 'AM';
+  final time = '$hour.$minute$ampm';
+  final filename = '$buildName-$date-$time.$ext';
+  kLog('Final output filename: $filename', type: 'success');
+  return {'buildName': buildName, 'location': location, 'filename': filename};
+}
+
 Future<void> _showInteractiveMenu() async {
   String? latestStable = await _getLatestStableVersion();
   String? latestBeta = await _getLatestBetaVersion();
@@ -170,10 +209,11 @@ Future<void> _showInteractiveMenu() async {
   }
   if (latestBeta != null &&
       _compareVersion(
-              kDigCliVersion, latestBeta.replaceAll(RegExp(r'[^0-9\.]'), '')) <
+              kDigCliVersion, latestBeta.replaceAll(RegExp(r'[^0-9\. ]'), '')) <
           0) {
     showBetaUpdate = true;
   }
+  final isBeta = await _isBetaInstalled();
 
   while (true) {
     kLog('\n=== DIG CLI MENU ===', type: 'info');
@@ -182,22 +222,30 @@ Future<void> _showInteractiveMenu() async {
     kLog('3. Clean Project', type: 'info');
     kLog('4. Show Version', type: 'info');
     if (showStableUpdate) {
-      kLog('5. Update to latest STABLE (pub.dev) [$latestStable]',
-          type: 'info');
+      kLog('5. Update to latest STABLE (pub.dev) [${latestStable}]', type: 'info');
     }
     if (showBetaUpdate) {
-      kLog('6. Update to latest BETA (GitHub) [$latestBeta]', type: 'info');
+      kLog('6. Update to latest BETA (GitHub) [${latestBeta}]', type: 'info');
+    }
+    if (isBeta) {
+      kLog('7. Switch to STABLE (pub.dev)', type: 'info');
     }
     kLog('0. Exit', type: 'info');
-    stdout.write('Enter your choice (0-6): ');
+    stdout.write('Enter your choice (0-${isBeta ? '7' : '6'}): ');
     final input = stdin.readLineSync();
     switch (input) {
       case '1':
-        await _createBuild(await _getDesktopPath(), null);
-        break;
+        {
+          final result = await _promptBuildNameAndLocation('apk');
+          await _createBuild(result['location']!, result['filename']!);
+          break;
+        }
       case '2':
-        await _createBundle(await _getDesktopPath(), null);
-        break;
+        {
+          final result = await _promptBuildNameAndLocation('aab');
+          await _createBundle(result['location']!, result['filename']!);
+          break;
+        }
       case '3':
         await _clearBuild();
         break;
@@ -206,10 +254,8 @@ Future<void> _showInteractiveMenu() async {
         break;
       case '5':
         if (showStableUpdate) {
-          kLog('Updating dig_cli to latest STABLE from pub.dev...',
-              type: 'info');
-          final result = await Process.run(
-              'flutter', ['pub', 'global', 'activate', 'dig_cli']);
+          kLog('Updating dig_cli to latest STABLE from pub.dev...', type: 'info');
+          final result = await Process.run('flutter', ['pub', 'global', 'activate', 'dig_cli']);
           kLog(result.stdout.toString(), type: 'info');
           kLog('Update complete! Please restart the CLI.', type: 'success');
           exit(0);
@@ -233,6 +279,17 @@ Future<void> _showInteractiveMenu() async {
           exit(0);
         } else {
           kLog('No beta update available.', type: 'warning');
+        }
+        break;
+      case '7':
+        if (isBeta) {
+          kLog('Switching to STABLE (pub.dev)...', type: 'info');
+          final result = await Process.run('flutter', ['pub', 'global', 'activate', 'dig_cli']);
+          kLog(result.stdout.toString(), type: 'info');
+          kLog('Switched to STABLE! Please restart the CLI.', type: 'success');
+          exit(0);
+        } else {
+          kLog('Option not available.', type: 'warning');
         }
         break;
       case '0':
