@@ -225,69 +225,67 @@ Future<Map<String, String>> _promptBuildNameAndLocation(String ext) async {
 Future<void> _showInteractiveMenu() async {
   String? latestStable = await _getLatestStableVersion();
   String? latestBeta = await _getLatestBetaVersion();
+
   bool showStableUpdate = false;
   bool showBetaUpdate = false;
-  if (latestStable != null &&
-      _compareVersion(kDigCliVersion, latestStable) < 0) {
+
+  // Only show stable update if a newer stable exists
+  if (latestStable != null && isUpdateAvailable(kDigCliVersion, latestStable)) {
     showStableUpdate = true;
   }
-  if (latestBeta != null &&
-      _compareVersion(
-              kDigCliVersion, latestBeta.replaceAll(RegExp(r'[^0-9\. ]'), '')) <
-          0) {
-    showBetaUpdate = true;
+  // Only show beta update if a newer beta exists
+  if (latestBeta != null) {
+    final currentVersion = Version.parse(kDigCliVersion.replaceFirst(RegExp(r'^[vV]'), '').trim());
+    final latestVersion = Version.parse(latestBeta.replaceFirst(RegExp(r'^[vV]'), '').trim());
+    print('DEBUG: current=$currentVersion, latestBeta=$latestVersion');
+    if (latestVersion > currentVersion) {
+      showBetaUpdate = true;
+    }
   }
+
   final isBeta = await _isBetaInstalled();
-  final canSwitchBetaToStable = isBeta && latestStable != null;
+  final canSwitchBetaToStable = isBeta && latestStable != null && isUpdateAvailable(kDigCliVersion, latestStable);
 
   while (true) {
     kLog('\n=== DIG CLI MENU ===', type: 'info');
-    // Build menu dynamically
     final menuOptions = <int, Map<String, dynamic>>{};
     int idx = 1;
-    menuOptions[idx] = {
+    menuOptions[idx++] = {
       'label': 'Build APK',
       'action': () async {
         final result = await _promptBuildNameAndLocation('apk');
         await _createBuild(result['location']!, result['filename']!);
       }
     };
-    idx++;
-    menuOptions[idx] = {
+    menuOptions[idx++] = {
       'label': 'Build AAB',
       'action': () async {
         final result = await _promptBuildNameAndLocation('aab');
         await _createBundle(result['location']!, result['filename']!);
       }
     };
-    idx++;
-    menuOptions[idx] = {
+    menuOptions[idx++] = {
       'label': 'Clean Project',
       'action': () async => await _clearBuild(),
     };
-    idx++;
-    menuOptions[idx] = {
+    menuOptions[idx++] = {
       'label': 'Show Version',
       'action': () async => await _showVersion(),
     };
-    idx++;
     if (showStableUpdate) {
-      menuOptions[idx] = {
+      menuOptions[idx++] = {
         'label': 'Update to latest STABLE (pub.dev) [$latestStable]',
         'action': () async {
-          kLog('Updating dig_cli to latest STABLE from pub.dev...',
-              type: 'info');
-          final result = await Process.run(
-              'flutter', ['pub', 'global', 'activate', 'dig_cli']);
+          kLog('Updating dig_cli to latest STABLE from pub.dev...', type: 'info');
+          final result = await Process.run('flutter', ['pub', 'global', 'activate', 'dig_cli']);
           kLog(result.stdout.toString(), type: 'info');
           kLog('Update complete! Please restart the CLI.', type: 'success');
           exit(0);
         }
       };
-      idx++;
     }
     if (showBetaUpdate) {
-      menuOptions[idx] = {
+      menuOptions[idx++] = {
         'label': 'Update to latest BETA (GitHub) [$latestBeta]',
         'action': () async {
           kLog('Updating dig_cli to latest BETA from GitHub...', type: 'info');
@@ -304,29 +302,24 @@ Future<void> _showInteractiveMenu() async {
           exit(0);
         }
       };
-      idx++;
     }
     if (canSwitchBetaToStable) {
-      menuOptions[idx] = {
+      menuOptions[idx++] = {
         'label': 'Switch from BETA to STABLE (pub.dev)',
         'action': () async {
           kLog('Switching from BETA to STABLE (pub.dev)...', type: 'info');
-          final result = await Process.run(
-              'flutter', ['pub', 'global', 'activate', 'dig_cli']);
+          final result = await Process.run('flutter', ['pub', 'global', 'activate', 'dig_cli']);
           kLog(result.stdout.toString(), type: 'info');
           kLog('Switched to STABLE! Please restart the CLI.', type: 'success');
           exit(0);
         }
       };
-      idx++;
     }
-    // Print menu
     for (final entry in menuOptions.entries) {
       kLog('${entry.key}. ${entry.value['label']}', type: 'info');
     }
     kLog('0. Exit', type: 'info');
-    stdout.write(
-        'Enter your choice (0-${menuOptions.keys.isEmpty ? 0 : menuOptions.keys.last}): ');
+    stdout.write('Enter your choice (0-${menuOptions.keys.isEmpty ? 0 : menuOptions.keys.last}): ');
     final input = stdin.readLineSync();
     if (input == '0') {
       kLog('Exiting...', type: 'info');
@@ -385,6 +378,25 @@ int _compareVersion(String v1, String v2) {
   if (a.length < b.length) return -1;
   if (a.length > b.length) return 1;
   return 0;
+}
+
+bool isUpdateAvailable(String current, String latest) {
+  try {
+    final currentVersion = Version.parse(current.replaceFirst(RegExp(r'^[vV]'), ''));
+    final latestVersion = Version.parse(latest.replaceFirst(RegExp(r'^[vV]'), ''));
+    return latestVersion > currentVersion;
+  } catch (_) {
+    return false;
+  }
+}
+
+bool isPreRelease(String version) {
+  try {
+    final v = Version.parse(version.replaceFirst(RegExp(r'^[vV]'), ''));
+    return v.isPreRelease;
+  } catch (_) {
+    return false;
+  }
 }
 
 Future<void> _showVersion() async {
