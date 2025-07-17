@@ -7,9 +7,7 @@ import 'package:args/args.dart';
 import 'package:ansicolor/ansicolor.dart';
 import 'package:yaml/yaml.dart';
 import 'package:path/path.dart' as p;
-
-const String appName = 'dig_cli';
-const String minFlutterVersion = '3.0.0';
+import 'version.dart';
 
 final AnsiPen _infoPen = AnsiPen()..blue();
 final AnsiPen _successPen = AnsiPen()..green();
@@ -33,20 +31,12 @@ void kLog(String message, {String type = 'info'}) {
 }
 
 Future<String> _getVersion() async {
-  try {
-    final pubspecFile = File('pubspec.yaml');
-    if (!await pubspecFile.exists()) return 'unknown';
-    final content = await pubspecFile.readAsString();
-    final yaml = loadYaml(content);
-    return yaml['version']?.toString() ?? 'unknown';
-  } catch (_) {
-    return 'unknown';
-  }
+  return kDigCliVersion;
 }
 
 Future<void> main(List<String> arguments) async {
   // Flutter version check
-  await _checkFlutterVersion(minRequired: minFlutterVersion);
+  await _checkFlutterVersion(minRequired: kMinFlutterVersion);
 
   final parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Show help')
@@ -166,12 +156,13 @@ int _compareVersion(String v1, String v2) {
 
 Future<void> _showVersion() async {
   final version = await _getVersion();
-  kLog('''\n📦 $appName v$version\n🚀 Flutter CLI Tool for Building & Cleaning Projects\n📱 Cross-platform support (Windows, macOS, Linux)\n⏰ Built with Dart & Flutter\n''');
+  kLog(
+      '''\n📦 $kDigCliName v$version\n🚀 Flutter CLI Tool for Building & Cleaning Projects\n📱 Cross-platform support (Windows, macOS, Linux)\n⏰ Built with Dart & Flutter\n''');
 }
 
 Future<void> _showHelp(String usage) async {
   final version = await _getVersion();
-  kLog('''\n📖 $appName Help (v$version)\n
+  kLog('''\n📖 $kDigCliName Help (v$version)\n
 USAGE:
   dig <command> [options]
 
@@ -231,8 +222,7 @@ Future<void> _createBuild(String outputDir, String? customName) async {
     final result = await Process.run('flutter', ['build', 'apk', '--release']);
     if (result.exitCode != 0) {
       kLog('❗ Build failed: ${result.stderr}', type: 'error');
-      kLog(
-          '💡 Check your Flutter installation and project configuration.',
+      kLog('💡 Check your Flutter installation and project configuration.',
           type: 'warning');
       exit(1);
     }
@@ -290,8 +280,7 @@ Future<void> _createBundle(String outputDir, String? customName) async {
         await Process.run('flutter', ['build', 'appbundle', '--release']);
     if (result.exitCode != 0) {
       kLog('❗ Build failed: ${result.stderr}', type: 'error');
-      kLog(
-          '💡 Check your Flutter installation and project configuration.',
+      kLog('💡 Check your Flutter installation and project configuration.',
           type: 'warning');
       exit(1);
     }
@@ -334,8 +323,7 @@ Future<void> _clearBuild() async {
 
     final pubspecFile = File('pubspec.yaml');
     if (!await pubspecFile.exists()) {
-      kLog(
-          '⚠️ Warning: No pubspec.yaml found. Are you in a Flutter project?',
+      kLog('⚠️ Warning: No pubspec.yaml found. Are you in a Flutter project?',
           type: 'warning');
     }
 
@@ -357,7 +345,8 @@ Future<void> _clearBuild() async {
     if (Platform.isMacOS) {
       final iosDir = Directory('ios');
       if (await iosDir.exists()) {
-        kLog('🧼 iOS: Cleaning workspace, Pods, build, symlinks...', type: 'info');
+        kLog('🧼 iOS: Cleaning workspace, Pods, build, symlinks...',
+            type: 'info');
         final iosPath = iosDir.path;
         await _deleteIfExists(p.join(iosPath, '.symlinks'));
         await _deleteIfExists(p.join(iosPath, 'Podfile.lock'));
@@ -400,7 +389,8 @@ Future<void> _clearBuild() async {
       await _deleteIfExists(p.join('android', 'app', 'build'));
     }
 
-    kLog('✅ All Clean! Flutter, iOS & Android project reset complete.', type: 'success');
+    kLog('✅ All Clean! Flutter, iOS & Android project reset complete.',
+        type: 'success');
     kLog('🎉 Your project is ready for a fresh build!', type: 'success');
   } catch (e) {
     kLog('❌ Error during cleanup: $e', type: 'error');
@@ -461,8 +451,7 @@ String _formatTime(DateTime time) {
 void _showUsage() {
   kLog('❓ Unknown command', type: 'error');
   kLog('Usage:', type: 'error');
-  kLog(
-      '  dig create apk      # Build APK with date-time, move to Desktop',
+  kLog('  dig create apk      # Build APK with date-time, move to Desktop',
       type: 'error');
   kLog(
       '  dig create build    # Same as create apk (for backward compatibility)',
@@ -470,15 +459,14 @@ void _showUsage() {
   kLog(
       '  dig create bundle   # Build app bundle (AAB) with date-time, move to Desktop',
       type: 'error');
-  kLog(
-      '  dig clear build     # Clean Flutter iOS and Android builds',
+  kLog('  dig clear build     # Clean Flutter iOS and Android builds',
       type: 'error');
   kLog('  dig clean           # Same as \'dig clear build\'', type: 'error');
   kLog('  dig help            # Show detailed help', type: 'error');
   kLog('  dig version         # Show version information', type: 'error');
-  kLog('  dig --output <dir>  # Specify output directory [optional]', type: 'error');
-  kLog(
-      '  dig --name <name>   # Custom name prefix for build output [optional]',
+  kLog('  dig --output <dir>  # Specify output directory [optional]',
+      type: 'error');
+  kLog('  dig --name <name>   # Custom name prefix for build output [optional]',
       type: 'error');
 }
 
