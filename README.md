@@ -1,91 +1,158 @@
-# dig_cli
+# 🛠️ dig_cli
 
-A Flutter CLI tool for building APKs, AABs, and cleaning Flutter projects with date-time naming.
+A powerful Flutter CLI tool for building APKs and AABs with automatic timestamped filenames, cleaning build artifacts, and organizing output — all from your terminal.
 
-## Features
+[![pub package](https://img.shields.io/pub/v/dig_cli.svg)](https://pub.dev/packages/dig_cli)  
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-- 🚧 **Build APK**: Create release APKs with automatic date-time naming
-- 📦 **Build AAB**: Create Android App Bundles with automatic date-time naming
-- 🧹 **Clean Builds**: Comprehensive Flutter, iOS, and Android project cleanup
-- 📱 **Desktop Integration**: Automatically moves builds to Desktop folder
-- ⏰ **Timestamp Naming**: All builds include date and time in filename
+---
 
-## Installation
+## 🚀 Features
+
+- 📦 **Build APK**: Generate release APKs with datetime-stamped filenames  
+- 🎯 **Build AAB**: Generate Android App Bundles (.aab) with timestamps  
+- 🧹 **Clean Projects**: Deep clean Flutter, iOS, and Android build files  
+- 🖥️ **Auto-Export to Desktop**: Outputs are automatically moved to your Desktop  
+- ⏱ **Timestamp Naming**: Output files are named using the current date and time  
+- 🛠 **Cross-Platform**: Works on macOS, Windows, and Linux  
+
+---
+
+## 📦 Installation
+
+### ✅ From pub.dev
 
 ```bash
-# Install globally
 flutter pub global activate dig_cli
+```
 
-# Or install from source
-git clone https://github.com/yourusername/dig_cli.git
+### 📁 From GitHub (local source)
+
+```bash
+git clone https://github.com/Digvijaysinh2204/dig_cli.git
 cd dig_cli
 flutter pub global activate --source path .
 ```
 
-## Usage
+---
+
+## ⚙️ Usage
 
 ### Build APK
+
 ```bash
 dig create build
 ```
-Creates a release APK with filename format: `projectname-dd-mm-yyyy-hh.mmAM.apk`
 
-### Build App Bundle (AAB)
+Output (Desktop): `yourproject-25-12-2025-02.30PM.apk`
+
+### Build AAB
+
 ```bash
 dig create bundle
 ```
-Creates an Android App Bundle with filename format: `projectname-dd-mm-yyyy-hh.mmAM.aab`
+
+Output (Desktop): `yourproject-25-12-2025-02.30PM.aab`
 
 ### Clean Project
+
+```bash
+dig clean
+```
+
+Or:
+
 ```bash
 dig clear build
-# or
-dig clean
 ```
-Performs comprehensive cleanup:
-- Flutter cache and build files
-- iOS workspace, Pods, and DerivedData
-- Android Gradle and build directories
-- Global Xcode DerivedData
 
-## Examples
+This cleans:
+- Flutter build and cache  
+- Android `.gradle`, `.cxx`, build folders  
+- iOS workspace, Pods, build folder, and DerivedData (macOS only)
+
+---
+
+## 🧪 Examples
 
 ```bash
-# Build APK and move to Desktop
-dig create build
-# Output: myapp-25-12-2024-02.30PM.apk
+dig create build --name MyApp
+# Builds MyApp-DD-MM-YYYY-HH.MMAM.apk to Desktop
 
-# Build AAB and move to Desktop  
-dig create bundle
-# Output: myapp-25-12-2024-02.30PM.aab
+dig create bundle -o ./output
+# Builds AAB to ./output folder
 
-# Clean all build files
 dig clean
-# Output: Complete cleanup of Flutter, iOS & Android
+# Fully cleans Android and iOS artifacts
 ```
 
-## Requirements
+---
 
-- Flutter SDK
-- Dart SDK
-- For iOS builds: Xcode and CocoaPods
-- For Android builds: Android SDK
+## 📂 Output File Naming
 
-## File Structure
+All output files follow the pattern:
 
-Builds are automatically moved to your Desktop folder with the following naming convention:
-- **APK**: `{project_name}-{dd-mm-yyyy}-{hh.mmAM}.apk`
-- **AAB**: `{project_name}-{dd-mm-yyyy}-{hh.mmAM}.aab`
+- **APK**: `{project_or_custom_name}-{dd-mm-yyyy}-{hh.mmAM}.apk`  
+- **AAB**: `{project_or_custom_name}-{dd-mm-yyyy}-{hh.mmAM}.aab`  
 
-## Contributing
+These are automatically moved to your Desktop (or a specified output directory).
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+---
 
-## License
+## ⚙️ Options
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-# dig_cli
+| Option              | Alias | Description                                                  |
+|---------------------|-------|--------------------------------------------------------------|
+| `--help`            | `-h`  | Show help                                                    |
+| `--version`         | `-v`  | Show version information                                     |
+| `--output <dir>`    | `-o`  | Specify output directory (default: Desktop)                  |
+| `--name <prefix>`   | `-n`  | Use custom prefix instead of project name for the output     |
+
+---
+
+## 🧬 Requirements
+
+- Flutter SDK ≥ 3.0.0  
+- Dart SDK ≥ 2.19.0  
+- Android SDK (for APK/AAB)  
+- Xcode & CocoaPods (for iOS cleanup on macOS)
+
+---
+
+## 🔧 Setup Alias (Optional)
+
+To shorten the command, you can create a terminal alias:
+
+```bash
+# Add this to ~/.zshrc or ~/.bashrc
+alias dig="dig_cli"
+```
+
+Then restart your terminal or run `source ~/.zshrc`.
+
+---
+
+## 🔗 Links
+
+- **Pub.dev**: https://pub.dev/packages/dig_cli  
+- **GitHub**: https://github.com/Digvijaysinh2204/dig_cli  
+
+---
+
+## 🤝 Contributing
+
+1. Fork this repo  
+2. Create a feature branch (`git checkout -b feature/my-feature`)  
+3. Commit your changes (`git commit -m 'feat: add something'`)  
+4. Push to the branch (`git push origin feature/my-feature`)  
+5. Open a Pull Request
+
+---
+
+## 📝 License
+
+Licensed under the [MIT License](LICENSE).
+
+---
+
+Made with ❤️ by [Digvijaysinh Chauhan](https://github.com/Digvijaysinh2204)

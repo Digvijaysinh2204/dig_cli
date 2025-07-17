@@ -2,6 +2,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:io';
+import 'dart:convert';
 import 'package:args/args.dart';
 import 'package:ansicolor/ansicolor.dart';
 import 'package:yaml/yaml.dart';
@@ -9,6 +10,7 @@ import 'package:path/path.dart' as p;
 
 const String appName = 'dig_cli';
 const String appVersion = '0.0.1';
+const String minFlutterVersion = '3.0.0';
 
 final AnsiPen infoPen = AnsiPen()..blue();
 final AnsiPen successPen = AnsiPen()..green();
@@ -20,13 +22,20 @@ void printSuccess(String message) => print(successPen(message));
 void printWarning(String message) => print(warningPen(message));
 void printError(String message) => stderr.writeln(errorPen(message));
 
-void main(List<String> arguments) async {
+Future<void> main(List<String> arguments) async {
+  // Flutter version check
+  await _checkFlutterVersion(minRequired: minFlutterVersion);
+
   final parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Show help')
     ..addFlag('version', abbr: 'v', negatable: false, help: 'Show version')
     ..addOption('output',
         abbr: 'o',
-        help: 'Specify output directory for build products (default: Desktop)');
+        help: 'Specify output directory for build products (default: Desktop)')
+    ..addOption('name',
+        abbr: 'n',
+        help:
+            'Custom name prefix for the build output file (overrides project name)');
 
   ArgResults argResults;
   try {
@@ -46,11 +55,15 @@ void main(List<String> arguments) async {
     return;
   }
 
-  // Get custom output directory if specified (or default to desktop)
-  final outputDir =
-      argResults['output'] != null && argResults['output'].isNotEmpty
-          ? argResults['output']
-          : await _getDesktopPath();
+  final outputDir = argResults['output'] != null &&
+          (argResults['output'] as String).isNotEmpty
+      ? argResults['output'] as String
+      : await _getDesktopPath();
+
+  final customName =
+      argResults['name'] != null && (argResults['name'] as String).isNotEmpty
+          ? argResults['name'] as String
+          : null;
 
   if (argResults.rest.isEmpty) {
     _showUsage();
@@ -62,9 +75,9 @@ void main(List<String> arguments) async {
 
   try {
     if (command == 'create' && (subcommand == 'build' || subcommand == 'apk')) {
-      await _createBuild(outputDir);
+      await _createBuild(outputDir, customName);
     } else if (command == 'create' && subcommand == 'bundle') {
-      await _createBundle(outputDir);
+      await _createBundle(outputDir, customName);
     } else if (command == 'clear' || command == 'clean') {
       await _clearBuild();
     } else if (command == 'alias') {
@@ -81,6 +94,50 @@ void main(List<String> arguments) async {
     _showUsage();
     exit(1);
   }
+}
+
+Future<bool> _checkFlutterVersion({required String minRequired}) async {
+  try {
+    final result = await Process.run('flutter', ['--version', '--machine']);
+    if (result.exitCode != 0) {
+      printWarning('⚠️ Unable to run Flutter to check version.');
+      return false;
+    }
+    final jsonResult = jsonDecode(result.stdout);
+    final versionString = jsonResult['frameworkVersion'] as String?;
+    if (versionString == null) {
+      printWarning('⚠️ Flutter version info not found.');
+      return false;
+    }
+    if (_compareVersion(versionString, minRequired) < 0) {
+      printWarning(
+          '⚠️ Your Flutter version ($versionString) is older than required ($minRequired).');
+      printWarning('Please consider updating Flutter for best compatibility.');
+      return false;
+    }
+    return true;
+  } catch (e) {
+    printWarning('⚠️ Failed to check Flutter version: $e');
+    return false;
+  }
+}
+
+/// Compares semantic versions, returns:
+/// -1 if v1 < v2
+///  0 if equal
+///  1 if v1 > v2
+int _compareVersion(String v1, String v2) {
+  List<int> parseVersion(String v) =>
+      v.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+  final a = parseVersion(v1);
+  final b = parseVersion(v2);
+  for (int i = 0; i < a.length && i < b.length; i++) {
+    if (a[i] < b[i]) return -1;
+    if (a[i] > b[i]) return 1;
+  }
+  if (a.length < b.length) return -1;
+  if (a.length > b.length) return 1;
+  return 0;
 }
 
 Future<void> _showVersion() async {
@@ -107,24 +164,27 @@ OPTIONS:
   -h, --help      Show help
   -v, --version   Show version
   -o, --output    Specify output directory
+  -n, --name      Custom name prefix for output file (overrides project name)
 
 EXAMPLES:
-  dig_cli create apk      # Build APK
-  dig_cli create bundle   # Build AAB
-  dig_cli clean           # Clean project
-  dig_cli alias           # Setup custom alias
+  dig_cli create apk --name MyApp      # Build APK with custom prefix
+  dig_cli create bundle                # Build AAB with project name prefix
+  dig_cli clean                       # Clean project
+  dig_cli alias                       # Setup custom alias
 
 For more information, visit: https://github.com/yourusername/dig_cli
 $usage
 ''');
 }
 
-Future<void> _createBuild(String outputDir) async {
+Future<void> _createBuild(String outputDir, String? customName) async {
   try {
-    final projectName = await _getProjectName();
-    if (projectName == null) {
-      printError('❗ Project name not found in pubspec.yaml!');
-      printWarning('💡 Make sure you are in a Flutter project directory.');
+    final projectName = customName ?? await _getProjectName();
+    if (projectName == null || projectName.isEmpty) {
+      printError(
+          '❗ Project name not found in pubspec.yaml and no custom name provided!');
+      printWarning(
+          '💡 Make sure you provide --name option or run inside a Flutter project.');
       exit(1);
     }
 
@@ -172,12 +232,14 @@ Future<void> _createBuild(String outputDir) async {
   }
 }
 
-Future<void> _createBundle(String outputDir) async {
+Future<void> _createBundle(String outputDir, String? customName) async {
   try {
-    final projectName = await _getProjectName();
-    if (projectName == null) {
-      printError('❗ Project name not found in pubspec.yaml!');
-      printWarning('💡 Make sure you are in a Flutter project directory.');
+    final projectName = customName ?? await _getProjectName();
+    if (projectName == null || projectName.isEmpty) {
+      printError(
+          '❗ Project name not found in pubspec.yaml and no custom name provided!');
+      printWarning(
+          '💡 Make sure you provide --name option or run inside a Flutter project.');
       exit(1);
     }
 
@@ -279,15 +341,17 @@ Future<void> _clearBuild() async {
         await Process.run('pod', ['install'], workingDirectory: iosPath);
       }
 
-      final globalDerivedData = Directory(
-        p.join(Platform.environment['HOME']!, 'Library', 'Developer', 'Xcode',
-            'DerivedData'),
-      );
-      if (await globalDerivedData.exists()) {
-        await globalDerivedData.delete(recursive: true);
-        printInfo('✅ Removed global Xcode DerivedData');
-      } else {
-        printInfo('ℹ️ No global DerivedData found');
+      final home = Platform.environment['HOME'];
+      if (home != null) {
+        final globalDerivedData = Directory(
+          p.join(home, 'Library', 'Developer', 'Xcode', 'DerivedData'),
+        );
+        if (await globalDerivedData.exists()) {
+          await globalDerivedData.delete(recursive: true);
+          printInfo('✅ Removed global Xcode DerivedData');
+        } else {
+          printInfo('ℹ️ No global DerivedData found');
+        }
       }
     } else {
       printInfo('ℹ️ Skipping iOS cleanup (not on macOS)');
@@ -314,9 +378,7 @@ Future<void> _clearBuild() async {
 Future<String?> _getProjectName() async {
   try {
     final pubspecFile = File('pubspec.yaml');
-    if (!await pubspecFile.exists()) {
-      return null;
-    }
+    if (!await pubspecFile.exists()) return null;
     final content = await pubspecFile.readAsString();
     final yaml = loadYaml(content);
     return yaml['name'] as String?;
@@ -325,7 +387,6 @@ Future<String?> _getProjectName() async {
   }
 }
 
-/// Cross-platform Desktop path getter (with Windows, macOS and Linux support)
 Future<String> _getDesktopPath() async {
   String? home;
   if (Platform.isWindows) {
@@ -340,8 +401,7 @@ Future<String> _getDesktopPath() async {
   if (await desktop.exists()) {
     return desktop.path;
   }
-  return p.join(
-      home, 'Desktop'); // Fallback if not exists, still return intended path
+  return p.join(home, 'Desktop');
 }
 
 Future<void> _deleteIfExists(String path) async {
@@ -357,8 +417,9 @@ Future<void> _deleteIfExists(String path) async {
 }
 
 String _formatTime(DateTime time) {
-  final hour =
-      (time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour));
+  final hour = (time.hour > 12
+      ? time.hour - 12
+      : (time.hour == 0 ? 12 : time.hour)); // 12h format
   final minute = time.minute.toString().padLeft(2, '0');
   final ampm = time.hour >= 12 ? 'PM' : 'AM';
   return '$hour:$minute $ampm ${time.timeZoneName}';
@@ -379,6 +440,8 @@ void _showUsage() {
   printError('  dig_cli help            # Show detailed help');
   printError('  dig_cli version         # Show version information');
   printError('  dig_cli --output <dir>  # Specify output directory [optional]');
+  printError(
+      '  dig_cli --name <name>   # Custom name prefix for build output [optional]');
 }
 
 void _printAliasInstructions() {
