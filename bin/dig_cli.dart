@@ -8,6 +8,7 @@ import 'package:ansicolor/ansicolor.dart';
 import 'package:yaml/yaml.dart';
 import 'package:path/path.dart' as p;
 import 'version.dart';
+import 'package:http/http.dart' as http;
 
 final AnsiPen _infoPen = AnsiPen()..blue();
 final AnsiPen _successPen = AnsiPen()..green();
@@ -76,6 +77,12 @@ Future<void> main(List<String> arguments) async {
     exit(64);
   }
 
+  // If no arguments, show interactive menu
+  if (arguments.isEmpty) {
+    await _showInteractiveMenu();
+    return;
+  }
+
   if (argResults['help'] as bool) {
     await _showHelp(parser.usage);
     return;
@@ -123,6 +130,117 @@ Future<void> main(List<String> arguments) async {
     kLog('❌ Error: $e', type: 'error');
     _showUsage();
     exit(1);
+  }
+}
+
+Future<String?> _getLatestStableVersion() async {
+  try {
+    final url = 'https://pub.dev/api/packages/dig_cli';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return json['latest']['version'] as String?;
+    }
+  } catch (_) {}
+  return null;
+}
+
+Future<String?> _getLatestBetaVersion() async {
+  try {
+    final url = 'https://api.github.com/repos/Digvijaysinh2204/dig_cli/tags';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final tags = jsonDecode(response.body) as List<dynamic>;
+      if (tags.isNotEmpty) {
+        return tags.first['name'] as String?;
+      }
+    }
+  } catch (_) {}
+  return null;
+}
+
+Future<void> _showInteractiveMenu() async {
+  String? latestStable = await _getLatestStableVersion();
+  String? latestBeta = await _getLatestBetaVersion();
+  bool showStableUpdate = false;
+  bool showBetaUpdate = false;
+  if (latestStable != null &&
+      _compareVersion(kDigCliVersion, latestStable) < 0) {
+    showStableUpdate = true;
+  }
+  if (latestBeta != null &&
+      _compareVersion(
+              kDigCliVersion, latestBeta.replaceAll(RegExp(r'[^0-9\.]'), '')) <
+          0) {
+    showBetaUpdate = true;
+  }
+
+  while (true) {
+    kLog('\n=== DIG CLI MENU ===', type: 'info');
+    kLog('1. Build APK', type: 'info');
+    kLog('2. Build AAB', type: 'info');
+    kLog('3. Clean Project', type: 'info');
+    kLog('4. Show Version', type: 'info');
+    if (showStableUpdate) {
+      kLog('5. Update to latest STABLE (pub.dev) [$latestStable]',
+          type: 'info');
+    }
+    if (showBetaUpdate) {
+      kLog('6. Update to latest BETA (GitHub) [$latestBeta]', type: 'info');
+    }
+    kLog('0. Exit', type: 'info');
+    stdout.write('Enter your choice (0-6): ');
+    final input = stdin.readLineSync();
+    switch (input) {
+      case '1':
+        await _createBuild(await _getDesktopPath(), null);
+        break;
+      case '2':
+        await _createBundle(await _getDesktopPath(), null);
+        break;
+      case '3':
+        await _clearBuild();
+        break;
+      case '4':
+        await _showVersion();
+        break;
+      case '5':
+        if (showStableUpdate) {
+          kLog('Updating dig_cli to latest STABLE from pub.dev...',
+              type: 'info');
+          final result = await Process.run(
+              'flutter', ['pub', 'global', 'activate', 'dig_cli']);
+          kLog(result.stdout.toString(), type: 'info');
+          kLog('Update complete! Please restart the CLI.', type: 'success');
+          exit(0);
+        } else {
+          kLog('No stable update available.', type: 'warning');
+        }
+        break;
+      case '6':
+        if (showBetaUpdate) {
+          kLog('Updating dig_cli to latest BETA from GitHub...', type: 'info');
+          final result = await Process.run('flutter', [
+            'pub',
+            'global',
+            'activate',
+            '--source',
+            'git',
+            'https://github.com/Digvijaysinh2204/dig_cli.git'
+          ]);
+          kLog(result.stdout.toString(), type: 'info');
+          kLog('Update complete! Please restart the CLI.', type: 'success');
+          exit(0);
+        } else {
+          kLog('No beta update available.', type: 'warning');
+        }
+        break;
+      case '0':
+        kLog('Exiting...', type: 'info');
+        exit(0);
+      default:
+        kLog('Invalid choice. Please try again.', type: 'warning');
+    }
   }
 }
 
@@ -214,7 +332,8 @@ $usage
 Future<void> _createBuild(String outputDir, String? customName) async {
   if (!await _isFlutterProject()) {
     kLog('❗ This command must be run inside a Flutter project.', type: 'error');
-    kLog('💡 Make sure pubspec.yaml contains a flutter dependency or SDK.', type: 'warning');
+    kLog('💡 Make sure pubspec.yaml contains a flutter dependency or SDK.',
+        type: 'warning');
     exit(1);
   }
   try {
@@ -276,7 +395,8 @@ Future<void> _createBuild(String outputDir, String? customName) async {
 Future<void> _createBundle(String outputDir, String? customName) async {
   if (!await _isFlutterProject()) {
     kLog('❗ This command must be run inside a Flutter project.', type: 'error');
-    kLog('💡 Make sure pubspec.yaml contains a flutter dependency or SDK.', type: 'warning');
+    kLog('💡 Make sure pubspec.yaml contains a flutter dependency or SDK.',
+        type: 'warning');
     exit(1);
   }
   try {
@@ -339,7 +459,8 @@ Future<void> _createBundle(String outputDir, String? customName) async {
 Future<void> _clearBuild() async {
   if (!await _isFlutterProject()) {
     kLog('❗ This command must be run inside a Flutter project.', type: 'error');
-    kLog('💡 Make sure pubspec.yaml contains a flutter dependency or SDK.', type: 'warning');
+    kLog('💡 Make sure pubspec.yaml contains a flutter dependency or SDK.',
+        type: 'warning');
     exit(1);
   }
   try {
