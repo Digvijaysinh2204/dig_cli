@@ -9,6 +9,7 @@ import 'package:yaml/yaml.dart';
 import 'package:path/path.dart' as p;
 import 'version.dart';
 import 'package:http/http.dart' as http;
+import 'package:pub_semver/pub_semver.dart';
 
 final AnsiPen _infoPen = AnsiPen()..blue();
 final AnsiPen _successPen = AnsiPen()..green();
@@ -122,8 +123,7 @@ Future<void> main(List<String> arguments) async {
   final subcommand = argResults.rest.length > 1 ? argResults.rest[1] : null;
 
   try {
-    if (command == 'create' &&
-        (subcommand == 'build' || subcommand == 'apk')) {
+    if (command == 'create' && (subcommand == 'build' || subcommand == 'apk')) {
       await _createBuild(outputDir, customName);
     } else if (command == 'create' && subcommand == 'bundle') {
       await _createBundle(outputDir, customName);
@@ -164,7 +164,31 @@ Future<String?> _getLatestBetaVersion() async {
     if (response.statusCode == 200) {
       final tags = jsonDecode(response.body) as List<dynamic>;
       if (tags.isNotEmpty) {
-        return tags.first['name'] as String?;
+        // Parse all tags as Version, filter out invalid ones
+        final versions = tags
+            .map((t) => t['name'] as String)
+            .map((name) {
+              // Remove leading 'v' or 'V'
+              final clean = name.replaceFirst(RegExp(r'^[vV]'), '');
+              try {
+                return Version.parse(clean);
+              } catch (_) {
+                return null;
+              }
+            })
+            .whereType<Version>()
+            .toList();
+        if (versions.isNotEmpty) {
+          versions.sort();
+          final betaVersions = versions.where((v) => v.isPreRelease).toList();
+          if (betaVersions.isNotEmpty) {
+            betaVersions.sort();
+            return betaVersions.last.toString();
+          } else if (versions.isNotEmpty) {
+            versions.sort();
+            return versions.last.toString();
+          }
+        }
       }
     }
   } catch (_) {}
@@ -214,57 +238,58 @@ Future<void> _showInteractiveMenu() async {
     showBetaUpdate = true;
   }
   final isBeta = await _isBetaInstalled();
+  final canSwitchBetaToStable = isBeta && latestStable != null;
 
   while (true) {
     kLog('\n=== DIG CLI MENU ===', type: 'info');
-    kLog('1. Build APK', type: 'info');
-    kLog('2. Build AAB', type: 'info');
-    kLog('3. Clean Project', type: 'info');
-    kLog('4. Show Version', type: 'info');
+    // Build menu dynamically
+    final menuOptions = <int, Map<String, dynamic>>{};
+    int idx = 1;
+    menuOptions[idx] = {
+      'label': 'Build APK',
+      'action': () async {
+        final result = await _promptBuildNameAndLocation('apk');
+        await _createBuild(result['location']!, result['filename']!);
+      }
+    };
+    idx++;
+    menuOptions[idx] = {
+      'label': 'Build AAB',
+      'action': () async {
+        final result = await _promptBuildNameAndLocation('aab');
+        await _createBundle(result['location']!, result['filename']!);
+      }
+    };
+    idx++;
+    menuOptions[idx] = {
+      'label': 'Clean Project',
+      'action': () async => await _clearBuild(),
+    };
+    idx++;
+    menuOptions[idx] = {
+      'label': 'Show Version',
+      'action': () async => await _showVersion(),
+    };
+    idx++;
     if (showStableUpdate) {
-      kLog('5. Update to latest STABLE (pub.dev) [${latestStable}]', type: 'info');
-    }
-    if (showBetaUpdate) {
-      kLog('6. Update to latest BETA (GitHub) [${latestBeta}]', type: 'info');
-    }
-    if (isBeta) {
-      kLog('7. Switch to STABLE (pub.dev)', type: 'info');
-    }
-    kLog('0. Exit', type: 'info');
-    stdout.write('Enter your choice (0-${isBeta ? '7' : '6'}): ');
-    final input = stdin.readLineSync();
-    switch (input) {
-      case '1':
-        {
-          final result = await _promptBuildNameAndLocation('apk');
-          await _createBuild(result['location']!, result['filename']!);
-          break;
-        }
-      case '2':
-        {
-          final result = await _promptBuildNameAndLocation('aab');
-          await _createBundle(result['location']!, result['filename']!);
-          break;
-        }
-      case '3':
-        await _clearBuild();
-        break;
-      case '4':
-        await _showVersion();
-        break;
-      case '5':
-        if (showStableUpdate) {
-          kLog('Updating dig_cli to latest STABLE from pub.dev...', type: 'info');
-          final result = await Process.run('flutter', ['pub', 'global', 'activate', 'dig_cli']);
+      menuOptions[idx] = {
+        'label': 'Update to latest STABLE (pub.dev) [$latestStable]',
+        'action': () async {
+          kLog('Updating dig_cli to latest STABLE from pub.dev...',
+              type: 'info');
+          final result = await Process.run(
+              'flutter', ['pub', 'global', 'activate', 'dig_cli']);
           kLog(result.stdout.toString(), type: 'info');
           kLog('Update complete! Please restart the CLI.', type: 'success');
           exit(0);
-        } else {
-          kLog('No stable update available.', type: 'warning');
         }
-        break;
-      case '6':
-        if (showBetaUpdate) {
+      };
+      idx++;
+    }
+    if (showBetaUpdate) {
+      menuOptions[idx] = {
+        'label': 'Update to latest BETA (GitHub) [$latestBeta]',
+        'action': () async {
           kLog('Updating dig_cli to latest BETA from GitHub...', type: 'info');
           final result = await Process.run('flutter', [
             'pub',
@@ -277,26 +302,41 @@ Future<void> _showInteractiveMenu() async {
           kLog(result.stdout.toString(), type: 'info');
           kLog('Update complete! Please restart the CLI.', type: 'success');
           exit(0);
-        } else {
-          kLog('No beta update available.', type: 'warning');
         }
-        break;
-      case '7':
-        if (isBeta) {
-          kLog('Switching to STABLE (pub.dev)...', type: 'info');
-          final result = await Process.run('flutter', ['pub', 'global', 'activate', 'dig_cli']);
+      };
+      idx++;
+    }
+    if (canSwitchBetaToStable) {
+      menuOptions[idx] = {
+        'label': 'Switch from BETA to STABLE (pub.dev)',
+        'action': () async {
+          kLog('Switching from BETA to STABLE (pub.dev)...', type: 'info');
+          final result = await Process.run(
+              'flutter', ['pub', 'global', 'activate', 'dig_cli']);
           kLog(result.stdout.toString(), type: 'info');
           kLog('Switched to STABLE! Please restart the CLI.', type: 'success');
           exit(0);
-        } else {
-          kLog('Option not available.', type: 'warning');
         }
-        break;
-      case '0':
-        kLog('Exiting...', type: 'info');
-        exit(0);
-      default:
-        kLog('Invalid choice. Please try again.', type: 'warning');
+      };
+      idx++;
+    }
+    // Print menu
+    for (final entry in menuOptions.entries) {
+      kLog('${entry.key}. ${entry.value['label']}', type: 'info');
+    }
+    kLog('0. Exit', type: 'info');
+    stdout.write(
+        'Enter your choice (0-${menuOptions.keys.isEmpty ? 0 : menuOptions.keys.last}): ');
+    final input = stdin.readLineSync();
+    if (input == '0') {
+      kLog('Exiting...', type: 'info');
+      exit(0);
+    }
+    final selected = int.tryParse(input ?? '');
+    if (selected != null && menuOptions.containsKey(selected)) {
+      await menuOptions[selected]!['action']();
+    } else {
+      kLog('Invalid choice. Please try again.', type: 'warning');
     }
   }
 }
