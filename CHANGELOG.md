@@ -13,3 +13,4 @@
 - Automatic version check for stable (pub.dev) and beta (GitHub) releases
 - Menu options to update to latest stable or beta version directly from CLI
 - Improved update logic and user experience
+- Updated README with user guidance for installation, usage, and updating

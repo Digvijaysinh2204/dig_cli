@@ -211,3 +211,42 @@ Licensed under the [MIT License](LICENSE).
 ---
 
 Made with ❤️ by [Digvijaysinh Chauhan](https://github.com/Digvijaysinh2204)
+---
+
+## 🔄 Updating dig_cli
+
+### From pub.dev (Stable)
+To update to the latest stable version:
+```bash
+flutter pub global activate dig_cli
+```
+
+### From GitHub (Beta/Latest)
+To update to the latest beta or development version:
+```bash
+flutter pub global activate --source git https://github.com/Digvijaysinh2204/dig_cli.git
+```
+
+After updating, you can check your version with:
+```bash
+dig --version
+```
+
+---
+
+## 🖥️ Interactive Menu
+If you run `dig_cli` (or your alias) with no arguments, you'll see an interactive menu:
+
+```
+=== DIG CLI MENU ===
+1. Build APK
+2. Build AAB
+3. Clean Project
+4. Show Version
+5. Update to latest STABLE (if available)
+6. Update to latest BETA (if available)
+0. Exit
+```
+
+Select an option by entering its number. Update options will only appear if a newer version is available.
+
