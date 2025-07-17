@@ -43,6 +43,45 @@ dart pub global activate --source git https://github.com/Digvijaysinh2204/dig_cl
 ```
 ---
 
+## 🖥️ Platform-specific Setup
+
+### macOS & Linux (Ubuntu)
+
+By default, use `dig_cli` in your terminal. If you prefer a shorter command, you can set up an alias (macOS and Linux setup is the same):
+
+```bash
+# Add this to ~/.zshrc, ~/.bashrc, or ~/.zshenv
+alias myflutter="dig_cli"
+```
+
+- You can use any alias name you like. After adding the alias and restarting your terminal (or running `source ~/.zshrc` or `source ~/.bashrc`), you can use your chosen alias (e.g., `myflutter`) instead of `dig_cli` in all commands.
+
+### Windows
+
+#### PowerShell
+
+Add the following line to your PowerShell profile (you can find your profile path with `$PROFILE`):
+
+```powershell
+Set-Alias myflutter dig_cli
+```
+
+- Restart PowerShell or run the above command in your current session to use your alias (e.g., `myflutter`).
+
+#### Command Prompt (cmd.exe)
+
+You can create a simple batch file to act as an alias:
+
+1. Open Notepad and add the following line:
+   ```bat
+   @echo off
+   dig_cli %*
+   ```
+2. Save the file as `myflutter.bat` in a directory included in your system's PATH (e.g., `C:\Windows`).
+3. Now you can use `myflutter` instead of `dig_cli` in Command Prompt.
+
+---
+
 ## ⚙️ Usage
 
 ### Build APK
@@ -140,7 +179,7 @@ These are automatically moved to your Desktop (or a specified output directory).
 By default, use `dig_cli` in your terminal. If you prefer a shorter command, you can set up an alias:
 
 ```bash
-# Add this to ~/.zshrc or ~/.bashrc
+# Add this to ~/.zshrc or ~/.bashrc or ~/.zshenv
 alias myflutter="dig_cli"
 ```
 
