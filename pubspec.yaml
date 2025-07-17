@@ -12,14 +12,14 @@ dependencies:
   flutter:
     sdk: flutter
   args: ^2.7.0
-  ansicolor: ^2.0.1
-  yaml: ^3.1.0
+  ansicolor: ^2.0.3
+  yaml: ^3.1.3
   path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.2
+  flutter_lints: ^6.0.0
 
 executables:
   dig_cli: dig_cli
