@@ -19,4 +19,4 @@ dev_dependencies:
   lints: ^6.0.0
 
 executables:
-  dig: dig_cli
+  dig_cli: dig_cli
