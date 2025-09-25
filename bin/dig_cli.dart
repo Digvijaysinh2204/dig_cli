@@ -33,7 +33,7 @@ void main(List<String> arguments) async {
 
   if (argResults['version']) {
     // Corrected part: Call the function to get the version
-    final version = await getCurrentCliVersion();
+    final version = kDigCliVersion;
     kLog('📦 dig_cli v$version');
     return;
   }

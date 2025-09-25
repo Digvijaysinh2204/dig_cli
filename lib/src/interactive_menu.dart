@@ -97,7 +97,7 @@ Future<void> showInteractiveMenu() async {
   final AnsiPen disabledPen = AnsiPen()..gray(level: 0.5);
 
   final isBuildable = await File('lib/main.dart').exists();
-  final String currentVersion = await getCurrentCliVersion();
+  final String currentVersion = kDigCliVersion;
 
   stdout.write('Checking for updates...');
   final String? latestStable = await _getLatestStableVersion(currentVersion);
