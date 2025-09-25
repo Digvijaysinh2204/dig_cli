@@ -9,11 +9,11 @@ import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
 import 'package:yaml/yaml.dart';
 
-import '../version.dart';
 import 'commands/build_command.dart';
 import 'commands/clean_command.dart';
 import 'commands/zip_command.dart';
 import 'utils/logger.dart';
+import 'version_helper.dart';
 
 // Helper function to get the latest version from pub.dev
 Future<String?> _getLatestStableVersion(String currentVersionStr) async {

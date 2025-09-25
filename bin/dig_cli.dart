@@ -8,7 +8,7 @@ import 'package:dig_cli/src/commands/clean_command.dart';
 import 'package:dig_cli/src/commands/zip_command.dart';
 import 'package:dig_cli/src/interactive_menu.dart';
 import 'package:dig_cli/src/utils/logger.dart';
-import 'package:dig_cli/version.dart';
+import 'package:dig_cli/src/version_helper.dart';
 
 void main(List<String> arguments) async {
   // If no arguments are given, show the interactive menu
