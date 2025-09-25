@@ -62,7 +62,7 @@ dig
 
 ```
 ╔════════════════════════════════════════╗
-║          DIG CLI TOOL v1.1.0          ║
+║          DIG CLI TOOL v1.1.0           ║
 ╠════════════════════════════════════════╣
 ║  1. 🚀 Build APK                       ║
 ║  2. 📦 Build AAB                       ║
@@ -96,12 +96,12 @@ dig zip
 
 ## ⚙️ Options
 
-| Option            | Alias | Description                                 |
-|-------------------|-------|---------------------------------------------|
-| `--help`          | `-h`  | Show help (when used with a command)        |
-| `--version`       | `-v`  | Show the tool's version                     |
-| `--output <dir>`  | `-o`  | Specify output directory (default: Desktop) |
-| `--name <prefix>` | `-n`  | Custom name prefix for build/zip output file|
+| Option            | Alias | Description                                  |
+|-------------------|-------|----------------------------------------------|
+| `--help`          | `-h`  | Show help (when used with a command)         |
+| `--version`       | `-v`  | Show the tool's version                      |
+| `--output <dir>`  | `-o`  | Specify output directory (default: Desktop)  |
+| `--name <prefix>` | `-n`  | Custom name prefix for build/zip output file |
 
 ---
 
