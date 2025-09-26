@@ -39,14 +39,20 @@ Future<String?> _getLatestStableVersion(String currentVersionStr) async {
 Future<void> _runUpdateProcess() async {
   kLog('\n🚀 Starting CLI update...', type: LogType.info);
   try {
-    final process =
-        await Process.start('dart', ['pub', 'global', 'activate', 'dig_cli']);
+    final process = await Process.start('dart', [
+      'pub',
+      'global',
+      'activate',
+      'dig_cli',
+    ]);
     await stdout.addStream(process.stdout);
     await stderr.addStream(process.stderr);
     final exitCode = await process.exitCode;
     if (exitCode == 0) {
-      kLog('\n✅ CLI updated successfully! Please restart the tool.',
-          type: LogType.success);
+      kLog(
+        '\n✅ CLI updated successfully! Please restart the tool.',
+        type: LogType.success,
+      );
     } else {
       kLog('\n❗ Update failed.', type: LogType.error);
     }
@@ -75,8 +81,9 @@ Future<Map<String, String>> _promptBuildDetails() async {
   String? home = Platform.isWindows
       ? Platform.environment['USERPROFILE']
       : Platform.environment['HOME'];
-  String defaultPath =
-      home != null ? p.join(home, 'Desktop') : Directory.current.path;
+  String defaultPath = home != null
+      ? p.join(home, 'Desktop')
+      : Directory.current.path;
 
   stdout.write('Enter save location (default: Desktop): ');
   String? location = stdin.readLineSync()?.trim();
@@ -111,8 +118,9 @@ Future<void> showInteractiveMenu() async {
   final AnsiPen disabledPen = AnsiPen()..gray(level: 0.5);
 
   final projectRoot = findProjectRoot();
-  final isBuildable =
-      await File(p.join(projectRoot.path, 'lib/main.dart')).exists();
+  final isBuildable = await File(
+    p.join(projectRoot.path, 'lib/main.dart'),
+  ).exists();
   final String currentVersion = kDigCliVersion;
 
   stdout.write('Checking for updates...');
@@ -132,9 +140,9 @@ Future<void> showInteractiveMenu() async {
           '--name',
           details['name']!,
           '--output',
-          details['location']!
+          details['location']!,
         ]);
-      }
+      },
     };
     menuOptions[optionIndex++] = {
       'label': '📦 Build AAB',
@@ -145,26 +153,26 @@ Future<void> showInteractiveMenu() async {
           '--name',
           details['name']!,
           '--output',
-          details['location']!
+          details['location']!,
         ]);
-      }
+      },
     };
   }
 
   menuOptions[optionIndex++] = {
     'label': '🧹 Clean Project',
-    'action': () => handleCleanCommand()
+    'action': () => handleCleanCommand(),
   };
   menuOptions[optionIndex++] = {
     'label': '🤐 Create Project ZIP',
-    'action': () => handleZipCommand()
+    'action': () => handleZipCommand(),
   };
 
   if (latestStable != null) {
     menuOptions[optionIndex] = {
       'label': '✨ Update to v$latestStable',
       'action': () => _runUpdateProcess(),
-      'isUpdate': true
+      'isUpdate': true,
     };
   }
 
@@ -180,38 +188,47 @@ Future<void> showInteractiveMenu() async {
 
   print('');
   print(borderPen(topBorder));
-  print(borderPen('║') +
-      ' ' * titlePaddingLeft +
-      titlePen(title) +
-      ' ' * titlePaddingRight +
-      borderPen('║'));
+  print(
+    borderPen('║') +
+        ' ' * titlePaddingLeft +
+        titlePen(title) +
+        ' ' * titlePaddingRight +
+        borderPen('║'),
+  );
   print(borderPen(middleBorder));
 
   if (!isBuildable) {
     final warningText = ' Build options hidden: lib/main.dart not found.';
     final int padding = totalWidth - warningText.length - 2;
-    print(borderPen('║') +
-        disabledPen(warningText) +
-        ' ' * (padding > 0 ? padding : 0) +
-        borderPen('║'));
+    print(
+      borderPen('║') +
+          disabledPen(warningText) +
+          ' ' * (padding > 0 ? padding : 0) +
+          borderPen('║'),
+    );
     print(borderPen(middleBorder));
   }
 
   void printMenuLine(String text, {bool isUpdate = false}) {
     final AnsiPen pen = isUpdate ? updatePen : optionPen;
     final strippedText = text.replaceAll(
-        RegExp(
-            r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])'),
-        '');
+      RegExp(
+        r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])',
+      ),
+      '',
+    );
     final int padding = totalWidth - strippedText.length - 5;
     print(
-        '${borderPen('║')}  ${pen(text)}${' ' * (padding > 0 ? padding : 0)}${borderPen('║')}');
+      '${borderPen('║')}  ${pen(text)}${' ' * (padding > 0 ? padding : 0)}${borderPen('║')}',
+    );
   }
 
   final displayOptions = menuOptions.values.toList();
   for (int i = 0; i < displayOptions.length; i++) {
-    printMenuLine('${i + 1}. ${displayOptions[i]['label']}',
-        isUpdate: displayOptions[i]['isUpdate'] ?? false);
+    printMenuLine(
+      '${i + 1}. ${displayOptions[i]['label']}',
+      isUpdate: displayOptions[i]['isUpdate'] ?? false,
+    );
   }
   printMenuLine('0. 🚪 Exit');
   print(borderPen(bottomBorder));

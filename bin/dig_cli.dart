@@ -50,8 +50,10 @@ void main(List<String> arguments) async {
         await handleZipCommand();
         break;
       default:
-        kLog('Unknown command: ${argResults.command?.name}',
-            type: LogType.error);
+        kLog(
+          'Unknown command: ${argResults.command?.name}',
+          type: LogType.error,
+        );
         exit(64);
     }
   } else {

@@ -12,8 +12,11 @@ import '../utils/spinner.dart';
 Future<void> handleBuildCommand(List<String> args) async {
   final parser = ArgParser()
     ..addOption('output', abbr: 'o', help: 'Specify output directory')
-    ..addOption('name',
-        abbr: 'n', help: 'Custom name prefix for the output file');
+    ..addOption(
+      'name',
+      abbr: 'n',
+      help: 'Custom name prefix for the output file',
+    );
 
   final argResults = parser.parse(args);
   final buildType = argResults.rest.isNotEmpty ? argResults.rest.first : 'apk';
@@ -27,8 +30,13 @@ Future<void> handleBuildCommand(List<String> args) async {
       customName: customName,
       buildType: 'APK',
       buildArgs: ['build', 'apk', '--release'],
-      sourcePath:
-          p.join('build', 'app', 'outputs', 'flutter-apk', 'app-release.apk'),
+      sourcePath: p.join(
+        'build',
+        'app',
+        'outputs',
+        'flutter-apk',
+        'app-release.apk',
+      ),
       fileExtension: 'apk',
     );
   } else if (buildType == 'bundle') {
@@ -38,12 +46,20 @@ Future<void> handleBuildCommand(List<String> args) async {
       buildType: 'App Bundle',
       buildArgs: ['build', 'appbundle', '--release'],
       sourcePath: p.join(
-          'build', 'app', 'outputs', 'bundle', 'release', 'app-release.aab'),
+        'build',
+        'app',
+        'outputs',
+        'bundle',
+        'release',
+        'app-release.aab',
+      ),
       fileExtension: 'aab',
     );
   } else {
-    kLog('Unknown build type: "$buildType". Use "apk" or "bundle".',
-        type: LogType.error);
+    kLog(
+      'Unknown build type: "$buildType". Use "apk" or "bundle".',
+      type: LogType.error,
+    );
     exit(64);
   }
 }
@@ -57,16 +73,20 @@ Future<void> _runBuildProcess({
   required String fileExtension,
 }) async {
   if (!await _isFlutterProject()) {
-    kLog('❗ This command must be run inside a Flutter project.',
-        type: LogType.error);
+    kLog(
+      '❗ This command must be run inside a Flutter project.',
+      type: LogType.error,
+    );
     exit(1);
   }
 
   try {
     final projectName = customName ?? await _getProjectName();
     if (projectName == null || projectName.isEmpty) {
-      kLog('❗ Project name not found and no custom name was provided!',
-          type: LogType.error);
+      kLog(
+        '❗ Project name not found and no custom name was provided!',
+        type: LogType.error,
+      );
       exit(1);
     }
 
@@ -93,8 +113,10 @@ Future<void> _runBuildProcess({
 
     final srcFile = File(sourcePath);
     if (!await srcFile.exists()) {
-      kLog('❗ Build failed. Output file not found at: $sourcePath',
-          type: LogType.error);
+      kLog(
+        '❗ Build failed. Output file not found at: $sourcePath',
+        type: LogType.error,
+      );
       exit(1);
     }
 
@@ -109,8 +131,10 @@ Future<void> _runBuildProcess({
     kLog('📁 Location: ${destFile.path}', type: LogType.info);
     kLog('📊 Size: ${sizeInMB}MB', type: LogType.info);
   } catch (e) {
-    kLog('❌ An unexpected error occurred during the build: $e',
-        type: LogType.error);
+    kLog(
+      '❌ An unexpected error occurred during the build: $e',
+      type: LogType.error,
+    );
     exit(1);
   }
 }

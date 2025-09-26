@@ -30,8 +30,9 @@ Future<void> handleCleanCommand() async {
     }
   } catch (e) {
     kLog(
-        '❗ This command must be run inside a Flutter project (pubspec.yaml not found).',
-        type: LogType.error);
+      '❗ This command must be run inside a Flutter project (pubspec.yaml not found).',
+      type: LogType.error,
+    );
     exit(1);
   }
   try {
@@ -78,15 +79,18 @@ Future<void> handleCleanCommand() async {
 
       if (homeDir != null) {
         final derivedData = Directory(
-            p.join(homeDir, 'Library', 'Developer', 'Xcode', 'DerivedData'));
+          p.join(homeDir, 'Library', 'Developer', 'Xcode', 'DerivedData'),
+        );
         if (await derivedData.exists()) {
           kLog('🧹 Cleaning global Xcode DerivedData...', type: LogType.info);
           await derivedData.delete(recursive: true);
         }
       }
     } else if (Platform.isWindows) {
-      kLog('🪟 Windows: Running platform specific cleanup...',
-          type: LogType.info);
+      kLog(
+        '🪟 Windows: Running platform specific cleanup...',
+        type: LogType.info,
+      );
       await _deleteIfExists('windows/build');
       await _deleteIfExists('windows/flutter/ephemeral');
       kLog('🧼 Cleaned local Windows build artifacts.', type: LogType.info);
@@ -99,8 +103,10 @@ Future<void> handleCleanCommand() async {
         }
       }
     } else if (Platform.isLinux) {
-      kLog('🐧 Linux: Running platform specific cleanup...',
-          type: LogType.info);
+      kLog(
+        '🐧 Linux: Running platform specific cleanup...',
+        type: LogType.info,
+      );
       await _deleteIfExists('linux/build');
       await _deleteIfExists('linux/flutter/ephemeral');
       kLog('🧼 Cleaned local Linux build artifacts.', type: LogType.info);

@@ -16,15 +16,21 @@ class IgnoreRules {
   final Set<String> prefixDirs; // NEW: for patterns like android/app/release/
 
   IgnoreRules(
-      this.exactDirs, this.exactFiles, this.extensions, this.prefixDirs);
+    this.exactDirs,
+    this.exactFiles,
+    this.extensions,
+    this.prefixDirs,
+  );
 }
 
 // --- IMPROVEMENT: Smarter .gitignore parser ---
 IgnoreRules _readGitignore() {
   final file = File('.gitignore');
   if (!file.existsSync()) {
-    kLog('⚠️ .gitignore not found. ZIP may include unnecessary files.',
-        type: LogType.warning);
+    kLog(
+      '⚠️ .gitignore not found. ZIP may include unnecessary files.',
+      type: LogType.warning,
+    );
     return IgnoreRules({}, {}, {}, {});
   }
 
@@ -42,14 +48,17 @@ IgnoreRules _readGitignore() {
       extensions.add(line.substring(1)); // *.log -> .log
     } else if (line.endsWith('/')) {
       if (line.startsWith('**/')) {
-        prefixDirs.add(line.substring(3,
-            line.length - 1)); // **/android/app/release/ -> android/app/release
+        prefixDirs.add(
+          line.substring(3, line.length - 1),
+        ); // **/android/app/release/ -> android/app/release
       } else if (line.startsWith('/')) {
-        prefixDirs.add(line.substring(1,
-            line.length - 1)); // /android/app/release/ -> android/app/release
+        prefixDirs.add(
+          line.substring(1, line.length - 1),
+        ); // /android/app/release/ -> android/app/release
       } else {
-        prefixDirs.add(line.substring(
-            0, line.length - 1)); // android/app/release/ -> android/app/release
+        prefixDirs.add(
+          line.substring(0, line.length - 1),
+        ); // android/app/release/ -> android/app/release
       }
     } else {
       exactFiles.add(line); // pubspec.lock
@@ -83,19 +92,23 @@ Future<void> handleZipCommand() async {
     }
   } catch (e) {
     kLog(
-        '❗This command must be run inside a Flutter project (pubspec.yaml not found).',
-        type: LogType.error);
+      '❗This command must be run inside a Flutter project (pubspec.yaml not found).',
+      type: LogType.error,
+    );
     exit(1);
   }
 
   // If on MacOS and ios/ exists, run 'pod deintegrate' before zipping
   if (Platform.isMacOS && Directory('ios').existsSync()) {
     await runWithSpinner('🧹 Running pod deintegrate in ios/ ...', () async {
-      final deintegrateResult =
-          await Process.run('pod', ['deintegrate'], workingDirectory: 'ios');
+      final deintegrateResult = await Process.run('pod', [
+        'deintegrate',
+      ], workingDirectory: 'ios');
       if (deintegrateResult.exitCode != 0) {
-        kLog('❌ pod deintegrate failed: \n${deintegrateResult.stderr}',
-            type: LogType.error);
+        kLog(
+          '❌ pod deintegrate failed: \n${deintegrateResult.stderr}',
+          type: LogType.error,
+        );
         exit(1);
       }
       kLog('✅ pod deintegrate completed.', type: LogType.success);
@@ -105,16 +118,20 @@ Future<void> handleZipCommand() async {
   await runWithSpinner('🧹 Running flutter clean before zipping...', () async {
     final cleanResult = await Process.run('flutter', ['clean']);
     if (cleanResult.exitCode != 0) {
-      kLog('❌ flutter clean failed: ${cleanResult.stderr}',
-          type: LogType.error);
+      kLog(
+        '❌ flutter clean failed: ${cleanResult.stderr}',
+        type: LogType.error,
+      );
       exit(1);
     }
     kLog('✅ flutter clean completed.', type: LogType.success);
   });
 
   if (!await File('pubspec.yaml').exists()) {
-    kLog('❗This command must be run inside a Flutter project root.',
-        type: LogType.error);
+    kLog(
+      '❗This command must be run inside a Flutter project root.',
+      type: LogType.error,
+    );
     exit(1);
   }
 
@@ -133,8 +150,9 @@ Future<void> handleZipCommand() async {
   String? home = Platform.isWindows
       ? Platform.environment['USERPROFILE']
       : Platform.environment['HOME'];
-  String defaultPath =
-      home != null ? p.join(home, 'Desktop') : Directory.current.path;
+  String defaultPath = home != null
+      ? p.join(home, 'Desktop')
+      : Directory.current.path;
 
   stdout.write('Enter save location (default: Desktop): ');
   String? location = stdin.readLineSync()?.trim();
@@ -158,16 +176,21 @@ Future<void> handleZipCommand() async {
         final entityName = p.basename(relativePath);
 
         // --- IMPROVEMENT: Better ignore logic ---
-        bool shouldIgnore = rules.prefixDirs.any((prefix) =>
-                relativePath.startsWith(prefix)) || // NEW: ignore by prefix dir
-            parts.any((part) =>
-                    part.startsWith('.') || // Ignore hidden files/folders
-                    rules.exactDirs
-                        .contains(part) // Ignore exact directory names
-                ) ||
+        bool shouldIgnore =
+            rules.prefixDirs.any(
+              (prefix) => relativePath.startsWith(prefix),
+            ) || // NEW: ignore by prefix dir
+            parts.any(
+              (part) =>
+                  part.startsWith('.') || // Ignore hidden files/folders
+                  rules.exactDirs.contains(
+                    part,
+                  ), // Ignore exact directory names
+            ) ||
             rules.exactFiles.contains(entityName) || // Ignore exact filenames
-            rules.extensions
-                .any((ext) => entityName.endsWith(ext)); // Ignore by extension
+            rules.extensions.any(
+              (ext) => entityName.endsWith(ext),
+            ); // Ignore by extension
 
         if (!shouldIgnore && entity is File) {
           encoder.addFileSync(entity, p.join(projectName, relativePath));
