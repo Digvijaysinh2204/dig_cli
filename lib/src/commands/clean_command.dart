@@ -3,21 +3,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../utils/logger.dart';
+import '../utils/project_utils.dart';
 import '../utils/spinner.dart';
-
-// Helper: Find project root by searching for pubspec.yaml upwards
-Directory findProjectRoot() {
-  var dir = Directory.current;
-  while (true) {
-    if (File('${dir.path}/pubspec.yaml').existsSync()) {
-      return dir;
-    }
-    final parent = dir.parent;
-    if (parent.path == dir.path) break; // reached filesystem root
-    dir = parent;
-  }
-  throw Exception('pubspec.yaml not found in this or any parent directory.');
-}
 
 Future<void> handleCleanCommand() async {
   // Switch to project root if not already there

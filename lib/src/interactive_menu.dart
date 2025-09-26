@@ -13,6 +13,7 @@ import 'commands/build_command.dart';
 import 'commands/clean_command.dart';
 import 'commands/zip_command.dart';
 import 'utils/logger.dart';
+import 'utils/project_utils.dart';
 import 'version_helper.dart';
 
 // Helper function to get the latest version from pub.dev
@@ -81,9 +82,8 @@ Future<Map<String, String>> _promptBuildDetails() async {
   String? home = Platform.isWindows
       ? Platform.environment['USERPROFILE']
       : Platform.environment['HOME'];
-  String defaultPath = home != null
-      ? p.join(home, 'Desktop')
-      : Directory.current.path;
+  String defaultPath =
+      home != null ? p.join(home, 'Desktop') : Directory.current.path;
 
   stdout.write('Enter save location (default: Desktop): ');
   String? location = stdin.readLineSync()?.trim();
@@ -92,20 +92,6 @@ Future<Map<String, String>> _promptBuildDetails() async {
   }
 
   return {'name': buildName, 'location': location};
-}
-
-// Helper: Find project root by searching for pubspec.yaml upwards
-Directory findProjectRoot() {
-  var dir = Directory.current;
-  while (true) {
-    if (File('${dir.path}/pubspec.yaml').existsSync()) {
-      return dir;
-    }
-    final parent = dir.parent;
-    if (parent.path == dir.path) break;
-    dir = parent;
-  }
-  throw Exception('pubspec.yaml not found in this or any parent directory.');
 }
 
 // The main function to display the beautiful, interactive menu

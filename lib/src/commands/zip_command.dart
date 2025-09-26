@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
 import '../utils/logger.dart';
+import '../utils/project_utils.dart';
 import '../utils/spinner.dart';
 
 class IgnoreRules {
@@ -67,20 +68,6 @@ IgnoreRules _readGitignore() {
   return IgnoreRules(exactDirs, exactFiles, extensions, prefixDirs);
 }
 
-// Helper: Find project root by searching for pubspec.yaml upwards
-Directory findProjectRoot() {
-  var dir = Directory.current;
-  while (true) {
-    if (File('${dir.path}/pubspec.yaml').existsSync()) {
-      return dir;
-    }
-    final parent = dir.parent;
-    if (parent.path == dir.path) break; // reached filesystem root
-    dir = parent;
-  }
-  throw Exception('pubspec.yaml not found in this or any parent directory.');
-}
-
 Future<void> handleZipCommand() async {
   // Switch to project root if not already there
   try {
@@ -101,9 +88,12 @@ Future<void> handleZipCommand() async {
   // If on MacOS and ios/ exists, run 'pod deintegrate' before zipping
   if (Platform.isMacOS && Directory('ios').existsSync()) {
     await runWithSpinner('🧹 Running pod deintegrate in ios/ ...', () async {
-      final deintegrateResult = await Process.run('pod', [
-        'deintegrate',
-      ], workingDirectory: 'ios');
+      final deintegrateResult = await Process.run(
+          'pod',
+          [
+            'deintegrate',
+          ],
+          workingDirectory: 'ios');
       if (deintegrateResult.exitCode != 0) {
         kLog(
           '❌ pod deintegrate failed: \n${deintegrateResult.stderr}',
@@ -150,9 +140,8 @@ Future<void> handleZipCommand() async {
   String? home = Platform.isWindows
       ? Platform.environment['USERPROFILE']
       : Platform.environment['HOME'];
-  String defaultPath = home != null
-      ? p.join(home, 'Desktop')
-      : Directory.current.path;
+  String defaultPath =
+      home != null ? p.join(home, 'Desktop') : Directory.current.path;
 
   stdout.write('Enter save location (default: Desktop): ');
   String? location = stdin.readLineSync()?.trim();
@@ -176,8 +165,7 @@ Future<void> handleZipCommand() async {
         final entityName = p.basename(relativePath);
 
         // --- IMPROVEMENT: Better ignore logic ---
-        bool shouldIgnore =
-            rules.prefixDirs.any(
+        bool shouldIgnore = rules.prefixDirs.any(
               (prefix) => relativePath.startsWith(prefix),
             ) || // NEW: ignore by prefix dir
             parts.any(
