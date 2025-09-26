@@ -1,9 +1,9 @@
-# Changelog
+## 1.1.0
 
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [1.0.5]
-- RELEASE
+- Initial release: Major UX overhaul, all commands now work from any subfolder (auto root detection)
+- Interactive menu with proper box alignment and emoji-safe padding
+- Spinner/loader for all long-running commands (build, clean, zip, pod, etc.)
+- Improved .gitignore support (auto-ignore for android/app/release and similar folders)
+- Project ZIP now excludes Pods, build, and other ignored files automatically
+- Clean and Build commands are more robust and user-friendly
+- Many bug fixes and code improvements
