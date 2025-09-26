@@ -12,14 +12,23 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Check out the code
       - uses: actions/checkout@v4
+        # For pull requests, check out the head of the PR
+        with:
+          ref: ${{ github.head_ref }}
+
+      # Step 2: Set up the Dart environment
       - uses: dart-lang/setup-dart@v1
 
-      - name: 'Format code'
-        run: dart format .
+      # Step 3: Check if the code is already formatted
+      - name: 'Check formatting'
+        run: dart format --output=none --set-exit-if-changed .
 
-      # This action automatically commits and pushes the formatting changes
-      - uses: stefanzweifel/git-auto-commit-action@v5
+      # Step 4: Auto-commit changes ONLY on a pull request
+      # This step will be skipped on direct pushes to main
+      - name: 'Auto-commit formatting changes'
+        if: github.event_name == 'pull_request'
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'style: auto format dart code'
-          branch: ${{ github.head_ref }}
