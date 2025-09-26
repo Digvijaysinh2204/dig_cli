@@ -9,12 +9,13 @@ on:
 
 jobs:
   validate:
-    runs-on: macos-latest # Changed to macOS
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          cache: true # Enable caching for Flutter dependencies
 
       - name: 'Install dependencies'
         run: dart pub get
