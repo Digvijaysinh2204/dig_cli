@@ -1,0 +1,86 @@
+# file: .github/workflows/main.yml
+
+name: 'Publish to Pub.dev & GitHub'
+
+# This workflow runs only when you push a new tag (e.g., v1.2.0)
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+jobs:
+  # Job 1: Run tests and analysis to ensure code quality
+  test:
+    name: 'Test & Analyze'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+
+      - name: 'Install dependencies'
+        run: dart pub get
+
+      - name: 'Analyze project source'
+        run: dart analyze
+
+      - name: 'Run tests'
+        run: dart test
+
+  # Job 2: Compile your tool for major platforms
+  build:
+    name: 'Build Binaries'
+    needs: test # This job only runs if the 'test' job succeeds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+
+      - name: 'Install dependencies'
+        run: dart pub get
+
+      - name: 'Build for Linux, Windows & macOS'
+        run: |
+          dart compile exe bin/dig_cli.dart -o dig-linux
+          dart compile exe bin/dig_cli.dart -o dig-windows.exe
+          dart compile exe bin/dig_cli.dart -o dig-macos
+
+      - name: 'Upload compiled files'
+        uses: actions/upload-artifact@v3
+        with:
+          name: binaries
+          path: |
+            dig-linux
+            dig-windows.exe
+            dig-macos
+
+  # Job 3: Publish to GitHub Releases and pub.dev
+  publish:
+    name: 'Publish to GitHub & Pub.dev'
+    needs: build # This job only runs if the 'build' job succeeds
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for trusted publishing to pub.dev
+      contents: write # Required for creating a GitHub Release
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+
+      - name: 'Download compiled binaries'
+        uses: actions/download-artifact@v3
+        with:
+          name: binaries
+
+      - name: 'Publish to pub.dev'
+        run: dart pub publish --force
+
+      - name: 'Create GitHub Release'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dig-linux
+            dig-windows.exe
+            dig-macos
+          body: |
+            Official release for version ${{ github.ref_name }}.
+            Download the executable for your platform below.

@@ -1,0 +1,25 @@
+# file: .github/workflows/format.yml
+
+name: 'Format Dart Code'
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+
+      - name: 'Format code'
+        run: dart format .
+
+      # This action automatically commits and pushes the formatting changes
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'style: auto format dart code'
+          branch: ${{ github.head_ref }}
