@@ -10,32 +10,27 @@ import 'package:mocktail/mocktail.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-// --- Mock Classes ---
-// We create mock versions of external dependencies
+// Mock classes (remain the same)
 class MockProcessResult extends Mock implements ProcessResult {}
 
 class MockProcess extends Mock implements Process {}
-
-// A helper for mocking Process.run
-Future<ProcessResult> mockProcessRun(Invocation invocation) {
-  final result = MockProcessResult();
-  when(() => result.exitCode).thenReturn(0); // Simulate success
-  when(() => result.stdout).thenReturn('');
-  when(() => result.stderr).thenReturn('');
-  return Future.value(result);
-}
+// ...
 
 void main() {
   group('CLI Tool Detailed Tests', () {
     late Directory tempDir;
+    late String tempPath; // Use a path string for comparison
 
     setUp(() {
       tempDir = Directory.systemTemp.createTempSync('dig_cli_test_');
-      Directory.current = tempDir;
-      File(p.join(tempDir.path, 'pubspec.yaml'))
+      // --- THIS IS THE FIX ---
+      // Get the real, resolved path to avoid symbolic link issues
+      tempPath = tempDir.resolveSymbolicLinksSync();
+      Directory.current = tempPath;
+
+      File(p.join(tempPath, 'pubspec.yaml'))
           .writeAsStringSync('name: test_project');
-      File(p.join(tempDir.path, 'lib', 'main.dart'))
-          .createSync(recursive: true);
+      File(p.join(tempPath, 'lib', 'main.dart')).createSync(recursive: true);
     });
 
     tearDown(() {
@@ -45,31 +40,26 @@ void main() {
 
     test('findProjectRoot helper should find the pubspec.yaml', () {
       final root = findProjectRoot();
-      expect(root.path, equals(tempDir.path));
+      // --- THIS IS THE FIX ---
+      // Compare the real paths of both directories
+      expect(root.resolveSymbolicLinksSync(), equals(tempPath));
     });
 
+    // ... (rest of the tests remain the same)
     group('Clean Command', () {
-      test('handleCleanCommand should call "flutter clean"', () async {
-        // This is an advanced test that checks if the correct command is executed.
-        // It's not fully implemented here but shows the concept of mocking Process.run.
-        // A full implementation would require a testing framework that can override top-level functions.
+      test('handleCleanCommand should run successfully', () async {
         await expectLater(handleCleanCommand(), completes);
       });
     });
 
     group('Build Command', () {
-      test('handleBuildCommand should call "flutter build apk"', () async {
-        // Similar to the clean command, a full test would mock Process.run
-        // and verify that `flutter build apk --release` was the command passed.
+      test('handleBuildCommand should attempt to build an APK', () async {
         await expectLater(handleBuildCommand(['apk']), completes);
       });
     });
 
     group('ZIP Command', () {
-      test('handleZipCommand should run "flutter clean" before zipping',
-          () async {
-        // This test verifies that `flutter clean` is called as part of the zip process.
-        // As with others, a full mock is needed for a complete test.
+      test('handleZipCommand should attempt to create a ZIP', () async {
         await expectLater(handleZipCommand(), completes);
       });
     });
