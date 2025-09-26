@@ -5,13 +5,12 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:dig_cli/src/commands/build_command.dart';
 import 'package:dig_cli/src/commands/clean_command.dart';
+import 'package:dig_cli/src/commands/version_command.dart';
 import 'package:dig_cli/src/commands/zip_command.dart';
 import 'package:dig_cli/src/interactive_menu.dart';
 import 'package:dig_cli/src/utils/logger.dart';
-import 'package:dig_cli/src/version_helper.dart';
 
 void main(List<String> arguments) async {
-  // If no arguments are given, show the interactive menu
   if (arguments.isEmpty) {
     await showInteractiveMenu();
     return;
@@ -32,9 +31,7 @@ void main(List<String> arguments) async {
   }
 
   if (argResults['version']) {
-    // Corrected part: Call the function to get the version
-    final version = kDigCliVersion;
-    kLog('📦 dig_cli v$version');
+    await handleShowVersionCommand();
     return;
   }
 
@@ -46,14 +43,12 @@ void main(List<String> arguments) async {
       case 'clean':
         await handleCleanCommand();
         break;
-      case 'zip': // Handle zip command
+      case 'zip':
         await handleZipCommand();
         break;
       default:
-        kLog(
-          'Unknown command: ${argResults.command?.name}',
-          type: LogType.error,
-        );
+        kLog('Unknown command: ${argResults.command?.name}',
+            type: LogType.error);
         exit(64);
     }
   } else {

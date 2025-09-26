@@ -1,3 +1,5 @@
+// file: lib/src/commands/clean_command.dart
+
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -7,33 +9,28 @@ import '../utils/project_utils.dart';
 import '../utils/spinner.dart';
 
 Future<void> handleCleanCommand() async {
-  // Switch to project root if not already there
-  try {
-    final root = findProjectRoot();
-    if (Directory.current.path != root.path) {
-      kLog('📂 Switching to project root: \n${root.path}', type: LogType.info);
-      Directory.current = root.path;
-      kLog('✅ Now in directory: ${Directory.current.path}', type: LogType.info);
-    }
-  } catch (e) {
-    kLog(
-      '❗ This command must be run inside a Flutter project (pubspec.yaml not found).',
-      type: LogType.error,
-    );
+  final root = findProjectRoot();
+
+  if (root == null) {
+    kLog('❗ This command must be run inside a Flutter project.',
+        type: LogType.error);
     exit(1);
   }
+  Directory.current = root;
+
   try {
     kLog('🚀 Starting thorough project cleanup...', type: LogType.info);
 
     await runWithSpinner(
       '🧹 Cleaning Flutter project (flutter clean)',
-      () => Process.run('flutter', ['clean']),
+      () async => await Process.run('flutter', ['clean']),
     );
     await _deleteIfExists('build');
     kLog('🗑️  Removed build directory', type: LogType.info);
+
     await runWithSpinner(
       '📦 Getting Dart packages (flutter pub get)',
-      () => Process.run('flutter', ['pub', 'get']),
+      () async => await Process.run('flutter', ['pub', 'get']),
     );
 
     String? homeDir = Platform.isWindows
@@ -44,7 +41,7 @@ Future<void> handleCleanCommand() async {
       kLog(' macOS: Running iOS specific cleanup...', type: LogType.info);
       await runWithSpinner(
         '📦 Pre-caching Flutter iOS artifacts',
-        () => Process.run('flutter', ['precache', '--ios']),
+        () async => await Process.run('flutter', ['precache', '--ios']),
       );
 
       final iosDir = Directory('ios');
@@ -54,30 +51,30 @@ Future<void> handleCleanCommand() async {
         await _deleteIfExists(p.join(iosDir.path, 'Pods'));
         await _deleteIfExists(p.join(iosDir.path, 'build'));
         kLog('🧼 Cleaned local iOS workspace.', type: LogType.info);
+
         await runWithSpinner(
           '📥 Installing CocoaPods (pod install)',
-          () => Process.run('pod', ['install'], workingDirectory: iosDir.path),
+          () async => await Process.run('pod', ['install'],
+              workingDirectory: iosDir.path),
         );
         await runWithSpinner(
           '📥 Updating CocoaPods (pod update)',
-          () => Process.run('pod', ['update'], workingDirectory: iosDir.path),
+          () async => await Process.run('pod', ['update'],
+              workingDirectory: iosDir.path),
         );
       }
 
       if (homeDir != null) {
         final derivedData = Directory(
-          p.join(homeDir, 'Library', 'Developer', 'Xcode', 'DerivedData'),
-        );
+            p.join(homeDir, 'Library', 'Developer', 'Xcode', 'DerivedData'));
         if (await derivedData.exists()) {
           kLog('🧹 Cleaning global Xcode DerivedData...', type: LogType.info);
           await derivedData.delete(recursive: true);
         }
       }
     } else if (Platform.isWindows) {
-      kLog(
-        '🪟 Windows: Running platform specific cleanup...',
-        type: LogType.info,
-      );
+      kLog('🪟 Windows: Running platform specific cleanup...',
+          type: LogType.info);
       await _deleteIfExists('windows/build');
       await _deleteIfExists('windows/flutter/ephemeral');
       kLog('🧼 Cleaned local Windows build artifacts.', type: LogType.info);
@@ -90,10 +87,8 @@ Future<void> handleCleanCommand() async {
         }
       }
     } else if (Platform.isLinux) {
-      kLog(
-        '🐧 Linux: Running platform specific cleanup...',
-        type: LogType.info,
-      );
+      kLog('🐧 Linux: Running platform specific cleanup...',
+          type: LogType.info);
       await _deleteIfExists('linux/build');
       await _deleteIfExists('linux/flutter/ephemeral');
       kLog('🧼 Cleaned local Linux build artifacts.', type: LogType.info);
