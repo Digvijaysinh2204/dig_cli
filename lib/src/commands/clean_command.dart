@@ -5,9 +5,32 @@ import 'package:path/path.dart' as p;
 import '../utils/logger.dart';
 import '../utils/spinner.dart';
 
+// Helper: Find project root by searching for pubspec.yaml upwards
+Directory findProjectRoot() {
+  var dir = Directory.current;
+  while (true) {
+    if (File('${dir.path}/pubspec.yaml').existsSync()) {
+      return dir;
+    }
+    final parent = dir.parent;
+    if (parent.path == dir.path) break; // reached filesystem root
+    dir = parent;
+  }
+  throw Exception('pubspec.yaml not found in this or any parent directory.');
+}
+
 Future<void> handleCleanCommand() async {
-  if (!await _isFlutterProject()) {
-    kLog('❗ This command must be run inside a Flutter project.',
+  // Switch to project root if not already there
+  try {
+    final root = findProjectRoot();
+    if (Directory.current.path != root.path) {
+      kLog('📂 Switching to project root: \n${root.path}', type: LogType.info);
+      Directory.current = root.path;
+      kLog('✅ Now in directory: ${Directory.current.path}', type: LogType.info);
+    }
+  } catch (e) {
+    kLog(
+        '❗ This command must be run inside a Flutter project (pubspec.yaml not found).',
         type: LogType.error);
     exit(1);
   }
@@ -96,11 +119,6 @@ Future<void> handleCleanCommand() async {
     kLog('❌ An error occurred during cleanup: $e', type: LogType.error);
     exit(1);
   }
-}
-
-Future<bool> _isFlutterProject() async {
-  final pubspecFile = File('pubspec.yaml');
-  return await pubspecFile.exists();
 }
 
 Future<void> _deleteIfExists(String path) async {

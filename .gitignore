@@ -134,3 +134,8 @@ app.*.symbols
 .dart_tool/package_config.json
 /.dart_tool/
 /.env
+
+# FVM Version Cache
+.fvm/
+/android/app/release/
+/lib/generated/

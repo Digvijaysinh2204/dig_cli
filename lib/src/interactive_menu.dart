@@ -87,6 +87,20 @@ Future<Map<String, String>> _promptBuildDetails() async {
   return {'name': buildName, 'location': location};
 }
 
+// Helper: Find project root by searching for pubspec.yaml upwards
+Directory findProjectRoot() {
+  var dir = Directory.current;
+  while (true) {
+    if (File('${dir.path}/pubspec.yaml').existsSync()) {
+      return dir;
+    }
+    final parent = dir.parent;
+    if (parent.path == dir.path) break;
+    dir = parent;
+  }
+  throw Exception('pubspec.yaml not found in this or any parent directory.');
+}
+
 // The main function to display the beautiful, interactive menu
 Future<void> showInteractiveMenu() async {
   final AnsiPen titlePen = AnsiPen()..white(bold: true);
@@ -96,7 +110,9 @@ Future<void> showInteractiveMenu() async {
   final AnsiPen updatePen = AnsiPen()..green(bold: true);
   final AnsiPen disabledPen = AnsiPen()..gray(level: 0.5);
 
-  final isBuildable = await File('lib/main.dart').exists();
+  final projectRoot = findProjectRoot();
+  final isBuildable =
+      await File(p.join(projectRoot.path, 'lib/main.dart')).exists();
   final String currentVersion = kDigCliVersion;
 
   stdout.write('Checking for updates...');
