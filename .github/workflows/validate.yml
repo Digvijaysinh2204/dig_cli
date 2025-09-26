@@ -8,28 +8,25 @@ on:
   pull_request:
 
 jobs:
-  # Job 1: Check formatting
-  format:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
 
-      - name: 'Check formatting'
-        run: dart format --output=none --set-exit-if-changed .
-
-  # Job 2: Run analysis and tests
-  analyze:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
-
+      # --- THIS IS THE FIX ---
+      # Step 1: Install dependencies FIRST
       - name: 'Install dependencies'
         run: dart pub get
 
+      # Step 2: Now check formatting
+      - name: 'Check formatting'
+        run: dart format --output=none --set-exit-if-changed .
+
+      # Step 3: Now run analysis
       - name: 'Analyze project source'
         run: dart analyze --fatal-infos --fatal-warnings
 
-      # - name: 'Run tests'
-      #   run: dart test
+      # Step 4: And finally, run tests
+      - name: 'Run tests'
+        run: dart test
