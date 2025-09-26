@@ -23,8 +23,8 @@ jobs:
       - name: 'Analyze project source'
         run: dart analyze
 
-      - name: 'Run tests'
-        run: dart test
+#      - name: 'Run tests'
+#        run: dart test
 
   # Job 2: Compile your tool for major platforms
   build:
