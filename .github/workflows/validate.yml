@@ -6,10 +6,20 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
 
 jobs:
-  validate:
+  # Job 1: Check formatting
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+
+      - name: 'Check formatting'
+        run: dart format --output=none --set-exit-if-changed .
+
+  # Job 2: Run analysis and tests
+  analyze:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +31,5 @@ jobs:
       - name: 'Analyze project source'
         run: dart analyze --fatal-infos --fatal-warnings
 
-      # Add this step if you create a 'test' directory with tests
       # - name: 'Run tests'
       #   run: dart test
