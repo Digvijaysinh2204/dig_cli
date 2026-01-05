@@ -104,40 +104,71 @@ class RenameCommand extends Command {
   }
 
   Future<void> _updateAndroidBundleId(String newId) async {
-    final buildGradle = File('android/app/build.gradle');
-    if (!await buildGradle.exists()) return;
+    // Try both Groovy and Kotlin DSL files
+    File? buildGradle;
+
+    final groovyFile = File('android/app/build.gradle');
+    final kotlinFile = File('android/app/build.gradle.kts');
+
+    if (await kotlinFile.exists()) {
+      buildGradle = kotlinFile;
+    } else if (await groovyFile.exists()) {
+      buildGradle = groovyFile;
+    }
+
+    if (buildGradle == null) {
+      throw Exception('Could not find build.gradle or build.gradle.kts');
+    }
 
     String content = await buildGradle.readAsString();
 
-    // 1. Update applicationId
-    final oldIdMatch = RegExp(r'applicationId\s+"([^"]+)"').firstMatch(content);
-    String? oldId = oldIdMatch?.group(1);
+    // 1. Detect old package ID from various formats
+    String? oldId;
 
+    // Try applicationId with quotes (Groovy: applicationId "com.example")
+    final appIdQuotesMatch =
+        RegExp(r'applicationId\s*[=]?\s*"([^"]+)"').firstMatch(content);
+    if (appIdQuotesMatch != null) {
+      oldId = appIdQuotesMatch.group(1);
+    }
+
+    // Try namespace (newer Flutter versions)
     if (oldId == null) {
-      // Try finding namespace if applicationId is missing or using variables
       final namespaceMatch =
-          RegExp(r'namespace\s+"([^"]+)"').firstMatch(content);
+          RegExp(r'namespace\s*[=]?\s*"([^"]+)"').firstMatch(content);
       oldId = namespaceMatch?.group(1);
     }
 
     if (oldId == null) {
-      throw Exception('Could not detect old package name in build.gradle');
+      throw Exception(
+          'Could not detect old package name in ${buildGradle.path}');
     }
 
-    content = content.replaceAll(
-      RegExp(r'applicationId\s+"[^"]+"'),
-      'applicationId "$newId"',
+    // 2. Update applicationId - handle both formats:
+    //    Groovy: applicationId "com.example"
+    //    Kotlin: applicationId = "com.example"
+    content = content.replaceAllMapped(
+      RegExp(r'applicationId\s*(=)?\s*"[^"]+"'),
+      (match) {
+        final hasEquals = match.group(1) != null;
+        return hasEquals
+            ? 'applicationId = "$newId"'
+            : 'applicationId "$newId"';
+      },
     );
 
-    // 2. Update namespace (for newer Flutter versions)
-    content = content.replaceAll(
-      RegExp(r'namespace\s+"[^"]+"'),
-      'namespace "$newId"',
+    // 3. Update namespace (for newer Flutter versions)
+    content = content.replaceAllMapped(
+      RegExp(r'namespace\s*(=)?\s*"[^"]+"'),
+      (match) {
+        final hasEquals = match.group(1) != null;
+        return hasEquals ? 'namespace = "$newId"' : 'namespace "$newId"';
+      },
     );
 
     await buildGradle.writeAsString(content);
 
-    // 3. Update AndroidManifest.xml package
+    // 4. Update AndroidManifest.xml package
     final manifestFile = File('android/app/src/main/AndroidManifest.xml');
     if (await manifestFile.exists()) {
       String mContent = await manifestFile.readAsString();
@@ -148,7 +179,7 @@ class RenameCommand extends Command {
       await manifestFile.writeAsString(mContent);
     }
 
-    // 4. Directory Restructuring and Package Declaration Update
+    // 5. Directory Restructuring and Package Declaration Update
     await _restructureAndroidDirectories(oldId, newId);
   }
 
@@ -231,14 +262,32 @@ class RenameCommand extends Command {
   }
 
   Future<void> _updateIOSBundleId(String newId) async {
+    // Update project.pbxproj
     final pbxproj = File('ios/Runner.xcodeproj/project.pbxproj');
     if (await pbxproj.exists()) {
       String content = await pbxproj.readAsString();
+      // Handle various formats:
+      // PRODUCT_BUNDLE_IDENTIFIER = com.example.app;
+      // PRODUCT_BUNDLE_IDENTIFIER = "com.example.app";
       content = content.replaceAll(
-        RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;'),
+        RegExp(r'PRODUCT_BUNDLE_IDENTIFIER = "?[^;"]+"?;'),
         'PRODUCT_BUNDLE_IDENTIFIER = $newId;',
       );
       await pbxproj.writeAsString(content);
+    }
+
+    // Also update Info.plist CFBundleIdentifier if hardcoded
+    final infoPlist = File('ios/Runner/Info.plist');
+    if (await infoPlist.exists()) {
+      String content = await infoPlist.readAsString();
+      // Only update if it's hardcoded (not using $(PRODUCT_BUNDLE_IDENTIFIER))
+      if (!content.contains(r'$(PRODUCT_BUNDLE_IDENTIFIER)')) {
+        content = content.replaceFirst(
+          RegExp(r'<key>CFBundleIdentifier</key>\s*<string>[^<]+</string>'),
+          '<key>CFBundleIdentifier</key>\n\t<string>$newId</string>',
+        );
+        await infoPlist.writeAsString(content);
+      }
     }
   }
 
