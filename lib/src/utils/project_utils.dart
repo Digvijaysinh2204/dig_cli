@@ -1,12 +1,12 @@
-// file: lib/src/utils/project_utils.dart
-
 import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:yaml/yaml.dart';
 
 // Finds the project root by searching upwards for a pubspec.yaml file.
 Directory? findProjectRoot() {
   var dir = Directory.current;
   while (true) {
-    if (File('${dir.path}/pubspec.yaml').existsSync()) {
+    if (File(p.join(dir.path, 'pubspec.yaml')).existsSync()) {
       return dir;
     }
     final parent = dir.parent;
@@ -18,8 +18,30 @@ Directory? findProjectRoot() {
   }
 }
 
-// Checks if the current directory is a Flutter project.
+// Checks if the current directory or its root is a Flutter project.
 Future<bool> isFlutterProject() async {
-  final pubspecFile = File('pubspec.yaml');
-  return await pubspecFile.exists();
+  final root = findProjectRoot();
+  if (root == null) return false;
+  return await File(p.join(root.path, 'pubspec.yaml')).exists();
+}
+
+// Gets the project name from pubspec.yaml.
+Future<String?> getProjectName() async {
+  final root = findProjectRoot();
+  if (root == null) return null;
+  final pubspecFile = File(p.join(root.path, 'pubspec.yaml'));
+  if (!await pubspecFile.exists()) return null;
+  
+  final content = await pubspecFile.readAsString();
+  final yaml = loadYaml(content);
+  return yaml['name'] as String?;
+}
+
+// Gets the user's desktop path.
+Future<String> getDesktopPath() async {
+  final home = Platform.isWindows
+      ? Platform.environment['USERPROFILE']
+      : Platform.environment['HOME'];
+  if (home == null) throw Exception('Could not find home directory.');
+  return p.join(home, 'Desktop');
 }

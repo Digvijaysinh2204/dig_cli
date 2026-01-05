@@ -1,17 +1,16 @@
-// file: lib/src/interactive_menu.dart
-
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:ansicolor/ansicolor.dart';
+import 'package:args/command_runner.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
-import 'package:yaml/yaml.dart';
 
 import '../src/version_helper.dart';
 import 'commands/build_command.dart';
 import 'commands/clean_command.dart';
+import 'commands/rename_command.dart';
 import 'commands/version_command.dart';
 import 'commands/zip_command.dart';
 import 'utils/logger.dart';
@@ -20,7 +19,7 @@ import 'utils/project_utils.dart';
 Future<String?> _getLatestStableVersion() async {
   try {
     final url = Uri.parse('https://pub.dev/api/packages/dig_cli');
-    final response = await http.get(url);
+    final response = await http.get(url).timeout(const Duration(seconds: 2));
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
       final latestVersion = json['latest']['version'] as String;
@@ -52,24 +51,17 @@ Future<void> _runUpdateProcess() async {
 }
 
 Future<Map<String, String>> _promptBuildDetails() async {
-  final pubspecFile = File('pubspec.yaml');
-  String defaultName = 'app-build';
-  if (await pubspecFile.exists()) {
-    final content = await pubspecFile.readAsString();
-    final yaml = loadYaml(content);
-    defaultName = yaml['name'] as String? ?? 'app-build';
-  }
-  stdout.write('Enter build name (default: $defaultName): ');
+  final projectName = await getProjectName() ?? 'app-build';
+  
+  stdout.write('Enter build name (default: $projectName): ');
   String? buildName = stdin.readLineSync()?.trim();
-  if (buildName == null || buildName.isEmpty) buildName = defaultName;
-  String? home = Platform.isWindows
-      ? Platform.environment['USERPROFILE']
-      : Platform.environment['HOME'];
-  String defaultPath =
-      home != null ? p.join(home, 'Desktop') : Directory.current.path;
+  if (buildName == null || buildName.isEmpty) buildName = projectName;
+  
+  final defaultPath = await getDesktopPath();
   stdout.write('Enter save location (default: Desktop): ');
   String? location = stdin.readLineSync()?.trim();
   if (location == null || location.isEmpty) location = defaultPath;
+  
   return {'name': buildName, 'location': location};
 }
 
@@ -88,7 +80,8 @@ Future<void> showInteractiveMenu() async {
     Directory.current = projectRoot;
   }
 
-  final isBuildable = isInsideProject && await File('lib/main.dart').exists();
+  final isBuildable = isInsideProject && await File(p.join(projectRoot.path, 'lib', 'main.dart')).exists();
+  
   stdout.write('Checking for updates...');
   final String? latestStable = await _getLatestStableVersion();
   stdout.write('\r${' ' * 25}\r');
@@ -100,6 +93,9 @@ Future<void> showInteractiveMenu() async {
         'label': '🚀 Build APK',
         'action': () async {
           final details = await _promptBuildDetails();
+          // We bypass runner and call run directly since we are in interactive mode
+          // But we need to set argResults, which is messy. 
+          // Better to use handleBuildCommand which we kept for compatibility.
           await handleBuildCommand([
             'apk',
             '--name',
@@ -124,13 +120,39 @@ Future<void> showInteractiveMenu() async {
       });
     }
     displayOptions.add(
-        {'label': '🧹 Clean Project', 'action': () => handleCleanCommand()});
+        {'label': '🧹 Clean Project', 'action': () => CleanCommand().run()});
+    displayOptions.add({
+      'label': '🏷️  Rename App',
+      'action': () async {
+        stdout.write('Enter new app name (leave empty to skip): ');
+        final name = stdin.readLineSync()?.trim();
+        stdout.write('Enter new bundle ID (e.g., com.example.app, leave empty to skip): ');
+        final bundleId = stdin.readLineSync()?.trim();
+
+        if ((name == null || name.isEmpty) && (bundleId == null || bundleId.isEmpty)) {
+          kLog('No changes provided.', type: LogType.warning);
+          return;
+        }
+
+        final args = <String>[];
+        if (name != null && name.isNotEmpty) {
+          args.addAll(['--name', name]);
+        }
+        if (bundleId != null && bundleId.isNotEmpty) {
+          args.addAll(['--bundle-id', bundleId]);
+        }
+
+        final runner = CommandRunner('dig', 'DIG CLI tool');
+        runner.addCommand(RenameCommand());
+        await runner.run(['rename', ...args]);
+      }
+    });
     displayOptions.add(
-        {'label': '🤐 Create Project ZIP', 'action': () => handleZipCommand()});
+        {'label': '🤐 Create Project ZIP', 'action': () => ZipCommand().run()});
   }
   displayOptions.add({
     'label': '📖 Version & Info',
-    'action': () => handleShowVersionCommand()
+    'action': () => VersionCommand().run()
   });
   if (latestStable != null) {
     displayOptions.add({
