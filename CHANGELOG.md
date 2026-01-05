@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.6] - 2026-01-05
+
+### Fixed
+- **CI/CD Workflow**: Updated `validate.yml` to support auto-formatting and faster Dart setup. Sync'd logic with `publish.yml`.
+
 ## [1.2.5] - 2026-01-05
 
 ### Fixed
