@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.5] - 2026-01-05
+
+### Fixed
+- **CI/CD Workflow**: Fixed "detached HEAD" error when pushing auto-formatted code back to the repository.
+
 ## [1.2.4] - 2026-01-05
 
 ### Added
