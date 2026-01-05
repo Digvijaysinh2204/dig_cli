@@ -1,6 +1,6 @@
 name: dig_cli
 description: A powerful command-line tool to automate building, cleaning, and packaging Flutter projects.
-version: 1.2.0
+version: 1.2.1
 homepage: https://github.com/Digvijaysinh2204/dig_cli
 
 environment:
@@ -19,4 +19,4 @@ dev_dependencies:
   lints: ^6.0.0
 
 executables:
-  dig: dig_cli
+  dg: dig_cli

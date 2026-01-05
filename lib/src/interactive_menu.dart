@@ -52,16 +52,16 @@ Future<void> _runUpdateProcess() async {
 
 Future<Map<String, String>> _promptBuildDetails() async {
   final projectName = await getProjectName() ?? 'app-build';
-  
+
   stdout.write('Enter build name (default: $projectName): ');
   String? buildName = stdin.readLineSync()?.trim();
   if (buildName == null || buildName.isEmpty) buildName = projectName;
-  
+
   final defaultPath = await getDesktopPath();
   stdout.write('Enter save location (default: Desktop): ');
   String? location = stdin.readLineSync()?.trim();
   if (location == null || location.isEmpty) location = defaultPath;
-  
+
   return {'name': buildName, 'location': location};
 }
 
@@ -80,8 +80,9 @@ Future<void> showInteractiveMenu() async {
     Directory.current = projectRoot;
   }
 
-  final isBuildable = isInsideProject && await File(p.join(projectRoot.path, 'lib', 'main.dart')).exists();
-  
+  final isBuildable = isInsideProject &&
+      await File(p.join(projectRoot.path, 'lib', 'main.dart')).exists();
+
   stdout.write('Checking for updates...');
   final String? latestStable = await _getLatestStableVersion();
   stdout.write('\r${' ' * 25}\r');
@@ -94,7 +95,7 @@ Future<void> showInteractiveMenu() async {
         'action': () async {
           final details = await _promptBuildDetails();
           // We bypass runner and call run directly since we are in interactive mode
-          // But we need to set argResults, which is messy. 
+          // But we need to set argResults, which is messy.
           // Better to use handleBuildCommand which we kept for compatibility.
           await handleBuildCommand([
             'apk',
@@ -126,10 +127,12 @@ Future<void> showInteractiveMenu() async {
       'action': () async {
         stdout.write('Enter new app name (leave empty to skip): ');
         final name = stdin.readLineSync()?.trim();
-        stdout.write('Enter new bundle ID (e.g., com.example.app, leave empty to skip): ');
+        stdout.write(
+            'Enter new bundle ID (e.g., com.example.app, leave empty to skip): ');
         final bundleId = stdin.readLineSync()?.trim();
 
-        if ((name == null || name.isEmpty) && (bundleId == null || bundleId.isEmpty)) {
+        if ((name == null || name.isEmpty) &&
+            (bundleId == null || bundleId.isEmpty)) {
           kLog('No changes provided.', type: LogType.warning);
           return;
         }
@@ -150,10 +153,8 @@ Future<void> showInteractiveMenu() async {
     displayOptions.add(
         {'label': '🤐 Create Project ZIP', 'action': () => ZipCommand().run()});
   }
-  displayOptions.add({
-    'label': '📖 Version & Info',
-    'action': () => VersionCommand().run()
-  });
+  displayOptions.add(
+      {'label': '📖 Version & Info', 'action': () => VersionCommand().run()});
   if (latestStable != null) {
     displayOptions.add({
       'label': '✨ Update to v$latestStable',

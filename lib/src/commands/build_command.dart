@@ -9,7 +9,8 @@ import '../utils/spinner.dart';
 
 class BuildCommand extends Command {
   @override
-  final name = 'create'; // Kept as 'create' for compatibility with previous version
+  final name =
+      'create'; // Kept as 'create' for compatibility with previous version
   @override
   final description = 'Builds the Flutter project into an APK or App Bundle.';
 
@@ -24,8 +25,10 @@ class BuildCommand extends Command {
 
   @override
   Future<void> run() async {
-    final buildType = argResults?.rest.isNotEmpty == true ? argResults!.rest.first : 'apk';
-    final outputDir = argResults?['output'] as String? ?? await getDesktopPath();
+    final buildType =
+        argResults?.rest.isNotEmpty == true ? argResults!.rest.first : 'apk';
+    final outputDir =
+        argResults?['output'] as String? ?? await getDesktopPath();
     final customName = argResults?['name'] as String?;
 
     if (buildType == 'apk' || buildType == 'build') {

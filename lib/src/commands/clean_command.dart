@@ -11,7 +11,8 @@ class CleanCommand extends Command {
   @override
   final name = 'clean';
   @override
-  final description = 'Thoroughly cleans the Flutter project and build artifacts.';
+  final description =
+      'Thoroughly cleans the Flutter project and build artifacts.';
 
   CleanCommand() {
     argParser.addFlag(
@@ -43,11 +44,12 @@ class CleanCommand extends Command {
         () async {
           final result = await Process.run('flutter', ['clean']);
           if (result.exitCode != 0) {
-            throw Exception('flutter clean failed with exit code ${result.exitCode}\n${result.stderr}');
+            throw Exception(
+                'flutter clean failed with exit code ${result.exitCode}\n${result.stderr}');
           }
         },
       );
-      
+
       await _deleteIfExists('build');
       kLog('🗑️  Removed build directory', type: LogType.info);
 
@@ -56,7 +58,8 @@ class CleanCommand extends Command {
         () async {
           final result = await Process.run('flutter', ['pub', 'get']);
           if (result.exitCode != 0) {
-            throw Exception('flutter pub get failed with exit code ${result.exitCode}\n${result.stderr}');
+            throw Exception(
+                'flutter pub get failed with exit code ${result.exitCode}\n${result.stderr}');
           }
         },
       );
@@ -86,7 +89,9 @@ class CleanCommand extends Command {
               final result = await Process.run('pod', ['install'],
                   workingDirectory: iosDir.path);
               if (result.exitCode != 0) {
-                 kLog('⚠️ pod install failed. You might need to run it manually.', type: LogType.warning);
+                kLog(
+                    '⚠️ pod install failed. You might need to run it manually.',
+                    type: LogType.warning);
               }
             },
           );

@@ -31,7 +31,7 @@ Future<String?> getProjectName() async {
   if (root == null) return null;
   final pubspecFile = File(p.join(root.path, 'pubspec.yaml'));
   if (!await pubspecFile.exists()) return null;
-  
+
   final content = await pubspecFile.readAsString();
   final yaml = loadYaml(content);
   return yaml['name'] as String?;

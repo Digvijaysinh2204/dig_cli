@@ -9,7 +9,7 @@ import 'package:dig_cli/src/commands/zip_command.dart';
 import 'package:dig_cli/src/interactive_menu.dart';
 
 void main(List<String> arguments) async {
-  final runner = CommandRunner('dig', 'DIG CLI - A powerful Flutter companion')
+  final runner = CommandRunner('dg', 'DIG CLI - A powerful Flutter companion')
     ..addCommand(BuildCommand())
     ..addCommand(CleanCommand())
     ..addCommand(ZipCommand())
@@ -17,7 +17,8 @@ void main(List<String> arguments) async {
     ..addCommand(VersionCommand());
 
   // Add global version flag
-  runner.argParser.addFlag('version', abbr: 'v', negatable: false, help: 'Show version');
+  runner.argParser
+      .addFlag('version', abbr: 'v', negatable: false, help: 'Show version');
 
   if (arguments.isEmpty) {
     await showInteractiveMenu();

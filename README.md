@@ -26,7 +26,7 @@ A powerful Flutter CLI tool to automate building, cleaning, packaging, and renam
 dart pub global activate dig_cli
 ```
 
-After installation, use **`dig`** as the command.
+After installation, use **`dg`** as the command.
 
 ---
 
@@ -35,17 +35,17 @@ After installation, use **`dig`** as the command.
 ### Interactive Menu (Recommended)
 
 ```bash
-dig
+dg
 ```
 
 ### Direct Commands
 
-- **Rename App**: `dig rename --name "New Name" --bundle-id com.new.id`
-- **Build APK**: `dig create apk`
-- **Build AAB**: `dig create bundle`
-- **Clean Project**: `dig clean`
-- **Create ZIP**: `dig zip`
-- **Show Version**: `dig --version`
+- **Rename App**: `dg rename --name "New Name" --bundle-id com.new.id`
+- **Build APK**: `dg create apk`
+- **Build AAB**: `dg create bundle`
+- **Clean Project**: `dg clean`
+- **Create ZIP**: `dg zip`
+- **Show Version**: `dg --version`
 
 ---
 
@@ -53,30 +53,30 @@ dig
 
 ```bash
 # Rename app and bundle identifier (All Platforms)
-dig rename --name "Awesome App" --bundle-id com.my.awesome.app
+dg rename --name "Awesome App" --bundle-id com.my.awesome.app
 
 # Build an APK with a custom name
-dig create apk --name MyApp --output ~/Downloads
+dg create apk --name MyApp --output ~/Downloads
 
 # Deep clean the project's build artifacts
-dig clean
+dg clean
 ```
 
 ---
 
 ## 🖥️ Platform-specific Setup (Alias)
 
-By default, use `dig` in your terminal. If you prefer a custom command name (alias), you can set it up easily:
+By default, use `dg` in your terminal. If you prefer a custom command name (alias), you can set it up easily:
 
 ### macOS & Linux
 ```bash
 # Add this to ~/.zshrc or ~/.bashrc
-alias df="dig"
+alias df="dg"
 ```
 
 ### Windows (PowerShell)
 ```powershell
-Set-Alias df dig
+Set-Alias df dg
 ```
 
 ---

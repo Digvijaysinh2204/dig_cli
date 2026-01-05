@@ -11,7 +11,8 @@ class RenameCommand extends Command {
   @override
   final name = 'rename';
   @override
-  final description = 'Renames the Flutter app and changes the bundle ID / package name.';
+  final description =
+      'Renames the Flutter app and changes the bundle ID / package name.';
 
   RenameCommand() {
     argParser.addOption(
@@ -46,7 +47,8 @@ class RenameCommand extends Command {
 
     try {
       if (newName != null) {
-        await runWithSpinner('🏷️  Updating App Name to "$newName"...', () async {
+        await runWithSpinner('🏷️  Updating App Name to "$newName"...',
+            () async {
           await _updateAndroidAppName(newName);
           await _updateIOSAppName(newName);
           await _updateMacOSAppName(newName);
@@ -58,12 +60,14 @@ class RenameCommand extends Command {
 
       if (newBundleId != null) {
         if (!_isValidBundleId(newBundleId)) {
-          kLog('❗ Invalid bundle ID format. Expected something like "com.example.app".',
+          kLog(
+              '❗ Invalid bundle ID format. Expected something like "com.example.app".',
               type: LogType.error);
           return;
         }
 
-        await runWithSpinner('📦 Updating Bundle ID to "$newBundleId"...', () async {
+        await runWithSpinner('📦 Updating Bundle ID to "$newBundleId"...',
+            () async {
           await _updateAndroidBundleId(newBundleId);
           await _updateIOSBundleId(newBundleId);
           await _updateMacOSBundleId(newBundleId);
@@ -73,7 +77,8 @@ class RenameCommand extends Command {
       }
 
       kLog('✅ App successfully renamed!', type: LogType.success);
-      kLog('💡 Run the clean command to ensure all artifacts are refreshed.', type: LogType.info);
+      kLog('💡 Run the clean command to ensure all artifacts are refreshed.',
+          type: LogType.info);
     } catch (e) {
       kLog('❌ An error occurred while renaming: $e', type: LogType.error);
       exit(1);
@@ -103,14 +108,15 @@ class RenameCommand extends Command {
     if (!await buildGradle.exists()) return;
 
     String content = await buildGradle.readAsString();
-    
+
     // 1. Update applicationId
     final oldIdMatch = RegExp(r'applicationId\s+"([^"]+)"').firstMatch(content);
     String? oldId = oldIdMatch?.group(1);
 
     if (oldId == null) {
       // Try finding namespace if applicationId is missing or using variables
-      final namespaceMatch = RegExp(r'namespace\s+"([^"]+)"').firstMatch(content);
+      final namespaceMatch =
+          RegExp(r'namespace\s+"([^"]+)"').firstMatch(content);
       oldId = namespaceMatch?.group(1);
     }
 
@@ -122,13 +128,13 @@ class RenameCommand extends Command {
       RegExp(r'applicationId\s+"[^"]+"'),
       'applicationId "$newId"',
     );
-    
+
     // 2. Update namespace (for newer Flutter versions)
     content = content.replaceAll(
       RegExp(r'namespace\s+"[^"]+"'),
       'namespace "$newId"',
     );
-    
+
     await buildGradle.writeAsString(content);
 
     // 3. Update AndroidManifest.xml package
@@ -146,7 +152,8 @@ class RenameCommand extends Command {
     await _restructureAndroidDirectories(oldId, newId);
   }
 
-  Future<void> _restructureAndroidDirectories(String oldId, String newId) async {
+  Future<void> _restructureAndroidDirectories(
+      String oldId, String newId) async {
     final platforms = ['kotlin', 'java'];
     final baseDir = 'android/app/src/main';
 
@@ -159,9 +166,9 @@ class RenameCommand extends Command {
 
       final oldFullDir = Directory(p.join(sourceDir.path, oldPath));
       if (!await oldFullDir.exists()) {
-         // If exact path not found, try to find MainActivity.kt/java recursively
-         // This handles cases where the folder structure doesn't perfectly match the ID
-         continue; 
+        // If exact path not found, try to find MainActivity.kt/java recursively
+        // This handles cases where the folder structure doesn't perfectly match the ID
+        continue;
       }
 
       final newFullDir = Directory(p.join(sourceDir.path, newPath));
@@ -175,13 +182,13 @@ class RenameCommand extends Command {
         if (entity is File) {
           final newFilePath = p.join(newFullDir.path, p.basename(entity.path));
           String fileContent = await entity.readAsString();
-          
+
           // Update package declaration
           fileContent = fileContent.replaceFirst(
             RegExp(r'^package\s+[\w\.]+', multiLine: true),
             'package $newId',
           );
-          
+
           await File(newFilePath).writeAsString(fileContent);
           await entity.delete();
         }
@@ -206,19 +213,19 @@ class RenameCommand extends Command {
     final infoPlist = File('ios/Runner/Info.plist');
     if (await infoPlist.exists()) {
       String content = await infoPlist.readAsString();
-      
+
       // Update CFBundleDisplayName
       content = content.replaceFirst(
         RegExp(r'<key>CFBundleDisplayName</key>\s*<string>[^<]*</string>'),
         '<key>CFBundleDisplayName</key>\n\t<string>$name</string>',
       );
-      
+
       // Update CFBundleName
       content = content.replaceFirst(
         RegExp(r'<key>CFBundleName</key>\s*<string>[^<]*</string>'),
         '<key>CFBundleName</key>\n\t<string>$name</string>',
       );
-      
+
       await infoPlist.writeAsString(content);
     }
   }
@@ -355,10 +362,12 @@ class RenameCommand extends Command {
 
     final mainfest = File('web/manifest.json');
     if (await mainfest.exists()) {
-       String content = await mainfest.readAsString();
-       content = content.replaceFirst(RegExp(r'"name": "[^"]*"'), '"name": "$name"');
-       content = content.replaceFirst(RegExp(r'"short_name": "[^"]*"'), '"short_name": "$name"');
-       await mainfest.writeAsString(content);
+      String content = await mainfest.readAsString();
+      content =
+          content.replaceFirst(RegExp(r'"name": "[^"]*"'), '"name": "$name"');
+      content = content.replaceFirst(
+          RegExp(r'"short_name": "[^"]*"'), '"short_name": "$name"');
+      await mainfest.writeAsString(content);
     }
   }
 }

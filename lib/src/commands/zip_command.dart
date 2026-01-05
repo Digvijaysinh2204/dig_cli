@@ -30,7 +30,9 @@ class IgnoreRules {
 
     for (var line in lines) {
       line = line.trim();
-      if (line.isEmpty || line.startsWith('#') || line.startsWith('!')) continue;
+      if (line.isEmpty || line.startsWith('#') || line.startsWith('!')) {
+        continue;
+      }
 
       if (line.startsWith('*.')) {
         extensions.add(line.substring(1));
@@ -48,16 +50,24 @@ class IgnoreRules {
     final entityName = p.basename(relativePath);
 
     // Ignore hidden files/dirs by default
-    if (parts.any((part) => part.startsWith('.'))) return true;
+    if (parts.any((part) => part.startsWith('.'))) {
+      return true;
+    }
 
     // Check exact dirs
-    if (parts.any((part) => exactDirs.contains(part))) return true;
+    if (parts.any((part) => exactDirs.contains(part))) {
+      return true;
+    }
 
     // Check exact files
-    if (exactFiles.contains(entityName)) return true;
+    if (exactFiles.contains(entityName)) {
+      return true;
+    }
 
     // Check extensions
-    if (extensions.any((ext) => entityName.endsWith(ext))) return true;
+    if (extensions.any((ext) => entityName.endsWith(ext))) {
+      return true;
+    }
 
     return false;
   }
@@ -113,7 +123,7 @@ class ZipCommand extends Command {
           location = defaultPath;
         }
       }
-      
+
       final outputPath = p.join(location, zipFileName);
 
       await runWithSpinner('📦 Creating clean ZIP archive...', () async {
@@ -121,11 +131,12 @@ class ZipCommand extends Command {
         encoder.create(outputPath);
         final rules = IgnoreRules.fromGitignore();
         final projectDir = Directory.current;
-        final entities = projectDir.listSync(recursive: true, followLinks: false);
+        final entities =
+            projectDir.listSync(recursive: true, followLinks: false);
 
         for (final entity in entities) {
           final relativePath = p.relative(entity.path, from: projectDir.path);
-          
+
           if (!rules.shouldIgnore(relativePath, entity) && entity is File) {
             encoder.addFileSync(entity, p.join(projectName, relativePath));
           }
