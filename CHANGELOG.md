@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.3] - 2026-01-05
+
+### Changed
+- **CI/CD Workflow**: Auto-formats code before analysis instead of rejecting push.
+- **Faster Builds**: Switched from Flutter to Dart SDK only (lighter weight).
+
 ## [1.2.2] - 2026-01-05
 
 ### Fixed

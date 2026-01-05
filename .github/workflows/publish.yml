@@ -8,28 +8,44 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+*'
 
 jobs:
-  test:
-    name: 'Test & Analyze'
+  format-and-analyze:
+    name: 'Format & Analyze'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          cache: true
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - uses: dart-lang/setup-dart@v1
 
       - name: 'Install dependencies'
         run: dart pub get
+
+      - name: 'Format code'
+        run: dart format .
+
+      - name: 'Commit formatted code (if changed)'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            git commit -m "style: auto-format code [skip ci]"
+            git push
+          fi
 
       - name: 'Analyze project source'
         run: dart analyze --fatal-infos --fatal-warnings
 
   build:
     name: 'Build Binaries'
-    needs: test
+    needs: format-and-analyze
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - os: ubuntu-latest
             output: dg-linux
@@ -40,10 +56,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
+      - uses: dart-lang/setup-dart@v1
 
       - name: 'Install dependencies'
         run: dart pub get
