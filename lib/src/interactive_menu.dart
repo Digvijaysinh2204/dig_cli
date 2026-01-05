@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:ansicolor/ansicolor.dart';
-import 'package:args/command_runner.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:pub_semver/pub_semver.dart';
@@ -15,6 +14,7 @@ import 'commands/version_command.dart';
 import 'commands/zip_command.dart';
 import 'utils/logger.dart';
 import 'utils/project_utils.dart';
+import 'utils/spinner.dart';
 
 Future<String?> _getLatestStableVersion() async {
   try {
@@ -83,9 +83,10 @@ Future<void> showInteractiveMenu() async {
   final isBuildable = isInsideProject &&
       await File(p.join(projectRoot.path, 'lib', 'main.dart')).exists();
 
-  stdout.write('Checking for updates...');
-  final String? latestStable = await _getLatestStableVersion();
-  stdout.write('\r${' ' * 25}\r');
+  String? latestStable;
+  await runWithSpinner('🔍 Checking for updates...', () async {
+    latestStable = await _getLatestStableVersion();
+  });
 
   final displayOptions = <Map<String, dynamic>>[];
   if (isInsideProject) {
@@ -94,9 +95,6 @@ Future<void> showInteractiveMenu() async {
         'label': '🚀 Build APK',
         'action': () async {
           final details = await _promptBuildDetails();
-          // We bypass runner and call run directly since we are in interactive mode
-          // But we need to set argResults, which is messy.
-          // Better to use handleBuildCommand which we kept for compatibility.
           await handleBuildCommand([
             'apk',
             '--name',
@@ -137,17 +135,18 @@ Future<void> showInteractiveMenu() async {
           return;
         }
 
+        // Simpler to just use CommandRunner for now but with better error handling
         final args = <String>[];
-        if (name != null && name.isNotEmpty) {
-          args.addAll(['--name', name]);
-        }
+        if (name != null && name.isNotEmpty) args.addAll(['--name', name]);
         if (bundleId != null && bundleId.isNotEmpty) {
           args.addAll(['--bundle-id', bundleId]);
         }
 
-        final runner = CommandRunner('dig', 'DIG CLI tool');
-        runner.addCommand(RenameCommand());
-        await runner.run(['rename', ...args]);
+        try {
+          await handleRenameCommand(['rename', ...args]);
+        } catch (e) {
+          kLog('Failed to rename: $e', type: LogType.error);
+        }
       }
     });
     displayOptions.add(
@@ -163,7 +162,7 @@ Future<void> showInteractiveMenu() async {
     });
   }
 
-  final int totalWidth = 42;
+  const int totalWidth = 42;
   final String title = 'DIG CLI TOOL v$kDigCliVersion';
   final int titlePaddingTotal = totalWidth - title.length - 2;
   final int titlePaddingLeft = (titlePaddingTotal / 2).floor();
@@ -183,15 +182,15 @@ Future<void> showInteractiveMenu() async {
   print(borderPen(middleBorder));
 
   if (!isInsideProject) {
-    final warningText = ' You are not inside a Flutter project.';
-    final padding = totalWidth - warningText.length - 2;
+    const warningText = ' You are not inside a Flutter project.';
+    final int padding = totalWidth - warningText.length - 2;
     print(borderPen('║') +
         disabledPen(warningText) +
         ' ' * (padding > 0 ? padding : 0) +
         borderPen('║'));
     print(borderPen(middleBorder));
   } else if (!isBuildable) {
-    final warningText = ' Build options hidden: lib/main.dart not found.';
+    const warningText = ' Build options hidden: lib/main.dart not found.';
     final int padding = totalWidth - warningText.length - 2;
     print(borderPen('║') +
         disabledPen(warningText) +
@@ -202,6 +201,7 @@ Future<void> showInteractiveMenu() async {
 
   void printMenuLine(String text, {bool isUpdate = false}) {
     final AnsiPen pen = isUpdate ? updatePen : optionPen;
+    // Strip emojis for correct padding calculation
     final strippedText = text.replaceAll(
         RegExp(
             r'(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff])'),

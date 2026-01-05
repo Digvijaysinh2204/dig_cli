@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.4] - 2026-01-05
+
+### Added
+- **Performance**: Added caching to project root discovery for faster command execution.
+- **UX**: Professional loading spinners added to the interactive menu for update checks.
+
+### Changed
+- **Workflow Optimization**: Parallelized publishing and binary builds. Pub.dev release is now significantly faster.
+
 ## [1.2.3] - 2026-01-05
 
 ### Changed

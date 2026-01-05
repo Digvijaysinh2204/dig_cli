@@ -420,3 +420,9 @@ class RenameCommand extends Command {
     }
   }
 }
+
+Future<void> handleRenameCommand(List<String> args) async {
+  final runner = CommandRunner('dg', 'Rename app')
+    ..addCommand(RenameCommand());
+  await runner.run(args);
+}

@@ -2,11 +2,16 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+Directory? _cachedProjectRoot;
+
 // Finds the project root by searching upwards for a pubspec.yaml file.
 Directory? findProjectRoot() {
+  if (_cachedProjectRoot != null) return _cachedProjectRoot;
+
   var dir = Directory.current;
   while (true) {
     if (File(p.join(dir.path, 'pubspec.yaml')).existsSync()) {
+      _cachedProjectRoot = dir;
       return dir;
     }
     final parent = dir.parent;
