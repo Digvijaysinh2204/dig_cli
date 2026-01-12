@@ -9,7 +9,10 @@ import 'package:pub_semver/pub_semver.dart';
 import '../src/version_helper.dart';
 import 'commands/build_command.dart';
 import 'commands/clean_command.dart';
+import 'commands/ios_build_command.dart';
+import 'commands/pub_cache_command.dart';
 import 'commands/rename_command.dart';
+import 'commands/sha_keys_command.dart';
 import 'commands/version_command.dart';
 import 'commands/zip_command.dart';
 import 'utils/logger.dart';
@@ -117,6 +120,21 @@ Future<void> showInteractiveMenu() async {
           ]);
         }
       });
+      // iOS build option only available on macOS
+      if (Platform.isMacOS) {
+        displayOptions.add({
+          'label': '🍎 Build iOS IPA',
+          'action': () async {
+            final details = await _promptBuildDetails();
+            await handleIosBuildCommand(
+                ['--name', details['name']!, '--output', details['location']!]);
+          }
+        });
+      }
+      displayOptions.add({
+        'label': '🔐 Get SHA Keys',
+        'action': () => getShaKeys(),
+      });
     }
     displayOptions.add(
         {'label': '🧹 Clean Project', 'action': () => CleanCommand().run()});
@@ -152,8 +170,10 @@ Future<void> showInteractiveMenu() async {
     displayOptions.add(
         {'label': '🤐 Create Project ZIP', 'action': () => ZipCommand().run()});
   }
+  displayOptions
+      .add({'label': '� Pub Cache Repair', 'action': () => repairPubCache()});
   displayOptions.add(
-      {'label': '📖 Version & Info', 'action': () => VersionCommand().run()});
+      {'label': '�📖 Version & Info', 'action': () => VersionCommand().run()});
   if (latestStable != null) {
     displayOptions.add({
       'label': '✨ Update to v$latestStable',

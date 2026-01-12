@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.8] - 2026-01-12
+
+### Added
+- **iOS Build**: New option to build iOS IPA directly to Desktop (macOS only).
+- **SHA Keys**: Get SHA1 and SHA256 keys using `./gradlew signingReport` (shows both debug & release keys).
+- **Pub Cache Repair**: Quick option to run `flutter pub cache repair`.
+
+### Changed
+- **SHA Keys**: Automatically navigates to android directory, runs command, and restores original directory.
+- **Menu Improvements**: iOS build option only visible on macOS.
+
 ## [1.2.7] - 2026-01-05
 
 ### Fixed
