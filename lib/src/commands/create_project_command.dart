@@ -263,26 +263,33 @@ class CreateProjectCommand extends Command {
 
   Future<void> _updateDartImports(
       Directory projectDir, String oldSlug, String newSlug) async {
-    final libDir = Directory(p.join(projectDir.path, 'lib'));
-    if (await libDir.exists()) {
-      await for (var entity in libDir.list(recursive: true)) {
-        if (entity is File && entity.path.endsWith('.dart')) {
-          String content = await entity.readAsString();
-          // Replace package imports
-          final oldImport = "package:$oldSlug/";
-          final newImport = "package:$newSlug/";
-          bool changed = false;
-          if (content.contains(oldImport)) {
-            content = content.replaceAll(oldImport, newImport);
-            changed = true;
-          }
-          // Also replace any legacy /app/ imports just in case
-          if (content.contains("'/app/")) {
-            content = content.replaceAll("'/app/", "'package:$newSlug/app/");
-            changed = true;
-          }
-          if (changed) {
-            await entity.writeAsString(content);
+    // Process both lib/ and test/ directories
+    final dirsToProcess = [
+      Directory(p.join(projectDir.path, 'lib')),
+      Directory(p.join(projectDir.path, 'test')),
+    ];
+
+    for (final dir in dirsToProcess) {
+      if (await dir.exists()) {
+        await for (var entity in dir.list(recursive: true)) {
+          if (entity is File && entity.path.endsWith('.dart')) {
+            String content = await entity.readAsString();
+            // Replace package imports
+            final oldImport = "package:$oldSlug/";
+            final newImport = "package:$newSlug/";
+            bool changed = false;
+            if (content.contains(oldImport)) {
+              content = content.replaceAll(oldImport, newImport);
+              changed = true;
+            }
+            // Also replace any legacy /app/ imports just in case
+            if (content.contains("'/app/")) {
+              content = content.replaceAll("'/app/", "'package:$newSlug/app/");
+              changed = true;
+            }
+            if (changed) {
+              await entity.writeAsString(content);
+            }
           }
         }
       }
