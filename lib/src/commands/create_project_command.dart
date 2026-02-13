@@ -61,8 +61,10 @@ class CreateProjectCommand extends Command {
     }
     if (bundleId == null ||
         bundleId.isEmpty ||
-        !RegExp(r'^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$').hasMatch(bundleId)) {
-      kLog('❗ Valid bundle ID is required (e.g., com.example.app).',
+        !RegExp(r'^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)*$')
+            .hasMatch(bundleId)) {
+      kLog(
+          '❗ Valid bundle ID is required (e.g., com.example.app or com.example).',
           type: LogType.error);
       return;
     }
@@ -171,8 +173,8 @@ class CreateProjectCommand extends Command {
   Future<String?> _findTemplatePath() async {
     // 1. Try to find relative to the package's lib directory (works for pub global run)
     try {
-      final packageUri = await Isolate.resolvePackageUri(Uri.parse(
-          'package:dig_cli/src/commands/create_project_command.dart'));
+      final packageUri = await Isolate.resolvePackageUri(
+          Uri.parse('package:dig_cli/src/commands/create_project_command.dart'));
       if (packageUri != null) {
         final packagePath =
             p.dirname(p.dirname(p.dirname(p.fromUri(packageUri))));
@@ -181,24 +183,35 @@ class CreateProjectCommand extends Command {
       }
     } catch (_) {}
 
-    // 2. Try relative to Platform.script (works for local dev)
+    // 2. Try relative to Platform.script (works for local dev and snapshots)
     try {
-      final scriptFile = Platform.script.toFilePath();
-      final cliDir = p.dirname(p.dirname(scriptFile));
-      final path = p.join(cliDir, 'sample', 'structure');
-      if (await Directory(path).exists()) return path;
+      String currentPath = p.dirname(Platform.script.toFilePath());
+      // Search up to 5 levels for the 'sample/structure' directory
+      for (int i = 0; i < 5; i++) {
+        final path = p.join(currentPath, 'sample', 'structure');
+        if (await Directory(path).exists()) return path;
+        
+        // Also check if we are already inside the package root where 'sample' exists
+        final directPath = p.join(currentPath, 'sample', 'structure');
+        if (await Directory(directPath).exists()) return directPath;
+
+        final parent = p.dirname(currentPath);
+        if (parent == currentPath) break;
+        currentPath = parent;
+      }
     } catch (_) {}
 
     // 3. Try relative to the executable (works for compiled binaries)
     try {
-      final exePath = Platform.resolvedExecutable;
-      final exeDir = p.dirname(exePath);
-      final path = p.join(exeDir, 'sample', 'structure');
-      if (await Directory(path).exists()) return path;
-
-      final parentDir = p.dirname(exeDir);
-      final path2 = p.join(parentDir, 'sample', 'structure');
-      if (await Directory(path2).exists()) return path2;
+      final exeDir = p.dirname(Platform.resolvedExecutable);
+      String currentPath = exeDir;
+      for (int i = 0; i < 3; i++) {
+        final path = p.join(currentPath, 'sample', 'structure');
+        if (await Directory(path).exists()) return path;
+        final parent = p.dirname(currentPath);
+        if (parent == currentPath) break;
+        currentPath = parent;
+      }
     } catch (_) {}
 
     // 4. Try current directory as last resort

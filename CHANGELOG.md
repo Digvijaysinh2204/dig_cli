@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.3] - 2026-02-13
+
+### Fixed
+
+- **Smart Path Resolution**: Implemented an aggressive search strategy for the project template, fixing "Template not found" errors when run globally.
+- **Flexible Bundle IDs**: Updated regex to allow two-segment IDs (e.g., `com.sapphire`) and support mixed-case input.
+
 ## [1.3.2] - 2026-02-13
 
 ### Fixed
