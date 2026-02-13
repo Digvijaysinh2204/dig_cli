@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-02-13
+
+### Fixed
+- **Global Path Resolution**: Fixed a critical bug where the project template could not be found when the CLI was run as a global package.
+- **Improved Prompts**: Added separate prompts for "Project Name" (slug/folder) and "App Display Name" during project creation.
+
 ## [1.3.0] - 2026-02-13
 
 ### Added

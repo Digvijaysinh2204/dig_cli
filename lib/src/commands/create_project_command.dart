@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
 import '../utils/logger.dart';
@@ -15,7 +16,10 @@ class CreateProjectCommand extends Command {
 
   CreateProjectCommand() {
     argParser.addOption('name',
-        abbr: 'n', help: 'The name of the new project (e.g., "My App")');
+        abbr: 'n',
+        help: 'The name of the new project folder/slug (e.g., "my_app")');
+    argParser.addOption('app-name',
+        abbr: 'a', help: 'The app display name (e.g., "My Awesome App")');
     argParser.addOption('bundle-id',
         abbr: 'b', help: 'The bundle ID/package name (e.g., com.example.app)');
     argParser.addOption('output',
@@ -29,12 +33,25 @@ class CreateProjectCommand extends Command {
     // 1. Get Project Details
     String? projectName = argResults?['name'] as String?;
     if (projectName == null || projectName.isEmpty) {
-      stdout.write('Enter project name (e.g., My Awesome App): ');
+      stdout.write('Enter project name (for folder & pubspec, e.g., my_app): ');
       projectName = stdin.readLineSync()?.trim();
     }
     if (projectName == null || projectName.isEmpty) {
       kLog('❗ Project name is required.', type: LogType.error);
       return;
+    }
+
+    // Slugify the project name for safety
+    final slug =
+        projectName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9_]'), '_');
+
+    String? appName = argResults?['app-name'] as String?;
+    if (appName == null || appName.isEmpty) {
+      stdout.write('Enter app display name (e.g., My Awesome App): ');
+      appName = stdin.readLineSync()?.trim();
+    }
+    if (appName == null || appName.isEmpty) {
+      appName = projectName; // Fallback to project name
     }
 
     String? bundleId = argResults?['bundle-id'] as String?;
@@ -50,8 +67,6 @@ class CreateProjectCommand extends Command {
       return;
     }
 
-    final slug =
-        projectName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9_]'), '_');
     String? outputDir = argResults?['output'] as String?;
     if (outputDir == null || outputDir.isEmpty) {
       outputDir = p.join(Directory.current.path, slug);
@@ -67,20 +82,11 @@ class CreateProjectCommand extends Command {
     }
 
     // 2. Locate Template
-    final scriptFile = Platform.script.toFilePath();
-    final cliDir = p.dirname(p.dirname(scriptFile));
-
-    // The template is now in 'sample/structure' directory for better organization
-    String templatePath = p.join(cliDir, 'sample', 'structure');
-
-    // Fallback logic
-    if (!await Directory(templatePath).exists()) {
-      templatePath = p.join(Directory.current.path, 'sample', 'structure');
-      if (!await Directory(templatePath).exists()) {
-        kLog('❗ Template structure not found at $templatePath',
-            type: LogType.error);
-        return;
-      }
+    String? templatePath = await _findTemplatePath();
+    if (templatePath == null) {
+      kLog('❗ Template structure not found. Please ensure you are running the command from a valid installation.',
+          type: LogType.error);
+      return;
     }
 
     kLog('📂 Creating project at: ${targetDir.path}', type: LogType.info);
@@ -89,13 +95,12 @@ class CreateProjectCommand extends Command {
     try {
       // 3. Copy Template
       await runWithSpinner('📝 Copying template files...', () async {
-        await _copyDirectory(Directory(templatePath), targetDir);
+        await _copyDirectory(Directory(templatePath!), targetDir);
         // Create sensitive skeleton files
         await _createSkeletonFiles(targetDir);
       });
 
       // 4. Rename Project Logic
-      // We change directory into the new project to run rename logic
       final originalCwd = Directory.current;
       Directory.current = targetDir;
       resetProjectRootCache();
@@ -112,16 +117,15 @@ class CreateProjectCommand extends Command {
         await _updateSettingsGradle(targetDir, slug);
 
         // 4. Update Rebranding (Android Display Name, iOS Bundle ID etc)
-        await _updateAllAppNames(projectName!);
+        await _updateAllAppNames(appName!);
         await _updateAllBundleIds(bundleId!);
 
         // 5. Update README with credit
-        await _updateReadme(targetDir, projectName);
+        await _updateReadme(targetDir, appName);
       });
 
       // 5. Setup Signing (Create JKS)
       kLog('\n🔑 Setting up Android Signing (0-Work)...', type: LogType.info);
-      // We run the command with simulated arguments for 0-work automation
       final jksRunner = CommandRunner('dg', 'temp')
         ..addCommand(CreateJksCommand());
       await jksRunner.run([
@@ -161,6 +165,45 @@ class CreateProjectCommand extends Command {
     } catch (e) {
       kLog('❌ Error creating project: $e', type: LogType.error);
     }
+  }
+
+  Future<String?> _findTemplatePath() async {
+    // 1. Try to find relative to the package's lib directory (works for pub global run)
+    try {
+      final packageUri = await Isolate.resolvePackageUri(
+          Uri.parse('package:dig_cli/src/commands/create_project_command.dart'));
+      if (packageUri != null) {
+        final packagePath = p.dirname(p.dirname(p.dirname(p.fromUri(packageUri))));
+        final path = p.join(packagePath, 'sample', 'structure');
+        if (await Directory(path).exists()) return path;
+      }
+    } catch (_) {}
+
+    // 2. Try relative to Platform.script (works for local dev)
+    try {
+      final scriptFile = Platform.script.toFilePath();
+      final cliDir = p.dirname(p.dirname(scriptFile));
+      final path = p.join(cliDir, 'sample', 'structure');
+      if (await Directory(path).exists()) return path;
+    } catch (_) {}
+
+    // 3. Try relative to the executable (works for compiled binaries)
+    try {
+      final exePath = Platform.resolvedExecutable;
+      final exeDir = p.dirname(exePath);
+      final path = p.join(exeDir, 'sample', 'structure');
+      if (await Directory(path).exists()) return path;
+      
+      final parentDir = p.dirname(exeDir);
+      final path2 = p.join(parentDir, 'sample', 'structure');
+      if (await Directory(path2).exists()) return path2;
+    } catch (_) {}
+
+    // 4. Try current directory as last resort
+    final localPath = p.join(Directory.current.path, 'sample', 'structure');
+    if (await Directory(localPath).exists()) return localPath;
+
+    return null;
   }
 
   Future<void> _copyDirectory(Directory source, Directory destination) async {
