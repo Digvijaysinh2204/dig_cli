@@ -173,8 +173,8 @@ class CreateProjectCommand extends Command {
   Future<String?> _findTemplatePath() async {
     // 1. Try to find relative to the package's lib directory (works for pub global run)
     try {
-      final packageUri = await Isolate.resolvePackageUri(
-          Uri.parse('package:dig_cli/src/commands/create_project_command.dart'));
+      final packageUri = await Isolate.resolvePackageUri(Uri.parse(
+          'package:dig_cli/src/commands/create_project_command.dart'));
       if (packageUri != null) {
         final packagePath =
             p.dirname(p.dirname(p.dirname(p.fromUri(packageUri))));
@@ -190,7 +190,7 @@ class CreateProjectCommand extends Command {
       for (int i = 0; i < 5; i++) {
         final path = p.join(currentPath, 'sample', 'structure');
         if (await Directory(path).exists()) return path;
-        
+
         // Also check if we are already inside the package root where 'sample' exists
         final directPath = p.join(currentPath, 'sample', 'structure');
         if (await Directory(directPath).exists()) return directPath;
