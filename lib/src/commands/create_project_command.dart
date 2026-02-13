@@ -96,7 +96,7 @@ class CreateProjectCommand extends Command {
     try {
       // 3. Copy Template
       await runWithSpinner('📝 Copying template files...', () async {
-        await _copyDirectory(Directory(templatePath!), targetDir);
+        await _copyDirectory(Directory(templatePath), targetDir);
         // Create sensitive skeleton files
         await _createSkeletonFiles(targetDir);
       });
