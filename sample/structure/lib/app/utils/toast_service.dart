@@ -7,7 +7,6 @@ void showToast({String message = '', ToastType type = ToastType.warning}) {
 
   toastification.showCustom(
     alignment: Alignment.topCenter,
-
     autoCloseDuration: Duration(seconds: _getDuration(type)),
     animationDuration: const Duration(milliseconds: 250),
     animationBuilder: (context, animation, alignment, child) {

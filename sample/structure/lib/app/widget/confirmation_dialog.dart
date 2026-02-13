@@ -41,7 +41,6 @@ class ConfirmationDialog extends StatelessWidget {
         ),
         textAlign: TextAlign.center,
       ),
-
       content: messageWidget != null
           ? Material(color: AppColor.kTransparent, child: messageWidget)
           : CustomTextView(

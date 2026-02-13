@@ -52,12 +52,10 @@ class CustomScaffold extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: statusBarDarkIcons
-            ? Brightness.dark
-            : Brightness.light,
-        statusBarBrightness: statusBarDarkIcons
-            ? Brightness.light
-            : Brightness.dark,
+        statusBarIconBrightness:
+            statusBarDarkIcons ? Brightness.dark : Brightness.light,
+        statusBarBrightness:
+            statusBarDarkIcons ? Brightness.light : Brightness.dark,
       ),
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
@@ -80,7 +78,6 @@ class CustomScaffold extends StatelessWidget {
                 floatingActionButton: floatingActionButton,
                 floatingActionButtonLocation: floatingActionButtonLocation,
                 resizeToAvoidBottomInset: resizeToAvoidBottomInset ?? true,
-
                 appBar: isAppBar
                     ? AppBarWrapper(
                         title: title,
@@ -95,7 +92,6 @@ class CustomScaffold extends StatelessWidget {
                         centerTitle: centerTitle,
                       )
                     : null,
-
                 body: SafeArea(
                   top: isSafeAreaTop,
                   bottom: isSafeAreaBottom,

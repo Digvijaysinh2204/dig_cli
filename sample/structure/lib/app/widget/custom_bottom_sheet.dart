@@ -24,7 +24,6 @@ class CustomBottomSheet {
       enableDrag: enableDrag,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.5),
-
       builder: (_) => PopScope(
         canPop: isDismissible,
         child: _CustomBottomSheetContainer(
@@ -172,8 +171,7 @@ class _SheetBody extends StatelessWidget {
                               : const SizedBox(width: 36)),
                       Expanded(
                         child: Center(
-                          child:
-                              titleWidget ??
+                          child: titleWidget ??
                               (title != null
                                   ? CustomTextView(
                                       text: title!,
@@ -191,9 +189,7 @@ class _SheetBody extends StatelessWidget {
                     ],
                   ),
                 ),
-
               const Gap(10),
-
               Flexible(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
@@ -207,7 +203,6 @@ class _SheetBody extends StatelessWidget {
               ),
             ],
           ),
-
           if (footer != null && !(autoHideFooterOnKeyboard && isKeyboardOpen))
             Positioned(
               left: 0,

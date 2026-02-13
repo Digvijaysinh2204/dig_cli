@@ -26,7 +26,6 @@ class CustomPagination extends StatelessWidget {
       enablePullDown: true,
       physics: RefreshPhysics(
         controller: controller,
-
         springDescription: const SpringDescription(
           mass: 2.2,
           stiffness: 150,
@@ -34,7 +33,6 @@ class CustomPagination extends StatelessWidget {
         ),
       ),
       enablePullUp: true,
-
       header: CustomHeader(builder: (context, mode) => const SizedBox.shrink()),
       footer: CustomFooter(
         builder: (BuildContext context, LoadStatus? mode) {

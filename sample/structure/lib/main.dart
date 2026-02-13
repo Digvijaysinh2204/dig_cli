@@ -58,10 +58,8 @@ class MyApp extends StatelessWidget {
                     absorbing: !network.isConnected.value,
                     child: child ?? const SizedBox.shrink(),
                   ),
-
                   const NetworkBanner(),
                   const GlobalLoader(),
-
                   if (!network.isConnected.value)
                     const Positioned.fill(
                       child: ModalBarrier(

@@ -11,7 +11,6 @@ class AppPage {
       page: () => const SplashView(),
       binding: SplashBinding(),
     ),
-
     GetPage(
       name: AppRoute.mainView,
       page: () => const MainView(),
