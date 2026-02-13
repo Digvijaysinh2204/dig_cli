@@ -1,0 +1,58 @@
+{
+  "@@locale": "en",
+  "noConnection": "No connection",
+  "somethingWentWrong": "Something went wrong",
+  "noInternetConnection": "No internet connection: {details}",
+  "@noInternetConnection": {
+    "description": "Message shown when there is no internet connection.",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
+  "requestTimedOut": "Request timed out after {seconds} seconds",
+  "@requestTimedOut": {
+    "description": "Message for request timeout.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "badResponseFormat": "Bad response format: {details}",
+  "@badResponseFormat": {
+    "description": "Message for bad response format.",
+    "placeholders": {
+      "details": {
+        "type": "String"
+      }
+    }
+  },
+  "connectionNotSecure": "Connection not secure",
+  "camera": "Camera",
+  "photos": "Photos",
+  "permissionRequiredTitle": "{permissionName} Permission Required",
+  "@permissionRequiredTitle": {
+    "description": "Title for permission required dialog.",
+    "placeholders": {
+      "permissionName": {
+        "type": "String"
+      }
+    }
+  },
+  "permissionRequiredMessage": "To use the {permissionName}, you need to grant permission. You can do this in your app settings.",
+  "@permissionRequiredMessage": {
+    "description": "Message for permission required dialog.",
+    "placeholders": {
+      "permissionName": {
+        "type": "String"
+      }
+    }
+  },
+  "cancel": "Cancel",
+  "openSettings": "Open settings",
+  "showLess": "Show less",
+  "readMore": "Read more",
+  "noDataFound": "No data found"
+}
