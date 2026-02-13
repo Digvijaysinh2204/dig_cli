@@ -84,7 +84,8 @@ class CreateProjectCommand extends Command {
     // 2. Locate Template
     String? templatePath = await _findTemplatePath();
     if (templatePath == null) {
-      kLog('❗ Template structure not found. Please ensure you are running the command from a valid installation.',
+      kLog(
+          '❗ Template structure not found. Please ensure you are running the command from a valid installation.',
           type: LogType.error);
       return;
     }
@@ -170,10 +171,11 @@ class CreateProjectCommand extends Command {
   Future<String?> _findTemplatePath() async {
     // 1. Try to find relative to the package's lib directory (works for pub global run)
     try {
-      final packageUri = await Isolate.resolvePackageUri(
-          Uri.parse('package:dig_cli/src/commands/create_project_command.dart'));
+      final packageUri = await Isolate.resolvePackageUri(Uri.parse(
+          'package:dig_cli/src/commands/create_project_command.dart'));
       if (packageUri != null) {
-        final packagePath = p.dirname(p.dirname(p.dirname(p.fromUri(packageUri))));
+        final packagePath =
+            p.dirname(p.dirname(p.dirname(p.fromUri(packageUri))));
         final path = p.join(packagePath, 'sample', 'structure');
         if (await Directory(path).exists()) return path;
       }
@@ -193,7 +195,7 @@ class CreateProjectCommand extends Command {
       final exeDir = p.dirname(exePath);
       final path = p.join(exeDir, 'sample', 'structure');
       if (await Directory(path).exists()) return path;
-      
+
       final parentDir = p.dirname(exeDir);
       final path2 = p.join(parentDir, 'sample', 'structure');
       if (await Directory(path2).exists()) return path2;
