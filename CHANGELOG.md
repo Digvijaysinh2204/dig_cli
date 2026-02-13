@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-02-13
+
+### Fixed
+- **Template Widget Test**: Fixed `widget_test.dart` template to use `PROJECT_NAME` placeholder instead of hardcoded `structure`
+- **Code Formatting**: Applied `dart format` to entire codebase for consistency
+- **JKS Gitignore**: Confirmed `*.jks` files are properly ignored in template `.gitignore`
+
 ## [1.3.6] - 2026-02-13
 
 ### Fixed
