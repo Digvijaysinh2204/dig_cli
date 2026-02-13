@@ -274,19 +274,28 @@ class CreateProjectCommand extends Command {
         await for (var entity in dir.list(recursive: true)) {
           if (entity is File && entity.path.endsWith('.dart')) {
             String content = await entity.readAsString();
-            // Replace package imports
+            bool changed = false;
+
+            // Replace PROJECT_NAME placeholder
+            if (content.contains('PROJECT_NAME')) {
+              content = content.replaceAll('PROJECT_NAME', newSlug);
+              changed = true;
+            }
+
+            // Replace package imports (for legacy structure references)
             final oldImport = "package:$oldSlug/";
             final newImport = "package:$newSlug/";
-            bool changed = false;
             if (content.contains(oldImport)) {
               content = content.replaceAll(oldImport, newImport);
               changed = true;
             }
+
             // Also replace any legacy /app/ imports just in case
             if (content.contains("'/app/")) {
               content = content.replaceAll("'/app/", "'package:$newSlug/app/");
               changed = true;
             }
+
             if (changed) {
               await entity.writeAsString(content);
             }
