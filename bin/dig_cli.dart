@@ -3,6 +3,10 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:dig_cli/src/commands/build_command.dart';
 import 'package:dig_cli/src/commands/clean_command.dart';
+import 'package:dig_cli/src/commands/create_jks_command.dart';
+import 'package:dig_cli/src/commands/create_project_command.dart';
+import 'package:dig_cli/src/commands/hash_key_command.dart';
+import 'package:dig_cli/src/commands/ios_build_command.dart';
 import 'package:dig_cli/src/commands/rename_command.dart';
 import 'package:dig_cli/src/commands/version_command.dart';
 import 'package:dig_cli/src/commands/zip_command.dart';
@@ -14,6 +18,10 @@ void main(List<String> arguments) async {
     ..addCommand(CleanCommand())
     ..addCommand(ZipCommand())
     ..addCommand(RenameCommand())
+    ..addCommand(HashKeyCommand())
+    ..addCommand(CreateJksCommand())
+    ..addCommand(CreateProjectCommand())
+    ..addCommand(IosBuildCommand())
     ..addCommand(VersionCommand());
 
   // Add global version flag

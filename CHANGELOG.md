@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-02-13
+
+### Added
+- **Proper Project Creation**: New `dg create-project` command to bootstrap highly structured Flutter projects.
+- **Automated JKS Integration**: Creates unique JKS keystores and configures signing automatically during project setup.
+- **Comprehensive Rebranding**: Massive improvements to renaming logic for Project Name, App Name, and Bundle IDs across all files.
+- **Firebase Skeletons**: Pre-configured Firebase files that guide the user to run `flutterfire configure`.
+- **Directory Restructuring**: Improved Android package directory moving and empty directory cleanup.
+- **Dotfile Support**: CLI now correctly handles and copies `.gitignore` and `.env` files.
+
+### Changed
+- **Credits**: Updated all attribution to "Digvijaysinh Chauhan" with links to pub.dev packages.
+- **Robustness**: Improved template stability with `flutter analyze` verified code and default `.env` values.
+- **UI/UX**: Clearer terminal feedback and Firebase setup reminders.
+
 ## [1.2.8] - 2026-01-12
 
 ### Added

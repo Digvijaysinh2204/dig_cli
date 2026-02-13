@@ -10,9 +10,11 @@ A powerful Flutter CLI tool to automate building, cleaning, packaging, and renam
 ## 🚀 Features
 
 - **Interactive Menu**: Easy navigation; run the tool without commands for a guided experience.
+- **✨ Create Project**: Bootstrap a **"Proper" Flutter Project** with pre-configured structure, JKS signing, and Firebase skeletons.
 - **🏷️ Rename App**: Smart renaming for **Android, iOS, macOS, Windows, Linux, and Web**.
-    - Handles Android namespace updates and directory restructuring.
-    - Updates bundle IDs and display names across all platform-specific files.
+  - Handles Android namespace updates and directory restructuring.
+  - Updates bundle IDs and display names across all platform-specific files.
+- **🛡️ JKS Automation**: Automated generation of JKS keystores and signing configuration for Android release builds.
 - **Build APK/AAB**: Release builds with automatic `ProjectName-YYYY-MM-DD-HH-MM` naming.
 - **Deep Clean**: Removes Flutter, Gradle, Xcode, and Pods caches on macOS, Windows, and Linux.
 - **Create Clean ZIP**: Packages your project into a ZIP file, excluding files from `.gitignore`.
@@ -40,6 +42,7 @@ dg
 
 ### Direct Commands
 
+- **Create Project**: `dg create-project`
 - **Rename App**: `dg rename --name "New Name" --bundle-id com.new.id`
 - **Build APK**: `dg create apk`
 - **Build AAB**: `dg create bundle`
@@ -69,12 +72,14 @@ dg clean
 By default, use `dg` in your terminal. If you prefer a custom command name (alias), you can set it up easily:
 
 ### macOS & Linux
+
 ```bash
 # Add this to ~/.zshrc or ~/.bashrc
 alias df="dg"
 ```
 
 ### Windows (PowerShell)
+
 ```powershell
 Set-Alias df dg
 ```
@@ -86,3 +91,5 @@ Set-Alias df dg
 Licensed under the [MIT License](LICENSE).
 
 Made with ❤️ by [Digvijaysinh Chauhan](https://github.com/Digvijaysinh2204)
+
+- **Check out my Flutter packages on [pub.dev](https://pub.dev/packages?q=Digvijaysinh+Chauhan)**

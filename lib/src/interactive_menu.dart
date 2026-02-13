@@ -9,6 +9,9 @@ import 'package:pub_semver/pub_semver.dart';
 import '../src/version_helper.dart';
 import 'commands/build_command.dart';
 import 'commands/clean_command.dart';
+import 'commands/create_jks_command.dart';
+import 'commands/create_project_command.dart';
+import 'commands/hash_key_command.dart';
 import 'commands/ios_build_command.dart';
 import 'commands/pub_cache_command.dart';
 import 'commands/rename_command.dart';
@@ -92,6 +95,14 @@ Future<void> showInteractiveMenu() async {
   });
 
   final displayOptions = <Map<String, dynamic>>[];
+  displayOptions.add({
+    'label': '🚀 Create New Project from Template',
+    'action': () async {
+      final command = CreateProjectCommand();
+      await command.run();
+    },
+  });
+
   if (isInsideProject) {
     if (isBuildable) {
       displayOptions.add({
@@ -126,14 +137,67 @@ Future<void> showInteractiveMenu() async {
           'label': '🍎 Build iOS IPA',
           'action': () async {
             final details = await _promptBuildDetails();
-            await handleIosBuildCommand(
-                ['--name', details['name']!, '--output', details['location']!]);
+
+            kLog('\nSelect Export Method:');
+            kLog('1. Ad-hoc (Testing on devices)');
+            kLog('2. Development (Dev builds)');
+            kLog('3. App Store (Production)');
+            kLog('4. Enterprise');
+            stdout.write('\n› Enter choice (1-4, default: 1): ');
+
+            final choice = stdin.readLineSync()?.trim();
+            String method;
+            switch (choice) {
+              case '2':
+                method = 'development';
+                break;
+              case '3':
+                method = 'app-store';
+                break;
+              case '4':
+                method = 'enterprise';
+                break;
+              case '1':
+              default:
+                method = 'ad-hoc';
+                break;
+            }
+
+            await handleIosBuildCommand([
+              '--name',
+              details['name']!,
+              '--output',
+              details['location']!,
+              '--method',
+              method
+            ]);
           }
         });
       }
       displayOptions.add({
         'label': '🔐 Get SHA Keys',
         'action': () => getShaKeys(),
+      });
+      displayOptions.add({
+        'label': '🔑 Get Hash Key (Base64)',
+        'action': () async {
+          kLog('\nSelect configuration:');
+          kLog('1. Debug');
+          kLog('2. Release');
+          stdout.write('\n› Enter choice (1 or 2): ');
+          final choice = stdin.readLineSync()?.trim();
+          if (choice == '1') {
+            await handleHashKeyCommand(['--debug']);
+          } else if (choice == '2') {
+            await handleHashKeyCommand(['--release']);
+          } else {
+            kLog('Invalid choice.', type: LogType.warning);
+          }
+        },
+      });
+      displayOptions.add({
+        'label': '🔑 Create JKS & Setup Signing',
+        'action': () => handleCreateJksCommand(),
       });
     }
     displayOptions.add(

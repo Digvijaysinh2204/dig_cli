@@ -23,6 +23,10 @@ Directory? findProjectRoot() {
   }
 }
 
+void resetProjectRootCache() {
+  _cachedProjectRoot = null;
+}
+
 // Checks if the current directory or its root is a Flutter project.
 Future<bool> isFlutterProject() async {
   final root = findProjectRoot();
