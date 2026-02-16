@@ -1,5 +1,14 @@
 {
   "@@locale": "en",
+  "downloading": "Downloading {progress}",
+  "@downloading": {
+    "placeholders": {
+      "progress": {}
+    }
+  },
+  "downloadComplete": "Download complete",
+  "downloadFailed": "Download failed",
+  "downloadPaused": "Download paused",
   "noConnection": "No connection",
   "somethingWentWrong": "Something went wrong",
   "noInternetConnection": "No internet connection: {details}",

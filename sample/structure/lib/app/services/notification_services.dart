@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:background_downloader/background_downloader.dart';
+
 import '../utils/import.dart';
 
 @pragma('vm:entry-point')
@@ -71,7 +73,7 @@ class NotificationService extends GetxService {
 
   Future<void> _initializeFlutterLocalNotifications() async {
     const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
+      '@drawable/notification',
     );
     const iosSettings = DarwinInitializationSettings();
 
@@ -82,7 +84,8 @@ class NotificationService extends GetxService {
 
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(_channel);
 
     await _flutterLocalNotificationsPlugin.initialize(
@@ -135,7 +138,13 @@ class NotificationService extends GetxService {
     kLog(content: 'Local notification displayed', title: 'SHOW_NOTIFICATION');
   }
 
-  Future<void> _handleMessageFromData(Map<String, dynamic> data) async {}
+  Future<void> _handleMessageFromData(Map<String, dynamic> data) async {
+    if (data['type'] == 'Download') {
+      FileDownloader().openFile(filePath: data['path']);
+    } else {
+      // Get.to(() => const Notifications());
+    }
+  }
 
   Future<void> _handleLaunchNotification() async {
     final launchDetails = await _flutterLocalNotificationsPlugin
@@ -222,4 +231,42 @@ class NotificationService extends GetxService {
     }
   }
  */
+
+  Future<void> showCustomNotification({
+    required String title,
+    required String body,
+    required Map<String, dynamic> payload,
+  }) async {
+    final androidDetails = AndroidNotificationDetails(
+      _channel.id,
+      _channel.name,
+      channelDescription: _channel.description,
+      importance: _channel.importance,
+      priority: Priority.high,
+      playSound: _channel.playSound,
+      enableVibration: _channel.enableVibration,
+      icon: '@drawable/notification',
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _flutterLocalNotificationsPlugin.show(
+      id: _createUniqueId(),
+      title: title,
+      body: body,
+      notificationDetails: details,
+      payload: jsonEncode(payload),
+    );
+
+    kLog(content: 'Local notification displayed', title: 'SHOW_NOTIFICATION');
+  }
 }

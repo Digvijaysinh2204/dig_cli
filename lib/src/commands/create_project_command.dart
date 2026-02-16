@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
 import '../utils/logger.dart';
@@ -71,12 +73,17 @@ class CreateProjectCommand extends Command {
 
     String? outputDir = argResults?['output'] as String?;
     if (outputDir == null || outputDir.isEmpty) {
-      outputDir = p.join(Directory.current.path, slug);
-    } else {
-      outputDir = p.join(outputDir, slug);
+      stdout.write('Enter output path (press enter for default ./$slug): ');
+      final input = stdin.readLineSync()?.trim();
+      if (input != null && input.isNotEmpty) {
+        outputDir = input;
+      }
     }
 
-    final targetDir = Directory(outputDir);
+    final targetDir = outputDir != null && outputDir.isNotEmpty
+        ? Directory(p.absolute(outputDir))
+        : Directory(p.join(Directory.current.path, slug));
+
     if (await targetDir.exists()) {
       kLog('❗ Directory ${targetDir.path} already exists.',
           type: LogType.error);
@@ -96,41 +103,70 @@ class CreateProjectCommand extends Command {
     kLog('🏗️  Using template: $templatePath', type: LogType.info);
 
     try {
-      // 3. Copy Template
-      await runWithSpinner('📝 Copying template files...', () async {
-        await _copyDirectory(Directory(templatePath), targetDir);
-        // Create sensitive skeleton files
-        await _createSkeletonFiles(targetDir);
+      // 3. Run Flutter Create as Base
+      await runWithSpinner('🚀 Running flutter create...', () async {
+        // Calculate org from bundleId
+        String org = 'com.example';
+        if (bundleId!.contains('.')) {
+          final parts = bundleId.split('.');
+          org = parts.sublist(0, parts.length - 1).join('.');
+        }
+
+        final result = await Process.run('flutter', [
+          'create',
+          '--project-name',
+          slug,
+          '--org',
+          org,
+          '--description',
+          'Created using DIG CLI',
+          targetDir.path,
+        ]);
+
+        if (result.exitCode != 0) {
+          throw Exception('flutter create failed: ${result.stderr}');
+        }
       });
 
-      // 4. Rename Project Logic
+      // 4. Overlay Template Structure (File-by-File Overlay)
+      await runWithSpinner('📝 Applying template overlay...', () async {
+        // Iterate through template files (skipping test/)
+        await _overlayTemplateFiles(Directory(templatePath), targetDir);
+
+        // C. Merge Pubspec Dependencies
+        await _mergePubspec(targetDir, templatePath);
+      });
+
+      // 5. Rebranding & Configuration
+      await runWithSpinner('🏷️  Finalizing configuration...', () async {
+        // 1. Update Imports
+        await _updateDartImports(targetDir, slug);
+
+        // 2. Configure Android Signing
+        await _configureAndroidSigning(targetDir);
+
+        // 3. Update README
+        await _updateReadme(targetDir, projectName!);
+
+        // 4. Ensure Manifest/Plist have correct names
+        await _updateAllAppNames(targetDir, appName!);
+
+        // 5. Ensure bundle IDs are correct (explicit check)
+        await _updateAllBundleIds(targetDir, bundleId!);
+
+        // 6. Generate Secure API Key for .env
+        await _generateAndInjectSecureKey(targetDir);
+      });
+
+      // 6. Generate JKS
+      kLog('\n🔑 Setting up Android Signing (0-Work)...', type: LogType.info);
       final originalCwd = Directory.current;
       Directory.current = targetDir;
       resetProjectRootCache();
 
-      await runWithSpinner('🏷️  Setting project names and bundle IDs...',
-          () async {
-        // 1. Update pubspec.yaml name
-        await _updatePubspecName(targetDir, slug);
-
-        // 2. Global Replacement of "structure" in Dart files (for imports)
-        await _updateDartImports(targetDir, 'structure', slug);
-
-        // 3. Update Android settings.gradle
-        await _updateSettingsGradle(targetDir, slug);
-
-        // 4. Update Rebranding (Android Display Name, iOS Bundle ID etc)
-        await _updateAllAppNames(appName!);
-        await _updateAllBundleIds(bundleId!);
-
-        // 5. Update README with credit
-        await _updateReadme(targetDir, appName);
-      });
-
-      // 5. Setup Signing (Create JKS)
-      kLog('\n🔑 Setting up Android Signing (0-Work)...', type: LogType.info);
       final jksRunner = CommandRunner('dg', 'temp')
         ..addCommand(CreateJksCommand());
+
       await jksRunner.run([
         'create-jks',
         '--no-interactive',
@@ -146,9 +182,16 @@ class CreateProjectCommand extends Command {
         'key',
       ]);
 
-      // 6. Pub Get
-      await runWithSpinner('📦 Fetching dependencies (flutter pub get)...',
-          () async {
+      // 7. Cleanup & Finish
+      await runWithSpinner('🧹 Cleaning up...', () async {
+        // Ensure sample.jks is gone if it somehow got copied
+        final sampleJks =
+            File(p.join(targetDir.path, 'android', 'app', 'sample.jks'));
+        if (await sampleJks.exists()) {
+          await sampleJks.delete();
+        }
+
+        // Run pub get
         final result = await Process.run('flutter', ['pub', 'get']);
         if (result.exitCode != 0) {
           kLog('⚠️  flutter pub get failed, you might need to run it manually.',
@@ -161,72 +204,66 @@ class CreateProjectCommand extends Command {
       kLog('\n✅ PROJECT CREATED SUCCESSFULLY!', type: LogType.success);
       kLog('📁 Path: ${targetDir.path}', type: LogType.info);
       kLog('🚀 Open it in VS Code: code ${targetDir.path}', type: LogType.info);
-      kLog('\n🔔 IMPORTANT: Firebase is pre-configured with skeletons.',
-          type: LogType.warning);
-      kLog('👉 Run "flutterfire configure" to complete your Firebase setup.',
-          type: LogType.info);
     } catch (e) {
       kLog('❌ Error creating project: $e', type: LogType.error);
     }
   }
 
   Future<String?> _findTemplatePath() async {
-    // 1. Try to find relative to the package's lib directory (works for pub global run)
     try {
-      final packageUri = await Isolate.resolvePackageUri(Uri.parse(
+      final uri = await Isolate.resolvePackageUri(Uri.parse(
           'package:dig_cli/src/commands/create_project_command.dart'));
-      if (packageUri != null) {
-        final packagePath =
-            p.dirname(p.dirname(p.dirname(p.fromUri(packageUri))));
-        final path = p.join(packagePath, 'sample', 'structure');
-        if (await Directory(path).exists()) return path;
+      if (uri != null) {
+        final filePath = uri.toFilePath();
+        final packageRoot =
+            p.dirname(p.dirname(p.dirname(p.dirname(filePath))));
+        final templatePath = p.join(packageRoot, 'sample', 'structure');
+        if (await Directory(templatePath).exists()) {
+          return templatePath;
+        }
       }
     } catch (_) {}
 
-    // 2. Try relative to Platform.script (works for local dev and snapshots)
     try {
-      String currentPath = p.dirname(Platform.script.toFilePath());
-      // Search up to 5 levels for the 'sample/structure' directory
-      for (int i = 0; i < 5; i++) {
-        final path = p.join(currentPath, 'sample', 'structure');
-        if (await Directory(path).exists()) return path;
-
-        // Also check if we are already inside the package root where 'sample' exists
-        final directPath = p.join(currentPath, 'sample', 'structure');
-        if (await Directory(directPath).exists()) return directPath;
-
-        final parent = p.dirname(currentPath);
-        if (parent == currentPath) break;
-        currentPath = parent;
+      final templatePubspecUri = await Isolate.resolvePackageUri(
+          Uri.parse('package:dig_cli/../../sample/structure/pubspec.yaml'));
+      if (templatePubspecUri != null) {
+        final pubspecPath = templatePubspecUri.toFilePath();
+        final templatePath = p.dirname(pubspecPath);
+        if (await Directory(templatePath).exists()) {
+          return templatePath;
+        }
       }
     } catch (_) {}
 
-    // 3. Try relative to the executable (works for compiled binaries)
     try {
-      final exeDir = p.dirname(Platform.resolvedExecutable);
-      String currentPath = exeDir;
-      for (int i = 0; i < 3; i++) {
-        final path = p.join(currentPath, 'sample', 'structure');
-        if (await Directory(path).exists()) return path;
-        final parent = p.dirname(currentPath);
-        if (parent == currentPath) break;
-        currentPath = parent;
+      final scriptPath = Platform.script.toFilePath();
+      if (scriptPath.endsWith('.dart') || scriptPath.endsWith('.snapshot')) {
+        Directory current = File(scriptPath).parent;
+        for (int i = 0; i < 5; i++) {
+          final templatePath = p.join(current.path, 'sample', 'structure');
+          if (await Directory(templatePath).exists()) {
+            return templatePath;
+          }
+          current = current.parent;
+        }
       }
     } catch (_) {}
-
-    // 4. Try current directory as last resort
-    final localPath = p.join(Directory.current.path, 'sample', 'structure');
-    if (await Directory(localPath).exists()) return localPath;
-
     return null;
   }
 
-  Future<void> _copyDirectory(Directory source, Directory destination) async {
+  Future<void> _overlayTemplateFiles(
+      Directory source, Directory destination) async {
     await destination.create(recursive: true);
     await for (var entity in source.list(recursive: false)) {
       final base = p.basename(entity.path);
+
+      // 1. Skip Test Directory (Keep Flutter's default)
+      if (base == 'test') {
+        continue;
+      }
+
       if (entity is Directory) {
-        // Skip transient/build folders
         if (base == 'build' ||
             base == 'Pods' ||
             base == '.dart_tool' ||
@@ -236,9 +273,8 @@ class CreateProjectCommand extends Command {
           continue;
         }
         final newDirectory = Directory(p.join(destination.path, base));
-        await _copyDirectory(entity, newDirectory);
+        await _overlayTemplateFiles(entity, newDirectory);
       } else if (entity is File) {
-        // Skip transient/lock files and specific system files
         if (base == '.DS_Store' ||
             base == 'pubspec.lock' ||
             base == 'Podfile.lock' ||
@@ -247,176 +283,174 @@ class CreateProjectCommand extends Command {
           continue;
         }
 
+        // 2. Overwrite or Create
         await entity.copy(p.join(destination.path, base));
       }
     }
   }
 
-  Future<void> _updatePubspecName(Directory projectDir, String slug) async {
-    final pubspecFile = File(p.join(projectDir.path, 'pubspec.yaml'));
-    if (await pubspecFile.exists()) {
-      String content = await pubspecFile.readAsString();
-      content = content.replaceFirst(RegExp(r'name:\s+.*'), 'name: $slug');
-      await pubspecFile.writeAsString(content);
+  Future<void> _updateDartImports(Directory projectDir, String newSlug) async {
+    try {
+      final absolutePath = p.absolute(projectDir.path);
+      final dirsToProcess = [
+        Directory(p.join(absolutePath, 'lib')),
+        Directory(p.join(absolutePath, 'test')),
+        Directory(p.join(absolutePath, 'android')),
+        Directory(p.join(absolutePath, 'ios')),
+      ];
+
+      for (final dir in dirsToProcess) {
+        if (!await dir.exists()) {
+          continue;
+        }
+        await _processDirectoryForImports(dir, newSlug);
+      }
+      await _processDirectoryForImports(Directory(absolutePath), newSlug,
+          recursive: false);
+    } catch (e) {
+      kLog('Error in _updateDartImports: $e', type: LogType.error);
     }
   }
 
-  Future<void> _updateDartImports(
-      Directory projectDir, String oldSlug, String newSlug) async {
-    // Process both lib/ and test/ directories
-    final dirsToProcess = [
-      Directory(p.join(projectDir.path, 'lib')),
-      Directory(p.join(projectDir.path, 'test')),
-    ];
-
-    for (final dir in dirsToProcess) {
-      if (await dir.exists()) {
-        await for (var entity in dir.list(recursive: true)) {
-          if (entity is File && entity.path.endsWith('.dart')) {
+  Future<void> _processDirectoryForImports(Directory dir, String newSlug,
+      {bool recursive = true}) async {
+    try {
+      final entities = dir.listSync(recursive: recursive);
+      for (var entity in entities) {
+        if (entity is! File) {
+          continue;
+        }
+        final ext = p.extension(entity.path);
+        if (ext == '.dart' ||
+            ext == '.yaml' ||
+            ext == '.gradle' ||
+            ext == '.kts' ||
+            ext == '.xml' ||
+            ext == '.plist' ||
+            ext == '.json' ||
+            ext == '.md') {
+          try {
             String content = await entity.readAsString();
             bool changed = false;
-
-            // Replace PROJECT_NAME placeholder
+            // Handle project name placeholder
             if (content.contains('PROJECT_NAME')) {
               content = content.replaceAll('PROJECT_NAME', newSlug);
               changed = true;
             }
-
-            // Replace package imports (for legacy structure references)
-            final oldImport = "package:$oldSlug/";
-            final newImport = "package:$newSlug/";
-            if (content.contains(oldImport)) {
-              content = content.replaceAll(oldImport, newImport);
-              changed = true;
-            }
-
-            // Also replace any legacy /app/ imports just in case
-            if (content.contains("'/app/")) {
-              content = content.replaceAll("'/app/", "'package:$newSlug/app/");
+            // Handle package import placeholder
+            if (content.contains('package:structure/')) {
+              content =
+                  content.replaceAll('package:structure/', 'package:$newSlug/');
               changed = true;
             }
 
             if (changed) {
               await entity.writeAsString(content);
             }
-          }
+          } catch (_) {}
         }
       }
-    }
-  }
-
-  Future<void> _updateSettingsGradle(Directory projectDir, String slug) async {
-    final settingsGradle =
-        File(p.join(projectDir.path, 'android', 'settings.gradle'));
-    final settingsGradleKts =
-        File(p.join(projectDir.path, 'android', 'settings.gradle.kts'));
-
-    if (await settingsGradle.exists()) {
-      String content = await settingsGradle.readAsString();
-      // Use a pattern that doesn't clash with delimiters
-      content = content.replaceFirst(
-          RegExp(r'rootProject.name\s*=\s*["\u0027].*["\u0027]'),
-          "rootProject.name = '$slug'");
-      await settingsGradle.writeAsString(content);
-    } else if (await settingsGradleKts.exists()) {
-      String content = await settingsGradleKts.readAsString();
-      content = content.replaceFirst(
-          RegExp(r'rootProject.name\s*=\s*["\u0027].*["\u0027]'),
-          'rootProject.name = "$slug"');
-      await settingsGradleKts.writeAsString(content);
-    }
-  }
-
-  Future<void> _createSkeletonFiles(Directory projectDir) async {
-    // This is now handled by copying from template and rebranding.
-    // We already neutralized sensitive data in the template.
+    } catch (_) {}
   }
 
   Future<void> _updateReadme(Directory projectDir, String projectName) async {
     final readmeFile = File(p.join(projectDir.path, 'README.md'));
-    final content = '''
-# $projectName
+    final content = '''# 📱 $projectName
 
-This project was generated using **DIG CLI**, a powerful Flutter companion tool.
+Created with building blocks from **DIG CLI**.
 
-## 🛠️ Created With
-- **Tool**: DIG CLI (dg)
-- **Author**: [Digvijaysinh Chauhan](https://pub.dev/packages?q=Digvijaysinh+Chauhan)
-- **Packages**: [Check out my Flutter packages on pub.dev](https://pub.dev/packages?q=Digvijaysinh+Chauhan)
-- **Platform**: Flutter
+![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/dart-%230175C2.svg?style=for-the-badge&logo=dart&logoColor=white)
+
+## ✨ Features
+This project comes pre-configured with a robust foundation:
+- 🏗️ **Solid Architecture**: Standardized folder structure for scalability.
+- 🔐 **Secure Defaults**: Auto-generated `API_KEY` and `.env` setup.
+- 🤖 **Android Ready**: Automated JKS signing configuration.
+- 🔥 **Firebase Prepared**: Skeleton setup for easy integration.
 
 ## 🚀 Getting Started
 
-This project is pre-configured with:
-- ✅ **Standardized Directory Structure**
-- ✅ **Automated Android Signing (JKS)**
-- ✅ **Firebase Skeleton Configuration**
-- ✅ **Rebranded Package & Bundle IDs**
-
-### Prerequisites
-- Flutter SDK
-- Java Development Kit (JDK) for Android builds
-
-### Run the App
-1. **Firebase Setup**: Run `flutterfire configure` to generate your actual `firebase_options.dart`.
-2. **Dependencies**: `flutter pub get`
-3. **Launch**: `flutter run`
+### 1️⃣ Setup Environment
 ```bash
-flutterfire configure
+# Get dependencies
 flutter pub get
+
+# Configure Firebase (Required)
+flutterfire configure
+```
+
+### 2️⃣ Run the App
+```bash
+# Development
 flutter run
+
+# Release Build
+flutter build apk --release
+```
+
+## 📂 Project Structure
+```text
+lib/
+├── main.dart          # Entry point
+├── core/              # Shared utilities & configs
+└── features/          # Feature-based organization
 ```
 
 ---
-*Generated by DIG CLI - Created by [Digvijaysinh Chauhan](https://pub.dev/packages?q=Digvijaysinh+Chauhan).*
+Generated by [DIG CLI](https://pub.dev/packages/dig_cli) 🚀
 ''';
     await readmeFile.writeAsString(content);
   }
 
-  // Replicating RenameCommand logic for self-containment and reliability
-  Future<void> _updateAllAppNames(String name) async {
-    // Android
-    final manifestFile = File('android/app/src/main/AndroidManifest.xml');
+  Future<void> _updateAllAppNames(Directory projectDir, String name) async {
+    final manifestFile = File(
+        p.join(projectDir.path, 'android/app/src/main/AndroidManifest.xml'));
     if (await manifestFile.exists()) {
       String content = await manifestFile.readAsString();
       content = content.replaceFirst(
           RegExp(r'android:label="[^"]*"'), 'android:label="$name"');
       await manifestFile.writeAsString(content);
     }
-
-    // iOS
-    final infoPlist = File('ios/Runner/Info.plist');
+    final infoPlist = File(p.join(projectDir.path, 'ios/Runner/Info.plist'));
     if (await infoPlist.exists()) {
       String content = await infoPlist.readAsString();
-      // Update Display Name
       content = content.replaceFirst(
           RegExp(r'<key>CFBundleDisplayName</key>\s*<string>[^<]*</string>'),
           '<key>CFBundleDisplayName</key>\n\t<string>$name</string>');
-      // Update Name
       content = content.replaceFirst(
           RegExp(r'<key>CFBundleName</key>\s*<string>[^<]*</string>'),
           '<key>CFBundleName</key>\n\t<string>$name</string>');
       await infoPlist.writeAsString(content);
     }
+
+    final appConstantFile =
+        File(p.join(projectDir.path, 'lib/app/constants/app_constant.dart'));
+    if (await appConstantFile.exists()) {
+      String content = await appConstantFile.readAsString();
+      content = content.replaceFirst(
+        "static const String appName = 'Structure'",
+        "static const String appName = '$name'",
+      );
+      await appConstantFile.writeAsString(content);
+    }
   }
 
-  Future<void> _updateAllBundleIds(String newId) async {
-    // 1. Android build.gradle
+  Future<void> _updateAllBundleIds(Directory projectDir, String newId) async {
     File? buildGradle;
-    if (await File('android/app/build.gradle.kts').exists()) {
-      buildGradle = File('android/app/build.gradle.kts');
-    } else if (await File('android/app/build.gradle').exists()) {
-      buildGradle = File('android/app/build.gradle');
+    final gradleKts =
+        File(p.join(projectDir.path, 'android/app/build.gradle.kts'));
+    final gradle = File(p.join(projectDir.path, 'android/app/build.gradle'));
+    if (await gradleKts.exists()) {
+      buildGradle = gradleKts;
+    } else if (await gradle.exists()) {
+      buildGradle = gradle;
     }
-
     if (buildGradle != null) {
       String content = await buildGradle.readAsString();
-
-      // Detect old id (from sample)
       final appIdMatch =
           RegExp(r'applicationId\s*[=]?\s*"([^"]+)"').firstMatch(content);
       final oldId = appIdMatch?.group(1);
-
       content = content
           .replaceAllMapped(RegExp(r'applicationId\s*(=)?\s*"[^"]+"'), (match) {
         return match.group(1) != null
@@ -430,26 +464,20 @@ flutter run
             : 'namespace "$newId"';
       });
       await buildGradle.writeAsString(content);
-
       if (oldId != null) {
-        // Restructure directories
-        await _restructureAndroidDirs(oldId, newId);
+        await _restructureAndroidDirs(projectDir, oldId, newId);
       }
     }
-
-    // 2. iOS pbxproj (Global Replace)
-    final pbxproj = File('ios/Runner.xcodeproj/project.pbxproj');
+    final pbxproj =
+        File(p.join(projectDir.path, 'ios/Runner.xcodeproj/project.pbxproj'));
     if (await pbxproj.exists()) {
       String content = await pbxproj.readAsString();
       content = content.replaceAll('com.example.structure', newId);
       await pbxproj.writeAsString(content);
     }
-
-    // 3. iOS Info.plist
-    final infoPlist = File('ios/Runner/Info.plist');
+    final infoPlist = File(p.join(projectDir.path, 'ios/Runner/Info.plist'));
     if (await infoPlist.exists()) {
       String content = await infoPlist.readAsString();
-      // Ensure PRODUCT_BUNDLE_IDENTIFIER usage, or replace hardcoded
       if (!content.contains(r'$(PRODUCT_BUNDLE_IDENTIFIER)')) {
         content = content.replaceFirst(
           RegExp(r'<key>CFBundleIdentifier</key>\s*<string>[^<]+</string>'),
@@ -458,15 +486,12 @@ flutter run
       }
       await infoPlist.writeAsString(content);
     }
-
-    // 4. Firebase Configs (Thorough)
     final filesToUpdate = [
-      'android/app/google-services.json',
-      'ios/Runner/GoogleService-Info.plist',
-      'lib/firebase_options.dart'
+      p.join(projectDir.path, 'android/app/google-services.json'),
+      p.join(projectDir.path, 'ios/Runner/GoogleService-Info.plist'),
+      p.join(projectDir.path, 'lib/firebase_options.dart')
     ];
-
-    for (var path in filesToUpdate) {
+    for (final path in filesToUpdate) {
       final file = File(path);
       if (await file.exists()) {
         String content = await file.readAsString();
@@ -476,48 +501,118 @@ flutter run
     }
   }
 
-  Future<void> _restructureAndroidDirs(String oldId, String newId) async {
-    final platforms = ['kotlin', 'java'];
-    for (final platform in platforms) {
-      final base = 'android/app/src/main/$platform';
-      if (!await Directory(base).exists()) continue;
-
-      final oldPath = oldId.replaceAll('.', p.separator);
-      final newPath = newId.replaceAll('.', p.separator);
-      final oldDir = Directory(p.join(base, oldPath));
-
-      if (await oldDir.exists()) {
-        final newDir = Directory(p.join(base, newPath));
-        await newDir.create(recursive: true);
-
-        await for (var entity in oldDir.list()) {
-          if (entity is File) {
-            String content = await entity.readAsString();
-            // Replace package declaration
-            content = content.replaceFirst(
-                RegExp(r'^package\s+[\w\.]+', multiLine: true),
-                'package $newId');
-            await File(p.join(newDir.path, p.basename(entity.path)))
-                .writeAsString(content);
-            await entity.delete();
+  Future<void> _restructureAndroidDirs(
+      Directory projectDir, String oldId, String newId) async {
+    final oldPath = oldId.replaceAll('.', '/');
+    final newPath = newId.replaceAll('.', '/');
+    final appSrc = p.join(projectDir.path, 'android/app/src');
+    for (var type in ['main', 'debug', 'profile']) {
+      for (var lang in ['kotlin', 'java']) {
+        final sourceDir = Directory(p.join(appSrc, type, lang, oldPath));
+        if (await sourceDir.exists()) {
+          final targetPath = p.join(appSrc, type, lang, newPath);
+          await Directory(targetPath).create(recursive: true);
+          await for (var entity in sourceDir.list()) {
+            final base = p.basename(entity.path);
+            await entity.rename(p.join(targetPath, base));
           }
-        }
-
-        // Cleanup empty parent directories
-        Directory current = oldDir;
-        while (current.path != Directory(base).path) {
-          try {
-            if ((await current.list().toList()).isEmpty) {
-              await current.delete();
-            } else {
-              break;
-            }
-          } catch (_) {
-            break;
+          var current = sourceDir;
+          while (current.path != p.join(appSrc, type, lang) &&
+              (await current.list().isEmpty)) {
+            final parent = current.parent;
+            await current.delete();
+            current = parent;
           }
-          current = current.parent;
         }
       }
+    }
+  }
+
+  Future<void> _mergePubspec(Directory projectDir, String templatePath) async {
+    final targetPubspec = File(p.join(projectDir.path, 'pubspec.yaml'));
+    final templatePubspec = File(p.join(templatePath, 'pubspec.yaml'));
+
+    if (await targetPubspec.exists() && await templatePubspec.exists()) {
+      String templateContent = await templatePubspec.readAsString();
+      // Update name to match the new project slug
+      templateContent = templateContent.replaceFirst(
+          RegExp(r'name:\s+.*'), 'name: ${p.basename(projectDir.path)}');
+      // Update description
+      templateContent = templateContent.replaceFirst(
+          RegExp(r'description:\s+.*'), 'description: Created using DIG CLI');
+
+      // Write the template's pubspec (with updated name) to the target,
+      // effectively "merging" by overwriting with our desired structure.
+      // This ensures all assets, fonts, and dependencies are exactly as in template.
+      await targetPubspec.writeAsString(templateContent);
+    }
+  }
+
+  Future<void> _configureAndroidSigning(Directory projectDir) async {
+    // Inject signing config into android/app/build.gradle
+    final buildGradle =
+        File(p.join(projectDir.path, 'android', 'app', 'build.gradle'));
+    if (await buildGradle.exists()) {
+      String content = await buildGradle.readAsString();
+
+      // 1. Add keystore loading logic before android {} block
+      const keystoreLoader = '''
+def keystorePropertiesFile = rootProject.file("key.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+''';
+      if (!content.contains('def keystoreProperties')) {
+        content = keystoreLoader + content;
+      }
+
+      // 2. Add signingConfigs inside android {}
+      if (!content.contains('signingConfigs {')) {
+        final signingConfig = '''
+    signingConfigs {
+        release {
+            keyAlias = keystoreProperties['keyAlias']
+            keyPassword = keystoreProperties['keyPassword']
+            storeFile = keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword = keystoreProperties['storePassword']
+        }
+    }
+''';
+        // Insert at start of android { block
+        content =
+            content.replaceFirst('android {', 'android {\n$signingConfig');
+      }
+
+      // 3. Apply signingConfig to release buildType
+      if (!content.contains('signingConfig signingConfigs.release')) {
+        content = content.replaceFirst('buildTypes {\n        release {',
+            'buildTypes {\n        release {\n            signingConfig signingConfigs.release');
+      }
+
+      await buildGradle.writeAsString(content);
+    }
+  }
+
+  Future<void> _generateAndInjectSecureKey(Directory projectDir) async {
+    final envFile = File(p.join(projectDir.path, '.env'));
+    if (await envFile.exists()) {
+      // Generate 32 bytes of secure random data
+      final random = Random.secure();
+      final values = List<int>.generate(32, (i) => random.nextInt(256));
+      final secureKey = base64UrlEncode(values);
+
+      String content = await envFile.readAsString();
+      // Replace existing API key or append if missing
+      if (content.contains('API_KEY=')) {
+        content =
+            content.replaceFirst(RegExp(r'API_KEY=.*'), 'API_KEY=$secureKey');
+      } else {
+        content += '\nAPI_KEY=$secureKey';
+      }
+      await envFile.writeAsString(content);
+      kLog('🔐 Generated secure API_KEY in .env', type: LogType.info);
     }
   }
 }

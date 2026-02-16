@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:package_info_plus/package_info_plus.dart';
+
 import '../utils/import.dart';
 
 class DeviceInfoService extends GetxService {
@@ -8,12 +10,13 @@ class DeviceInfoService extends GetxService {
 
   final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
   late Map<String, dynamic> deviceData;
+  late PackageInfo packageInfo;
   String? deviceId;
 
   @override
-  Future<void> onInit() async {
+  void onInit() {
     super.onInit();
-    await fetchAndLogDeviceInfo();
+    fetchAndLogDeviceInfo();
   }
 
   Future<void> fetchAndLogDeviceInfo() async {
@@ -21,6 +24,15 @@ class DeviceInfoService extends GetxService {
     deviceId =
         deviceData['id'] ?? deviceData['identifierForVendor'] ?? 'unknown';
     kLog(title: 'DEVICE_INFO', content: deviceData);
+    kLog(
+      title: 'PACKAGE_INFO',
+      content: {
+        'appName': packageInfo.appName,
+        'packageName': packageInfo.packageName,
+        'version': packageInfo.version,
+        'buildNumber': packageInfo.buildNumber,
+      },
+    );
   }
 
   Future<Map<String, dynamic>> getDeviceInfo() async {

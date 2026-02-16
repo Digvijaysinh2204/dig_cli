@@ -76,11 +76,13 @@ class CustomTextField extends StatelessWidget {
         fillColor: fillColor ?? AppColor.kWhite,
         suffixIcon: suffixIcon,
         prefixIcon: prefixIcon,
-        contentPadding: contentPadding ??
+        contentPadding:
+            contentPadding ??
             const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         border: InputBorder.none,
         hintText: hintText.toString(),
-        hintStyle: hintStyle ??
+        hintStyle:
+            hintStyle ??
             AppTextStyle.medium(
               size: 15,
               color: AppColor.k030303.withValues(alpha: 0.52),
