@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.4] - 2026-02-16
+
+### Changed
+- **Formatting**: Performed a full project-wide code formatting for both the CLI and the project template.
+- **XML Cleanliness**: Optimized `AndroidManifest.xml` and other Android XML resources for better readability and standard indentation.
+
 ## [1.5.3] - 2026-02-16
 
 ### Fixed
