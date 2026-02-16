@@ -44,11 +44,11 @@ class DeviceInfoModel {
   }
 
   Map<String, dynamic> toJson() => {
-    'device_token': deviceToken,
-    'device_type': deviceType.value,
-    'device_id': deviceId,
-    'lang': lang,
-  };
+        'device_token': deviceToken,
+        'device_type': deviceType.value,
+        'device_id': deviceId,
+        'lang': lang,
+      };
 
   String toRawJson() => json.encode(toJson());
 
