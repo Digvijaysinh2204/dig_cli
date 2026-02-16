@@ -19,9 +19,14 @@ A powerful Flutter CLI tool to automate building, cleaning, packaging, and renam
   - Handles Android namespace updates and directory restructuring.
   - Updates bundle IDs and display names across all platform-specific files.
 - **🏗️ Create Module**: Automated GetX scaffolding (`View`, `Controller`, `Binding`, `Export`) with auto-route registration.
+- **🎨 Asset Generation**: Auto-generate type-safe asset constants from your assets directory.
+  - `dg asset build` - Generate once
+  - `dg asset watch` - Auto-regenerate on changes
+  - Simple `dig.yaml` configuration (like `l10n.yaml`)
+  - Separate classes for SVG icons, PNG/JPG images
 - **🛡️ Build Tools**: Release builds with automatic `ProjectName-YYYY-MM-DD` naming.
 - **Deep Clean**: Removes Flutter, Gradle, Xcode, and Pods caches on macOS, Windows, and Linux.
-- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.5.7).
+- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.5.8).
 
 ---
 
@@ -52,6 +57,8 @@ dg
 - **Build AAB**: `dg create bundle`
 - **Clean Project**: `dg clean`
 - **Create ZIP**: `dg zip`
+- **Generate Assets**: `dg asset build`
+- **Watch Assets**: `dg asset watch`
 - **Show Version**: `dg --version`
 
 ---

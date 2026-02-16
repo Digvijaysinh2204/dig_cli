@@ -2,14 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.8] - 2026-02-16
+
+### Added
+
+- **Asset Generation**: New `asset` command to auto-generate type-safe Dart constants from assets
+  - `dg asset build` - Generate asset constants once
+  - `dg asset watch` - Watch for asset changes and auto-regenerate
+  - Configuration via `dig.yaml` (similar to `l10n.yaml`)
+  - Separate classes for each asset type: `IconAssetSVG`, `ImageAssetPNG`, `ImageAssetJPG`, `ImageAssetSVG`
+  - Auto-converts file names to camelCase (`ic_back.svg` → `IconAssetSVG.icBack`)
+  - Skips empty classes (only generates classes with actual files)
+  - Comprehensive warnings and documentation in generated files
+
 ## [1.5.7] - 2026-02-16
 
 ### Added
+
 - **Create Module**: New `create-module` command to automate GetX scaffolding with robust PascalCase naming and auto-registration in routes and exports.
 - **Dashboard UI**: Redesigned the project template's `MainView` into a professional system status dashboard.
 - **Centralized Exports**: Introduced `lib/app/module/module_export.dart` to streamline module imports across the project.
 
 ### Fixed
+
 - **Firebase Robustness**: Wrapped Firebase initialization in `try-catch` blocks within the template. The app now survives and runs gracefully even if Firebase is not configured.
 - **Analysis Cleanup**: Resolved multiple unnecessary imports and analysis warnings in the project template.
 - **Documentation**: Updated the template's `README.md` with clearer Firebase setup guides and a "Run without Firebase" section.
@@ -17,22 +32,26 @@ All notable changes to this project will be documented in this file.
 ## [1.5.5] - 2026-02-16
 
 ### Fixed
+
 - **Firebase Initialization**: Added guards to `Firebase.initializeApp` in the project template to prevent `[core/duplicate-app]` errors during startup or background message handling.
 
 ## [1.5.4] - 2026-02-16
 
 ### Changed
+
 - **Formatting**: Performed a full project-wide code formatting for both the CLI and the project template.
 - **XML Cleanliness**: Optimized `AndroidManifest.xml` and other Android XML resources for better readability and standard indentation.
 
 ## [1.5.3] - 2026-02-16
 
 ### Fixed
+
 - **Update Logic**: Fixed an issue where the CLI would prompt to update even if the installed version matched the latest version. Now strictly checks for newer versions.
 
 ## [1.5.2] - 2026-02-16
 
 ### Fixed
+
 - **Version Info**: The CLI now correctly displays both the **Installed** version and the **Latest** available version from pub.dev. It also shows the **Executable Path**, so you know exactly which binary is running (local vs global).
 - **Package Name**: Fixed an issue where Kotlin/Java files retained the old package name (e.g., `com.example.structure`) after rebranding.
 - **Interactive Menu**: Code cleanup and import fixes for better stability.
