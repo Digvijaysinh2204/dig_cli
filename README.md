@@ -10,15 +10,17 @@ A powerful Flutter CLI tool to automate building, cleaning, packaging, and renam
 ## 🚀 Features
 
 - **Interactive Menu**: Easy navigation; run the tool without commands for a guided experience.
-- **✨ Create Project**: Bootstrap a **"Proper" Flutter Project** with pre-configured structure, JKS signing, and Firebase skeletons.
+- **✨ Create Project**: Bootstrap a **"Proper" Flutter Project** (v1.5.0 Standard) with:
+  - **Dynamic App Name**: Auto-injects your app name into `AppConstant` and `AndroidManifest`.
+  - **Download Manager**: Pre-configured `GetxService` for robust background downloads & localization.
+  - **JKS Automation**: Auto-generates unique keystores and configures signing.
+  - **Secure Defaults**: Generates cryptographically secure API keys in `.env`.
 - **🏷️ Rename App**: Smart renaming for **Android, iOS, macOS, Windows, Linux, and Web**.
   - Handles Android namespace updates and directory restructuring.
   - Updates bundle IDs and display names across all platform-specific files.
-- **🛡️ JKS Automation**: Automated generation of JKS keystores and signing configuration for Android release builds.
-- **Build APK/AAB**: Release builds with automatic `ProjectName-YYYY-MM-DD-HH-MM` naming.
+- **🛡️ Build Tools**: Release builds with automatic `ProjectName-YYYY-MM-DD` naming.
 - **Deep Clean**: Removes Flutter, Gradle, Xcode, and Pods caches on macOS, Windows, and Linux.
-- **Create Clean ZIP**: Packages your project into a ZIP file, excluding files from `.gitignore`.
-- **Auto Update Check**: Checks for new versions on pub.dev and provides an update option.
+- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.5.0).
 
 ---
 
