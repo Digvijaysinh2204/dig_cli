@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1] - 2026-02-16
+
+### Fixed
+
+- **Cleanup**: Fixed an issue where default Flutter assets (like specific Android launcher icons and Kotlin files) were persisting after project creation.
+- **Assets**: Ensures `android/app/src/main/res` and `ios/Runner/Assets.xcassets` are fully replaced by the template, preventing duplicate resources.
+
 ## [1.5.0] - 2026-02-16
 
 ### Added

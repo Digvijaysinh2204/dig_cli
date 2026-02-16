@@ -128,6 +128,11 @@ class CreateProjectCommand extends Command {
         }
       });
 
+      // 3.5 Cleanup Default Assets (To prevent duplicates/ghost files)
+      await runWithSpinner('🧹 Clearing default Flutter assets...', () async {
+        await _cleanupDefaultFlutterAssets(targetDir);
+      });
+
       // 4. Overlay Template Structure (File-by-File Overlay)
       await runWithSpinner('📝 Applying template overlay...', () async {
         // Iterate through template files (skipping test/)
@@ -613,6 +618,25 @@ if (keystorePropertiesFile.exists()) {
       }
       await envFile.writeAsString(content);
       kLog('🔐 Generated secure API_KEY in .env', type: LogType.info);
+    }
+  }
+
+  Future<void> _cleanupDefaultFlutterAssets(Directory projectDir) async {
+    final pathsToDelete = [
+      // Android: Remove default resources (icons, styles) and sources (kotlin/java)
+      // We want our template to be the source of truth, not a merge.
+      'android/app/src/main/res',
+      'android/app/src/main/kotlin',
+      'android/app/src/main/java',
+      // iOS: Remove default assets (AppIcon)
+      'ios/Runner/Assets.xcassets',
+    ];
+
+    for (final path in pathsToDelete) {
+      final dir = Directory(p.join(projectDir.path, path));
+      if (await dir.exists()) {
+        await dir.delete(recursive: true);
+      }
     }
   }
 }
