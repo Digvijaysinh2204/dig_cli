@@ -221,7 +221,8 @@ Future<void> showInteractiveMenu() async {
       .add({'label': '� Pub Cache Repair', 'action': () => repairPubCache()});
   displayOptions.add(
       {'label': '�📖 Version & Info', 'action': () => VersionCommand().run()});
-  if (latestStable != null) {
+  if (latestStable != null &&
+      VersionUtils.isNewer(latestStable!, kDigCliVersion)) {
     displayOptions.add({
       'label': '✨ Update to v$latestStable',
       'action': () => _runUpdateProcess(),

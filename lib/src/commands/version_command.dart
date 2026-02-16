@@ -68,13 +68,13 @@ class VersionCommand extends Command {
       final latestText = 'Latest: v$latestVersion';
       print(borderPen('║') +
           ' ' * ((totalWidth - latestText.length - 2) / 2).floor() +
-          (currentVersion == latestVersion
-              ? versionPen(latestText)
-              : warningPen(latestText)) +
+          (VersionUtils.isNewer(latestVersion, currentVersion)
+              ? warningPen(latestText)
+              : versionPen(latestText)) +
           ' ' * ((totalWidth - latestText.length - 2) / 2).ceil() +
           borderPen('║'));
 
-      if (currentVersion != latestVersion) {
+      if (VersionUtils.isNewer(latestVersion, currentVersion)) {
         print(borderPen('║') + ' ' * (totalWidth - 2) + borderPen('║'));
         final updateMsg = 'Update available!';
         print(borderPen('║') +

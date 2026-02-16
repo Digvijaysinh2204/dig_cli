@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.3] - 2026-02-16
+
+### Fixed
+- **Update Logic**: Fixed an issue where the CLI would prompt to update even if the installed version matched the latest version. Now strictly checks for newer versions.
+
 ## [1.5.2] - 2026-02-16
 
 ### Fixed

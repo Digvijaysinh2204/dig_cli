@@ -17,10 +17,18 @@ class VersionUtils {
     return null;
   }
 
+  static bool isNewer(String latest, String current) {
+    try {
+      return Version.parse(latest) > Version.parse(current);
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<bool> isUpdateAvailable() async {
     final latest = await getLatestStableVersion();
     if (latest != null) {
-      return Version.parse(latest) > Version.parse(kDigCliVersion);
+      return isNewer(latest, kDigCliVersion);
     }
     return false;
   }
