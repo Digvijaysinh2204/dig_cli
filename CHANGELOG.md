@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-02-16
+
+### Added
+
+- **Project Structure**: Introduced a new "Flutter Create First" approach for cleaner, compliant projects.
+- **Dynamic App Name**: CLI now auto-injects your project name into `AppConstant` during creation.
+- **Dependencies**: Added `package_info_plus` to the template for runtime metadata access.
+- **Download Manager**: New refactored `DownloadManager` service for handling file downloads.
+- **Localization**: Added dynamic localization support for download notifications.
+- **Notification Service**: Enhanced notification handling with improved reliability.
+- **JKS Cleanup**: Automatically removes `sample.jks` and generates a project-specific keystore.
+- **Secure API Key**: Generates a secure API key in `.env` during project creation.
+- **Improved README**: Generates a premium `README.md` with project details.
+
+### Changed
+
+- **Config**: Updated iOS icon to a simplified 1024x1024 source.
+- **Resources**: Synced Android `res` styles and colors, added notification icon.
+- **Refactoring**: Extensive code cleanup and formatting across the CLI and template.
+- **Documentation**: Updated walkthroughs and task tracking.
+
+### Fixed
+
+- **Download Manager**: Refactored to a proper `GetxService` (removed singleton instance).
+- **Service Access**: Fixed dependency injection issues in `DownloadManager`.
+- **Initialization**: `DownloadManager` is now properly initialized in `InitialBindings`.
+
 ## [1.2.7] - 2026-01-05
 
 ### Fixed
