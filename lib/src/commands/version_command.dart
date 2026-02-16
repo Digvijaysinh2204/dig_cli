@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:ansicolor/ansicolor.dart';
 import 'package:args/command_runner.dart';
 
@@ -31,14 +33,14 @@ class VersionCommand extends Command {
 
     print('');
     print(borderPen(topBorder));
-    
+
     // Title
     print(borderPen('║') +
         ' ' * ((totalWidth - title.length - 2) / 2).floor() +
         titlePen(title) +
         ' ' * ((totalWidth - title.length - 2) / 2).ceil() +
         borderPen('║'));
-    
+
     print(borderPen('║') + ' ' * (totalWidth - 2) + borderPen('║'));
 
     // Version Info
@@ -49,26 +51,41 @@ class VersionCommand extends Command {
         ' ' * ((totalWidth - installedText.length - 2) / 2).ceil() +
         borderPen('║'));
 
+    // Executable Path (Local verification)
+    final scriptPath = Platform.script.toFilePath();
+    // Truncate if too long
+    final displayPath = scriptPath.length > (totalWidth - 4)
+        ? '...${scriptPath.substring(scriptPath.length - (totalWidth - 7))}'
+        : scriptPath;
+
+    print(borderPen('║') +
+        ' ' * ((totalWidth - displayPath.length - 2) / 2).floor() +
+        (AnsiPen()..gray(level: 0.5))(displayPath) +
+        ' ' * ((totalWidth - displayPath.length - 2) / 2).ceil() +
+        borderPen('║'));
+
     if (latestVersion != null) {
       final latestText = 'Latest: v$latestVersion';
       print(borderPen('║') +
           ' ' * ((totalWidth - latestText.length - 2) / 2).floor() +
-          (currentVersion == latestVersion ? versionPen(latestText) : warningPen(latestText)) +
+          (currentVersion == latestVersion
+              ? versionPen(latestText)
+              : warningPen(latestText)) +
           ' ' * ((totalWidth - latestText.length - 2) / 2).ceil() +
           borderPen('║'));
-      
+
       if (currentVersion != latestVersion) {
-         print(borderPen('║') + ' ' * (totalWidth - 2) + borderPen('║'));
-         final updateMsg = 'Update available!';
-         print(borderPen('║') +
+        print(borderPen('║') + ' ' * (totalWidth - 2) + borderPen('║'));
+        final updateMsg = 'Update available!';
+        print(borderPen('║') +
             ' ' * ((totalWidth - updateMsg.length - 2) / 2).floor() +
             warningPen(updateMsg) +
             ' ' * ((totalWidth - updateMsg.length - 2) / 2).ceil() +
             borderPen('║'));
       }
     } else {
-       final checkingText = 'Latest: (Check failed)';
-       print(borderPen('║') +
+      final checkingText = 'Latest: (Check failed)';
+      print(borderPen('║') +
           ' ' * ((totalWidth - checkingText.length - 2) / 2).floor() +
           warningPen(checkingText) +
           ' ' * ((totalWidth - checkingText.length - 2) / 2).ceil() +

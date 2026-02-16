@@ -20,21 +20,6 @@ import 'utils/logger.dart';
 import 'utils/project_utils.dart';
 import 'utils/spinner.dart';
 
-Future<String?> _getLatestStableVersion() async {
-  try {
-    final url = Uri.parse('https://pub.dev/api/packages/dig_cli');
-    final response = await http.get(url).timeout(const Duration(seconds: 2));
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
-      final latestVersion = json['latest']['version'] as String;
-      if (Version.parse(latestVersion) > Version.parse(kDigCliVersion)) {
-        return latestVersion;
-      }
-    }
-  } catch (_) {}
-  return null;
-}
-
 Future<void> _runUpdateProcess() async {
   kLog('\n🚀 Starting CLI update...', type: LogType.info);
   try {
@@ -89,7 +74,7 @@ Future<void> showInteractiveMenu() async {
 
   String? latestStable;
   await runWithSpinner('🔍 Checking for updates...', () async {
-    latestStable = await _getLatestStableVersion();
+    latestStable = await VersionUtils.getLatestStableVersion();
   });
 
   final displayOptions = <Map<String, dynamic>>[];

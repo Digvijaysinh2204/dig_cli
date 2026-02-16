@@ -46,7 +46,8 @@ class CustomRadioButton<T> extends StatelessWidget {
             const Gap(8),
             CustomTextView(
               text: label!,
-              style: labelStyle ??
+              style:
+                  labelStyle ??
                   AppTextStyle.semiBold(size: 16, color: AppColor.k030303),
             ),
           ],
