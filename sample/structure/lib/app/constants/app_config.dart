@@ -38,7 +38,13 @@ class AppConfig {
     }
   }
 
-  static FirebaseOptions get firebaseOptions {
-    return DefaultFirebaseOptions.currentPlatform;
+  static FirebaseOptions? get firebaseOptions {
+    try {
+      final options = DefaultFirebaseOptions.currentPlatform;
+      if (options.projectId.isEmpty) return null;
+      return options;
+    } catch (_) {
+      return null;
+    }
   }
 }

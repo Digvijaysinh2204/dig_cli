@@ -13,7 +13,7 @@ void notificationTapBackground(NotificationResponse notificationResponse) {
 }
 
 class NotificationService extends GetxService {
-  final FirebaseMessaging messaging = FirebaseMessaging.instance;
+  FirebaseMessaging get messaging => FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
@@ -54,6 +54,8 @@ class NotificationService extends GetxService {
       DateTime.now().millisecondsSinceEpoch.remainder(100000);
 
   void _initializeFirebaseListeners() {
+    if (AppConfig.firebaseOptions == null) return;
+
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       try {
         kLog(content: message.toMap(), title: 'FOREGROUND_NOTIFICATION');
@@ -84,7 +86,8 @@ class NotificationService extends GetxService {
 
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(_channel);
 
     await _flutterLocalNotificationsPlugin.initialize(
@@ -159,19 +162,21 @@ class NotificationService extends GetxService {
       }
     }
 
-    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage != null) {
-      kLog(
-        content: 'App opened from terminated (FCM)',
-        title: 'NOTIFICATION_STATE',
-      );
-      _updateNotificationCount();
-      await _handleMessageFromData(initialMessage.data);
+    if (AppConfig.firebaseOptions != null) {
+      final initialMessage = await messaging.getInitialMessage();
+      if (initialMessage != null) {
+        kLog(
+          content: 'App opened from terminated (FCM)',
+          title: 'NOTIFICATION_STATE',
+        );
+        _updateNotificationCount();
+        await _handleMessageFromData(initialMessage.data);
+      }
     }
   }
 
   Future<void> _setupIOS() async {
-    if (Platform.isIOS) {
+    if (Platform.isIOS && AppConfig.firebaseOptions != null) {
       await messaging.setForegroundNotificationPresentationOptions(
         alert: true,
         badge: true,
@@ -181,6 +186,8 @@ class NotificationService extends GetxService {
   }
 
   Future<void> _requestNotificationPermission() async {
+    if (AppConfig.firebaseOptions == null) return;
+
     final settings = await messaging.requestPermission(
       alert: true,
       announcement: true,
@@ -201,6 +208,8 @@ class NotificationService extends GetxService {
   }
 
   Future<void> getFirebaseToken() async {
+    if (AppConfig.firebaseOptions == null) return;
+
     try {
       if (Platform.isIOS) await messaging.getAPNSToken();
       final token = await messaging.getToken() ?? 'N/A';

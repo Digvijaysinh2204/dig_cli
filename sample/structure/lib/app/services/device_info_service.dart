@@ -10,7 +10,7 @@ class DeviceInfoService extends GetxService {
 
   final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
   late Map<String, dynamic> deviceData;
-  late PackageInfo packageInfo;
+  PackageInfo? packageInfo;
   String? deviceId;
 
   @override
@@ -20,19 +20,22 @@ class DeviceInfoService extends GetxService {
   }
 
   Future<void> fetchAndLogDeviceInfo() async {
+    packageInfo = await PackageInfo.fromPlatform();
     deviceData = await getDeviceInfo();
     deviceId =
         deviceData['id'] ?? deviceData['identifierForVendor'] ?? 'unknown';
     kLog(title: 'DEVICE_INFO', content: deviceData);
-    kLog(
-      title: 'PACKAGE_INFO',
-      content: {
-        'appName': packageInfo.appName,
-        'packageName': packageInfo.packageName,
-        'version': packageInfo.version,
-        'buildNumber': packageInfo.buildNumber,
-      },
-    );
+    if (packageInfo != null) {
+      kLog(
+        title: 'PACKAGE_INFO',
+        content: {
+          'appName': packageInfo!.appName,
+          'packageName': packageInfo!.packageName,
+          'version': packageInfo!.version,
+          'buildNumber': packageInfo!.buildNumber,
+        },
+      );
+    }
   }
 
   Future<Map<String, dynamic>> getDeviceInfo() async {

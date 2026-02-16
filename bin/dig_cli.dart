@@ -10,6 +10,7 @@ import 'package:dig_cli/src/commands/ios_build_command.dart';
 import 'package:dig_cli/src/commands/rename_command.dart';
 import 'package:dig_cli/src/commands/version_command.dart';
 import 'package:dig_cli/src/commands/zip_command.dart';
+import 'package:dig_cli/src/commands/create_module_command.dart';
 import 'package:dig_cli/src/interactive_menu.dart';
 
 void main(List<String> arguments) async {
@@ -21,6 +22,7 @@ void main(List<String> arguments) async {
     ..addCommand(HashKeyCommand())
     ..addCommand(CreateJksCommand())
     ..addCommand(CreateProjectCommand())
+    ..addCommand(CreateModuleCommand())
     ..addCommand(IosBuildCommand())
     ..addCommand(VersionCommand());
 

@@ -1,6 +1,5 @@
 import 'dart:developer' show log;
 
-import '../constants/app_config.dart';
 import 'import.dart';
 
 void kLog({required dynamic content, String title = ''}) {

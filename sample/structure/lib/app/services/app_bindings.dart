@@ -1,4 +1,3 @@
-import '../constants/app_config.dart';
 import '../utils/import.dart';
 
 class AppBindings extends Bindings {
@@ -10,9 +9,7 @@ class AppBindings extends Bindings {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(options: AppConfig.firebaseOptions);
-    }
+    await FirebaseUtils.safeInitialize();
     Get.put<ThemeService>(ThemeService(), permanent: true);
     Get.put<LanguageService>(LanguageService(), permanent: true);
     await Get.putAsync(() => NetworkService().init());

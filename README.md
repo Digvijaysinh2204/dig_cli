@@ -18,9 +18,10 @@ A powerful Flutter CLI tool to automate building, cleaning, packaging, and renam
 - **🏷️ Rename App**: Smart renaming for **Android, iOS, macOS, Windows, Linux, and Web**.
   - Handles Android namespace updates and directory restructuring.
   - Updates bundle IDs and display names across all platform-specific files.
+- **🏗️ Create Module**: Automated GetX scaffolding (`View`, `Controller`, `Binding`, `Export`) with auto-route registration.
 - **🛡️ Build Tools**: Release builds with automatic `ProjectName-YYYY-MM-DD` naming.
 - **Deep Clean**: Removes Flutter, Gradle, Xcode, and Pods caches on macOS, Windows, and Linux.
-- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.5.0).
+- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.5.7).
 
 ---
 
@@ -45,6 +46,7 @@ dg
 ### Direct Commands
 
 - **Create Project**: `dg create-project`
+- **Create Module**: `dg create-module auth` (or `dg create-module -n auth`)
 - **Rename App**: `dg rename --name "New Name" --bundle-id com.new.id`
 - **Build APK**: `dg create apk`
 - **Build AAB**: `dg create bundle`

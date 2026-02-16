@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.7] - 2026-02-16
+
+### Added
+- **Create Module**: New `create-module` command to automate GetX scaffolding with robust PascalCase naming and auto-registration in routes and exports.
+- **Dashboard UI**: Redesigned the project template's `MainView` into a professional system status dashboard.
+- **Centralized Exports**: Introduced `lib/app/module/module_export.dart` to streamline module imports across the project.
+
+### Fixed
+- **Firebase Robustness**: Wrapped Firebase initialization in `try-catch` blocks within the template. The app now survives and runs gracefully even if Firebase is not configured.
+- **Analysis Cleanup**: Resolved multiple unnecessary imports and analysis warnings in the project template.
+- **Documentation**: Updated the template's `README.md` with clearer Firebase setup guides and a "Run without Firebase" section.
+
 ## [1.5.5] - 2026-02-16
 
 ### Fixed

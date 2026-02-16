@@ -53,7 +53,7 @@ class DefaultFirebaseOptions {
     apiKey: 'YOUR_ANDROID_API_KEY',
     appId: 'YOUR_ANDROID_APP_ID',
     messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
+    projectId: '',
     databaseURL: 'https://YOUR_PROJECT_ID.firebaseio.com',
     storageBucket: 'YOUR_PROJECT_ID.appspot.com',
   );
@@ -62,7 +62,7 @@ class DefaultFirebaseOptions {
     apiKey: 'YOUR_IOS_API_KEY',
     appId: 'YOUR_IOS_APP_ID',
     messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
+    projectId: '',
     databaseURL: 'https://YOUR_PROJECT_ID.firebaseio.com',
     storageBucket: 'YOUR_PROJECT_ID.appspot.com',
     androidClientId: 'YOUR_ANDROID_CLIENT_ID',

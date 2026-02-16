@@ -1,5 +1,4 @@
-import '../module/main/main_export.dart';
-import '../module/splash/splash_export.dart';
+import '../module/module_export.dart';
 import '../utils/import.dart';
 
 class AppPage {

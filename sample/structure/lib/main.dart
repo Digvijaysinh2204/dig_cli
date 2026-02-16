@@ -1,20 +1,18 @@
 import 'app/bindings/initial_bindings.dart';
-import 'app/constants/app_config.dart';
 import 'app/utils/import.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(options: AppConfig.firebaseOptions);
-  }
+  await FirebaseUtils.safeInitialize();
   kLog(content: message.toMap(), title: 'BACKGROUND NOTIFICATION');
 }
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  AppConfig.setEnvironment(Environment.debug);
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await AppBindings().dependencies();
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   runApp(
     const ToastificationWrapper(
       config: ToastificationConfig(
