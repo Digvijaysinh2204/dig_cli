@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.2] - 2026-02-16
+
+### Fixed
+- **Version Info**: The CLI now correctly displays both the **Installed** version and the **Latest** available version from pub.dev, resolving confusion.
+- **Package Name**: Fixed an issue where Kotlin/Java files retained the old package name (e.g., `com.example.structure`) after rebranding. The CLI now properly updates the `package` declaration to match your new bundle ID.
+- **Interactive Menu**: Code cleanup and import fixes for better stability.
+
 ## [1.5.1] - 2026-02-16
 
 ### Fixed

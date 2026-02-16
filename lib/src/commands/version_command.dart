@@ -1,6 +1,7 @@
 import 'package:ansicolor/ansicolor.dart';
 import 'package:args/command_runner.dart';
 
+import '../utils/version_utils.dart';
 import '../version_helper.dart';
 
 class VersionCommand extends Command {
@@ -13,25 +14,70 @@ class VersionCommand extends Command {
   @override
   Future<void> run() async {
     const currentVersion = kDigCliVersion;
+    final String? latestVersion = await VersionUtils.getLatestStableVersion();
+
     final borderPen = AnsiPen()..blue();
     final titlePen = AnsiPen()..white(bold: true);
     final textPen = AnsiPen()..cyan();
+    final versionPen = AnsiPen()..green();
+    final warningPen = AnsiPen()..yellow();
 
-    final title = 'DIG CLI TOOL v$currentVersion';
+    final title = 'DIG CLI TOOL';
     final author = 'Made with ❤️ by Digvijaysinh Chauhan';
-    final totalWidth = 42;
+    final totalWidth = 50; // Increased width for version info
 
     final topBorder = '╔${'═' * (totalWidth - 2)}╗';
     final bottomBorder = '╚${'═' * (totalWidth - 2)}╝';
 
     print('');
     print(borderPen(topBorder));
+    
+    // Title
     print(borderPen('║') +
         ' ' * ((totalWidth - title.length - 2) / 2).floor() +
         titlePen(title) +
         ' ' * ((totalWidth - title.length - 2) / 2).ceil() +
         borderPen('║'));
+    
     print(borderPen('║') + ' ' * (totalWidth - 2) + borderPen('║'));
+
+    // Version Info
+    final installedText = 'Installed: v$currentVersion';
+    print(borderPen('║') +
+        ' ' * ((totalWidth - installedText.length - 2) / 2).floor() +
+        textPen(installedText) +
+        ' ' * ((totalWidth - installedText.length - 2) / 2).ceil() +
+        borderPen('║'));
+
+    if (latestVersion != null) {
+      final latestText = 'Latest: v$latestVersion';
+      print(borderPen('║') +
+          ' ' * ((totalWidth - latestText.length - 2) / 2).floor() +
+          (currentVersion == latestVersion ? versionPen(latestText) : warningPen(latestText)) +
+          ' ' * ((totalWidth - latestText.length - 2) / 2).ceil() +
+          borderPen('║'));
+      
+      if (currentVersion != latestVersion) {
+         print(borderPen('║') + ' ' * (totalWidth - 2) + borderPen('║'));
+         final updateMsg = 'Update available!';
+         print(borderPen('║') +
+            ' ' * ((totalWidth - updateMsg.length - 2) / 2).floor() +
+            warningPen(updateMsg) +
+            ' ' * ((totalWidth - updateMsg.length - 2) / 2).ceil() +
+            borderPen('║'));
+      }
+    } else {
+       final checkingText = 'Latest: (Check failed)';
+       print(borderPen('║') +
+          ' ' * ((totalWidth - checkingText.length - 2) / 2).floor() +
+          warningPen(checkingText) +
+          ' ' * ((totalWidth - checkingText.length - 2) / 2).ceil() +
+          borderPen('║'));
+    }
+
+    print(borderPen('║') + ' ' * (totalWidth - 2) + borderPen('║'));
+
+    // Author
     print(borderPen('║') +
         ' ' * ((totalWidth - author.length - 2) / 2).floor() +
         textPen(author) +

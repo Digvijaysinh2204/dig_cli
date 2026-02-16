@@ -1,12 +1,10 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:ansicolor/ansicolor.dart';
-import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
-import 'package:pub_semver/pub_semver.dart';
 
 import '../src/version_helper.dart';
+import 'utils/version_utils.dart'; // Import the new VersionUtils
 import 'commands/build_command.dart';
 import 'commands/clean_command.dart';
 import 'commands/create_jks_command.dart';
