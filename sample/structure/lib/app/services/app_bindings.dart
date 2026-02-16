@@ -10,7 +10,9 @@ class AppBindings extends Bindings {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    await Firebase.initializeApp(options: AppConfig.firebaseOptions);
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(options: AppConfig.firebaseOptions);
+    }
     Get.put<ThemeService>(ThemeService(), permanent: true);
     Get.put<LanguageService>(LanguageService(), permanent: true);
     await Get.putAsync(() => NetworkService().init());

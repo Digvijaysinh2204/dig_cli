@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.5] - 2026-02-16
+
+### Fixed
+- **Firebase Initialization**: Added guards to `Firebase.initializeApp` in the project template to prevent `[core/duplicate-app]` errors during startup or background message handling.
+
 ## [1.5.4] - 2026-02-16
 
 ### Changed

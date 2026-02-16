@@ -4,7 +4,9 @@ import 'app/utils/import.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: AppConfig.firebaseOptions);
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(options: AppConfig.firebaseOptions);
+  }
   kLog(content: message.toMap(), title: 'BACKGROUND NOTIFICATION');
 }
 
