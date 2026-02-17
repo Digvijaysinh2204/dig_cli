@@ -167,17 +167,16 @@ Map<String, Map<String, List<_AssetInfo>>> _scanAssets(
 
       // Get all folder parts between 'assets' and the file
       var subfolders = pathParts.sublist(1, pathParts.length - 1);
-      
+
       // If the last subfolder matches the file extension, remove it
       // This prevents: assets/icons/svg/ + svg → IconsSvgSvg
       // Instead: assets/icons/ + svg → IconsSvg
       if (subfolders.isNotEmpty && subfolders.last == extension) {
         subfolders = subfolders.sublist(0, subfolders.length - 1);
       }
-      
+
       // If no subfolders left, skip this file
       if (subfolders.isEmpty) continue;
-
 
       // Join subfolders with underscore for nested paths
       // assets/icons/home/icon.svg → icons_home
