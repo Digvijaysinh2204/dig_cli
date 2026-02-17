@@ -1,3 +1,11 @@
 assets-dir: assets/
-output-file: assets.dart
 output-dir: lib/generated
+
+# Optional: Skip/exclude specific folders from asset generation
+# Examples:
+# skip: icons              # Skip entire icons folder
+# skip: icons/svg          # Skip only icons/svg subfolder
+# skip: fonts              # Skip entire fonts folder
+# skip:                    # Skip multiple folders
+#   - icons
+#   - fonts

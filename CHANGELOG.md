@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.9] - 2026-02-17
+
+### Enhanced
+
+- **Asset Generation**: Major improvements to the `asset` command
+  - **Multi-file Structure**: Assets now organized into separate files by category and type
+    - `IconsPng`, `IconsSvg`, `ImagesPng`, `ImagesJpg`, `FontsTtf`, `FontsOtf`
+    - Category export files: `icons.dart`, `images.dart`, `fonts.dart`
+    - Single main export: `assets.dart` for easy imports
+  - **Skip/Exclude Feature**: New `skip` configuration in `dig.yaml`
+    - Skip entire folders: `skip: icons`
+    - Skip specific subfolders: `skip: icons/svg`
+    - Skip multiple folders with list syntax
+  - **Improved Naming**: Better camelCase conversion handles any file name format
+    - `semi-bold.ttf` → `semiBold`
+    - `SOmeIcon.svg` → `someIcon`
+    - `ic_back.svg` → `icBack`
+  - **Better Organization**: Default output changed to `lib/generated` (configurable)
+  - **Enhanced Output**: Shows all generated files in tree structure
+
+### Fixed
+
+- **Version Check**: Fixed issue where update prompt showed even when already on latest version
+  - Now correctly syncs `kDigCliVersion` with `pubspec.yaml`
+- **Analysis Options**: Added `flutter_lints` to sample project dependencies to fix warnings
+
 ## [1.5.8] - 2026-02-16
 
 ### Added

@@ -52,8 +52,7 @@ Future<void> _buildAssets() async {
     print('💡 Create dig.yaml file with configuration:');
     print('''
 assets-dir: assets/
-output-file: assets.dart
-output-dir: lib/generated
+output-dir: lib/gen
 ''');
     exit(1);
   }
@@ -67,25 +66,32 @@ output-dir: lib/generated
     exit(1);
   }
 
-  final outputDir = config['output-dir'] as String? ?? 'lib/generated';
-  final outputFileName = config['output-file'] as String? ?? 'assets.dart';
-  final outputPath = '$outputDir/$outputFileName';
+  final outputDir = config['output-dir'] as String? ?? 'lib/gen';
 
-  final assets = _scanAssets(assetsDir);
-  final generatedCode = _generateCode(assets);
+  // Get skip/exclude patterns from config
+  final skipPatterns = <String>[];
+  if (config['skip'] != null) {
+    final skipConfig = config['skip'];
+    if (skipConfig is List) {
+      skipPatterns.addAll(skipConfig.map((e) => e.toString()));
+    } else if (skipConfig is String) {
+      skipPatterns.add(skipConfig);
+    }
+  }
 
-  final outputFile = File(outputPath);
-  outputFile.createSync(recursive: true);
-  outputFile.writeAsStringSync(generatedCode);
+  // Scan assets and organize by category and type
+  final assets = _scanAssets(assetsDir, skipPatterns);
 
-  print(
-      '✅ Generated ${assets.values.fold(0, (sum, list) => sum + list.length)} asset constants');
-  print('📝 Updated: ${outputFile.path}\n');
+  // Generate all files
+  final generatedFiles = _generateMultipleFiles(assets, outputDir);
 
   // Print summary
-  assets.forEach((category, files) {
-    print('  $category: ${files.length} files');
-  });
+  print('✅ Generated ${_countTotalAssets(assets)} asset constants\n');
+  print('📁 Generated Files:');
+  for (final file in generatedFiles) {
+    print('  $file');
+  }
+  print('');
 }
 
 Future<void> _watchAssets() async {
@@ -106,7 +112,11 @@ Future<void> _watchAssets() async {
     if (path.endsWith('.svg') ||
         path.endsWith('.png') ||
         path.endsWith('.jpg') ||
-        path.endsWith('.jpeg')) {
+        path.endsWith('.jpeg') ||
+        path.endsWith('.ttf') ||
+        path.endsWith('.otf') ||
+        path.endsWith('.webp') ||
+        path.endsWith('.gif')) {
       print('\n📁 Detected change: ${path.split(Platform.pathSeparator).last}');
       _buildAssets();
     }
@@ -119,12 +129,25 @@ Future<void> _watchAssets() async {
   print('\n👋 Stopped watching');
 }
 
-Map<String, List<_AssetInfo>> _scanAssets(Directory dir) {
-  final assets = <String, List<_AssetInfo>>{
-    'ImageAssetPNG': [],
-    'ImageAssetSVG': [],
-    'ImageAssetJPG': [],
-    'IconAssetSVG': [],
+/// Scan assets and organize by category and file type
+/// Returns: {
+///   'icons': {
+///     'png': [AssetInfo...],
+///     'svg': [AssetInfo...],
+///   },
+///   'images': {
+///     'png': [AssetInfo...],
+///   },
+///   'fonts': {
+///     'ttf': [AssetInfo...],
+///   }
+/// }
+Map<String, Map<String, List<_AssetInfo>>> _scanAssets(
+    Directory dir, List<String> skipPatterns) {
+  final assets = <String, Map<String, List<_AssetInfo>>>{
+    'icons': {},
+    'images': {},
+    'fonts': {},
   };
 
   final allFiles = dir.listSync(recursive: true);
@@ -135,22 +158,50 @@ Map<String, List<_AssetInfo>> _scanAssets(Directory dir) {
       final extension = path.split('.').last.toLowerCase();
       final relativePath = path.substring(path.indexOf('assets/'));
 
-      String? matchedCategory;
-
-      if (path.contains('icons/svg') && extension == 'svg') {
-        matchedCategory = 'IconAssetSVG';
-      } else if (extension == 'svg') {
-        matchedCategory = 'ImageAssetSVG';
-      } else if (extension == 'png') {
-        matchedCategory = 'ImageAssetPNG';
-      } else if (extension == 'jpg' || extension == 'jpeg') {
-        matchedCategory = 'ImageAssetJPG';
+      // Check if this path should be skipped
+      if (_shouldSkip(relativePath, skipPatterns)) {
+        continue;
       }
 
-      if (matchedCategory != null) {
+      String? category;
+      String? fileType;
+
+      // Determine category based on folder structure
+      if (path.contains('/icons/')) {
+        category = 'icons';
+      } else if (path.contains('/fonts/')) {
+        category = 'fonts';
+      } else if (path.contains('/images/')) {
+        category = 'images';
+      } else {
+        // Default categorization based on extension
+        if (extension == 'ttf' || extension == 'otf') {
+          category = 'fonts';
+        } else {
+          category = 'images';
+        }
+      }
+
+      // Determine file type
+      if (extension == 'png' ||
+          extension == 'jpg' ||
+          extension == 'jpeg' ||
+          extension == 'svg' ||
+          extension == 'webp' ||
+          extension == 'gif') {
+        fileType = extension == 'jpeg' ? 'jpg' : extension;
+      } else if (extension == 'ttf' || extension == 'otf') {
+        fileType = extension;
+      }
+
+      if (fileType != null) {
+        // Initialize the file type list if it doesn't exist
+        assets[category]!.putIfAbsent(fileType, () => []);
+
         final fileName = path.split('/').last.split('.').first;
         final constantName = _toConstantName(fileName);
-        assets[matchedCategory]!.add(_AssetInfo(constantName, relativePath));
+        assets[category]![fileType]!
+            .add(_AssetInfo(constantName, relativePath));
       }
     }
   }
@@ -159,20 +210,30 @@ Map<String, List<_AssetInfo>> _scanAssets(Directory dir) {
 }
 
 String _toConstantName(String fileName) {
-  // Preserve original file name structure
-  // ic_back.svg -> icBack
-  // my_icon.svg -> myIcon
-  // some-icon.svg -> someIcon
+  // Convert any file name format to proper camelCase
+  // Examples:
+  // - ic_back.svg -> icBack
+  // - my_icon.svg -> myIcon
+  // - some-icon.svg -> someIcon
+  // - SOmeIcon.svg -> someIcon
+  // - MyIcon.svg -> myIcon
 
   // Replace hyphens with underscores for consistency
-  final normalized = fileName.replaceAll('-', '_');
+  var normalized = fileName.replaceAll('-', '_');
 
   // Split by underscore
-  final parts = normalized.split('_').where((p) => p.isNotEmpty).toList();
+  var parts = normalized.split('_').where((p) => p.isNotEmpty).toList();
 
-  if (parts.isEmpty) return fileName;
+  if (parts.isEmpty) return fileName.toLowerCase();
 
-  // First part lowercase, rest capitalized
+  // If no underscores/hyphens, check for camelCase or PascalCase
+  if (parts.length == 1) {
+    final part = parts.first;
+    // Convert to proper camelCase (first letter lowercase, rest as-is for readability)
+    return part[0].toLowerCase() + part.substring(1);
+  }
+
+  // First part lowercase, rest capitalized properly
   final first = parts.first.toLowerCase();
   final rest = parts
       .skip(1)
@@ -181,10 +242,135 @@ String _toConstantName(String fileName) {
   return first + rest.join('');
 }
 
-String _generateCode(Map<String, List<_AssetInfo>> assets) {
+/// Generate multiple files organized by category and type
+/// Returns list of generated file paths
+List<String> _generateMultipleFiles(
+    Map<String, Map<String, List<_AssetInfo>>> assets, String outputDir) {
+  final generatedFiles = <String>[];
+
+  // Create output directory
+  final baseDir = Directory(outputDir);
+  if (!baseDir.existsSync()) {
+    baseDir.createSync(recursive: true);
+  }
+
+  final categoryExports = <String>[];
+
+  // Generate files for each category
+  for (final categoryEntry in assets.entries) {
+    final category = categoryEntry.key;
+    final typeMap = categoryEntry.value;
+
+    if (typeMap.isEmpty) continue;
+
+    final typeExports = <String>[];
+
+    // Generate type-specific files (e.g., icons_png.dart, icons_svg.dart)
+    for (final typeEntry in typeMap.entries) {
+      final fileType = typeEntry.key;
+      final assetList = typeEntry.value;
+
+      if (assetList.isEmpty) continue;
+
+      final className = _toCategoryClassName(category, fileType);
+      final fileName = '${category}_$fileType.dart';
+      final filePath = '$outputDir/assets/$category/$fileName';
+
+      final typeFileContent =
+          _generateTypeFile(className, assetList, category, fileType);
+
+      final typeFile = File(filePath);
+      typeFile.createSync(recursive: true);
+      typeFile.writeAsStringSync(typeFileContent);
+
+      generatedFiles.add(filePath);
+      typeExports.add("export '$category/$fileName';");
+    }
+
+    // Generate category export file (e.g., icons.dart)
+    if (typeExports.isNotEmpty) {
+      final categoryFilePath = '$outputDir/assets/$category.dart';
+      final categoryFileContent = _generateCategoryFile(typeExports);
+
+      final categoryFile = File(categoryFilePath);
+      categoryFile.createSync(recursive: true);
+      categoryFile.writeAsStringSync(categoryFileContent);
+
+      generatedFiles.add(categoryFilePath);
+      categoryExports.add("export 'assets/$category.dart';");
+    }
+  }
+
+  // Generate main export file (assets.dart)
+  if (categoryExports.isNotEmpty) {
+    final mainFilePath = '$outputDir/assets.dart';
+    final mainFileContent = _generateMainFile(categoryExports);
+
+    final mainFile = File(mainFilePath);
+    mainFile.writeAsStringSync(mainFileContent);
+
+    generatedFiles.insert(0, mainFilePath);
+  }
+
+  return generatedFiles;
+}
+
+String _toCategoryClassName(String category, String fileType) {
+  // icons + png -> IconsPng
+  // images + jpg -> ImagesJpg
+  // fonts + ttf -> FontsTtf
+  final categoryCapitalized = category[0].toUpperCase() + category.substring(1);
+  final typeCapitalized = fileType[0].toUpperCase() + fileType.substring(1);
+  return '$categoryCapitalized$typeCapitalized';
+}
+
+String _generateTypeFile(String className, List<_AssetInfo> assets,
+    String category, String fileType) {
   final buffer = StringBuffer();
 
-  // Add comprehensive header similar to l10n
+  buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
+  buffer.writeln('// Generated by: dg asset build');
+  buffer.writeln();
+  buffer.writeln('// ignore_for_file: type=lint');
+  buffer.writeln();
+  buffer.writeln('/// ${fileType.toUpperCase()} $category assets');
+  buffer.writeln('class $className {');
+  buffer.writeln('  const $className._();');
+  buffer.writeln();
+
+  assets.sort((a, b) => a.name.compareTo(b.name));
+
+  for (final asset in assets) {
+    buffer.writeln('  /// ${asset.path}');
+    buffer.writeln("  static const String ${asset.name} = '${asset.path}';");
+    if (asset != assets.last) buffer.writeln();
+  }
+
+  buffer.writeln('}');
+  buffer.writeln();
+
+  return buffer.toString();
+}
+
+String _generateCategoryFile(List<String> exports) {
+  final buffer = StringBuffer();
+
+  buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
+  buffer.writeln('// Generated by: dg asset build');
+  buffer.writeln();
+  buffer.writeln('// ignore_for_file: type=lint');
+  buffer.writeln();
+
+  for (final export in exports) {
+    buffer.writeln(export);
+  }
+
+  return buffer.toString();
+}
+
+String _generateMainFile(List<String> categoryExports) {
+  final buffer = StringBuffer();
+
   buffer.writeln('// GENERATED CODE - DO NOT MODIFY BY HAND');
   buffer.writeln('// Generated by: dg asset build');
   buffer.writeln('// Configuration: dig.yaml');
@@ -196,17 +382,17 @@ String _generateCode(Map<String, List<_AssetInfo>> assets) {
   buffer.writeln('/// To use these assets in your application:');
   buffer.writeln('///');
   buffer.writeln('/// ```dart');
-  buffer.writeln('/// import \'package:flutter_svg/flutter_svg.dart\';');
-  buffer.writeln('/// import \'package:your_app/generated/assets.dart\';');
+  buffer.writeln("/// import 'package:flutter_svg/flutter_svg.dart';");
+  buffer.writeln("/// import 'package:your_app/gen/assets.dart';");
   buffer.writeln('///');
   buffer.writeln('/// // For SVG icons');
-  buffer.writeln('/// SvgPicture.asset(IconAssetSVG.icBack);');
+  buffer.writeln('/// SvgPicture.asset(IconsSvg.icBack);');
   buffer.writeln('///');
   buffer.writeln('/// // For PNG images');
-  buffer.writeln('/// Image.asset(ImageAssetPNG.logo);');
+  buffer.writeln('/// Image.asset(ImagesPng.logo);');
   buffer.writeln('///');
-  buffer.writeln('/// // For JPG images');
-  buffer.writeln('/// Image.asset(ImageAssetJPG.banner);');
+  buffer.writeln('/// // For fonts');
+  buffer.writeln("/// TextStyle(fontFamily: FontsTtf.regular);");
   buffer.writeln('/// ```');
   buffer.writeln('///');
   buffer.writeln('/// ## Regenerating Assets');
@@ -227,32 +413,40 @@ String _generateCode(Map<String, List<_AssetInfo>> assets) {
   buffer.writeln('/// All changes will be overwritten on next generation.');
   buffer.writeln();
 
-  // Generate classes for each asset type
-  for (final entry in assets.entries) {
-    final className = entry.key;
-    final files = entry.value;
-
-    // Skip if no files
-    if (files.isEmpty) continue;
-
-    buffer.writeln('/// Asset constants for $className');
-    buffer.writeln('class $className {');
-    buffer.writeln('  const $className._();');
-    buffer.writeln();
-
-    files.sort((a, b) => a.name.compareTo(b.name));
-
-    for (final asset in files) {
-      buffer.writeln('  /// ${asset.path}');
-      buffer.writeln("  static const String ${asset.name} = '${asset.path}';");
-      if (asset != files.last) buffer.writeln();
-    }
-
-    buffer.writeln('}');
-    buffer.writeln();
+  for (final export in categoryExports) {
+    buffer.writeln(export);
   }
 
   return buffer.toString();
+}
+
+int _countTotalAssets(Map<String, Map<String, List<_AssetInfo>>> assets) {
+  var count = 0;
+  for (final typeMap in assets.values) {
+    for (final assetList in typeMap.values) {
+      count += assetList.length;
+    }
+  }
+  return count;
+}
+
+/// Check if a path should be skipped based on skip patterns
+bool _shouldSkip(String path, List<String> skipPatterns) {
+  for (final pattern in skipPatterns) {
+    // Normalize pattern
+    final normalizedPattern = pattern.replaceAll('\\', '/');
+
+    // Check if path matches the pattern
+    // Examples:
+    // - 'icons' matches 'assets/icons/...'
+    // - 'icons/svg' matches 'assets/icons/svg/...'
+    // - 'fonts' matches 'assets/fonts/...'
+    if (path.contains('/$normalizedPattern/') ||
+        path.startsWith('assets/$normalizedPattern/')) {
+      return true;
+    }
+  }
+  return false;
 }
 
 class _AssetInfo {
