@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2026-02-17
+
+### 🎨 Major: Subfolder-Based Asset Generation
+
+Complete redesign of asset generation to use folder structure for class names:
+
+- **Subfolder-Based Classes**: Each subfolder becomes a class
+  - `assets/bottom_bar/svg/` → `BottomBarSvg`
+  - `assets/top_bar/png/` → `TopBarPng`
+  - `assets/fonts/inter/` → `FontsInterTtf`
+- **Smart Extension Handling**: Automatically removes redundant folder names
+  - `assets/icons/svg/` → `IconsSvg` (not `IconsSvgSvg`)
+- **Nested Folder Support**: Handles multi-level folder structures
+  - `assets/icons/home/svg/` → `IconsHomeSvg`
+- **Better Organization**: More intuitive and flexible than category-based approach
+
+### Added
+
+- **Asset Generation Guide**: New `ASSET_GENERATION_GUIDE.md` with comprehensive examples
+- **Usage Examples**: Detailed code examples for SVG, PNG, and font assets
+
+### Changed
+
+- **Breaking**: Asset class names now based on folder structure instead of generic categories
+  - Old: `IconAssetSVG`, `ImageAssetPNG`
+  - New: `IconsSvg`, `BottomBarPng`, `FontsInterTtf`
+
 ## [1.5.9] - 2026-02-17
 
 ### Enhanced

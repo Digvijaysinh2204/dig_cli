@@ -19,15 +19,17 @@ A powerful Flutter CLI tool to automate building, cleaning, packaging, and renam
   - Handles Android namespace updates and directory restructuring.
   - Updates bundle IDs and display names across all platform-specific files.
 - **🏗️ Create Module**: Automated GetX scaffolding (`View`, `Controller`, `Binding`, `Export`) with auto-route registration.
-- **🎨 Asset Generation**: Auto-generate organized, type-safe asset constants
+- **🎨 Asset Generation**: Subfolder-based asset organization
   - `dg asset build` - Generate once
   - `dg asset watch` - Auto-regenerate on changes
-  - Multi-file structure: `IconsPng`, `IconsSvg`, `ImagesPng`, `FontsTtf`, etc.
+  - Folder structure determines class names: `assets/bottom_bar/svg` → `BottomBarSvg`
+  - Smart extension handling prevents redundancy
   - Skip/exclude folders via `dig.yaml` configuration
   - Single import: `import 'package:app/generated/assets.dart'`
+  - See [ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md) for examples
 - **🛡️ Build Tools**: Release builds with automatic `ProjectName-YYYY-MM-DD` naming.
 - **Deep Clean**: Removes Flutter, Gradle, Xcode, and Pods caches on macOS, Windows, and Linux.
-- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.5.9).
+- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.6.0).
 
 ---
 
@@ -75,7 +77,26 @@ dg create apk --name MyApp --output ~/Downloads
 
 # Deep clean the project's build artifacts
 dg clean
+
+# Generate assets with subfolder-based classes
+dg asset build
+# Creates: BottomBarSvg, IconsSvg, FontsInterTtf, etc.
 ```
+
+### Asset Generation Example
+
+```dart
+// Folder: assets/bottom_bar/svg/home.svg
+import 'package:your_app/generated/assets.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+SvgPicture.asset(BottomBarSvg.home);
+
+// Folder: assets/fonts/inter/bold.ttf
+Text('Hello', style: TextStyle(fontFamily: FontsInterTtf.bold));
+```
+
+For detailed examples, see [ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md)
 
 ---
 
