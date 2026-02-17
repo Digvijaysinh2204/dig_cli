@@ -86,8 +86,7 @@ class NotificationService extends GetxService {
 
     await _flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
 
     await _flutterLocalNotificationsPlugin.initialize(
