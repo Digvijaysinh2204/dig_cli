@@ -25,7 +25,7 @@ class _AssetBuildCommand extends Command {
 
   @override
   Future<void> run() async {
-    await _buildAssets();
+    await buildAssets();
   }
 }
 
@@ -42,7 +42,7 @@ class _AssetWatchCommand extends Command {
   }
 }
 
-Future<void> _buildAssets() async {
+Future<void> buildAssets() async {
   print('🎨 Generating asset constants...\n');
 
   // Read configuration from dig.yaml
@@ -54,7 +54,7 @@ Future<void> _buildAssets() async {
 assets-dir: assets/
 output-dir: lib/gen
 ''');
-    exit(1);
+    return;
   }
 
   final configContent = configFile.readAsStringSync();
@@ -63,7 +63,7 @@ output-dir: lib/gen
   final assetsDir = Directory(config['assets-dir'] as String? ?? 'assets/');
   if (!assetsDir.existsSync()) {
     print('❌ Assets directory not found: ${assetsDir.path}');
-    exit(1);
+    return;
   }
 
   final outputDir = config['output-dir'] as String? ?? 'lib/gen';
@@ -104,7 +104,7 @@ Future<void> _watchAssets() async {
   }
 
   // Generate once on start
-  await _buildAssets();
+  await buildAssets();
 
   // Watch for changes
   assetsDir.watch(recursive: true).listen((event) {
@@ -118,7 +118,7 @@ Future<void> _watchAssets() async {
         path.endsWith('.webp') ||
         path.endsWith('.gif')) {
       print('\n📁 Detected change: ${path.split(Platform.pathSeparator).last}');
-      _buildAssets();
+      buildAssets();
     }
   });
 

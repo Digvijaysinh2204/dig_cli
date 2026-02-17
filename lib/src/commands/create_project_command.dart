@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import '../utils/logger.dart';
 import '../utils/project_utils.dart';
 import '../utils/spinner.dart';
+import 'asset_command.dart';
 import 'create_jks_command.dart';
 
 class CreateProjectCommand extends Command {
@@ -202,6 +203,14 @@ class CreateProjectCommand extends Command {
           kLog('⚠️  flutter pub get failed, you might need to run it manually.',
               type: LogType.warning);
         }
+
+        // Run asset generation
+        try {
+          await buildAssets();
+        } catch (e) {
+          kLog('⚠️  Initial asset generation failed: $e',
+              type: LogType.warning);
+        }
       });
 
       Directory.current = originalCwd;
@@ -372,6 +381,7 @@ This project comes pre-configured with a robust foundation:
 - 🏗️ **Solid Architecture**: Standardized folder structure for scalability.
 - 🔐 **Secure Defaults**: Auto-generated `API_KEY` and `.env` setup.
 - 🤖 **Android Ready**: Automated JKS signing configuration.
+- 🖼️ **Asset Generation**: Type-safe asset management pre-configured.
 - 🔥 **Firebase Prepared**: Skeleton setup for easy integration.
 
 ## 🚀 Getting Started
@@ -385,7 +395,14 @@ flutter pub get
 flutterfire configure
 ```
 
-### 2️⃣ Run the App
+### 2️⃣ Asset Generation
+Type-safe asset classes are automatically generated from your `assets/` folder.
+- **Generate once**: `dg asset build`
+- **Watch mode**: `dg asset watch`
+
+For more details, see [ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md).
+
+### 3️⃣ Run the App
 ```bash
 # Development
 flutter run

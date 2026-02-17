@@ -73,4 +73,5 @@ export '../widget/loader.dart';
 export '../widget/network_banner.dart';
 export '../../firebase_options.dart';
 export '../../generated/localization_key.dart';
+export '../../generated/assets.dart';
 export 'logger.dart';
