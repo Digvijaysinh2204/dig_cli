@@ -15,6 +15,7 @@ A powerful Flutter CLI tool to automate building, cleaning, packaging, and renam
   - **Download Manager**: Pre-configured `GetxService` for robust background downloads & localization.
   - **JKS Automation**: Auto-generates unique keystores and configures signing.
   - **Secure Defaults**: Generates cryptographically secure API keys in `.env`.
+  - **Asset Generation**: Pre-configured with subfolder-based asset structure.
 - **🏷️ Rename App**: Smart renaming for **Android, iOS, macOS, Windows, Linux, and Web**.
   - Handles Android namespace updates and directory restructuring.
   - Updates bundle IDs and display names across all platform-specific files.
@@ -29,7 +30,7 @@ A powerful Flutter CLI tool to automate building, cleaning, packaging, and renam
   - See [ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md) for examples
 - **🛡️ Build Tools**: Release builds with automatic `ProjectName-YYYY-MM-DD` naming.
 - **Deep Clean**: Removes Flutter, Gradle, Xcode, and Pods caches on macOS, Windows, and Linux.
-- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.6.0).
+- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.6.1).
 
 ---
 

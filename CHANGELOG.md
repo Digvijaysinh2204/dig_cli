@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.1] - 2026-02-18
+
+### Enhancements
+
+- **Asset Generation**: Automatically sets up asset generation structure for new projects.
+- **Documentation**: Updated asset generation guide and README.
+
 ## [1.6.0] - 2026-02-17
 
 ### 🎨 Major: Subfolder-Based Asset Generation
