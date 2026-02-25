@@ -19,7 +19,7 @@ class CustomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: Get.width,
-      height: height ?? 51,
+      height: height,
       decoration: BoxDecoration(
         color: AppColor.kWhite,
         border: Border.all(color: borderColor),

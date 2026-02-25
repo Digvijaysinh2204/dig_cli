@@ -148,8 +148,9 @@ class DownloadManager extends GetxService {
 
     try {
       final uri = Uri.parse(url);
-      final lastSegment =
-          uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+      final lastSegment = uri.pathSegments.isNotEmpty
+          ? uri.pathSegments.last
+          : '';
 
       if (lastSegment.contains('.')) {
         final ext = lastSegment.split('.').last;

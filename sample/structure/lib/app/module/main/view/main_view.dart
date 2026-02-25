@@ -6,20 +6,25 @@ class MainView extends GetView<MainController> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return CustomScaffold(
       isAppBar: true,
       title: CustomTextView(
-        text: 'Dashboard',
+        text: loc.dashboard,
         style: AppTextStyle.appBarTitle(),
       ),
       backgroundColor: AppColor.kEEEAEC,
+      floatingActionButton: FloatingActionButton(
+        onPressed: controller.incrementCounter,
+        child: const Icon(Icons.add),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             CustomTextView(
-              text: 'System Status',
+              text: loc.systemStatus,
               style: AppTextStyle.bold(size: 18),
             ),
             const Gap(16),
@@ -29,14 +34,14 @@ class MainView extends GetView<MainController> {
                 children: [
                   _statusRow(
                     icon: Icons.cloud_done_rounded,
-                    label: 'Firebase',
+                    label: loc.firebase,
                     value: controller.firebaseStatus,
                     color: AppColor.k9A80AF,
                   ),
                   const Divider(height: 32),
                   _statusRow(
                     icon: Icons.phone_iphone_rounded,
-                    label: 'Device',
+                    label: loc.device,
                     value:
                         (controller.deviceInfo.deviceData['model'] ?? 'Unknown')
                             .toString()
@@ -46,7 +51,7 @@ class MainView extends GetView<MainController> {
                   const Divider(height: 32),
                   _statusRow(
                     icon: Icons.info_outline_rounded,
-                    label: 'App Version',
+                    label: loc.appVersion,
                     value:
                         (controller.deviceInfo.packageInfo?.version ?? '1.0.0')
                             .toString()
@@ -58,7 +63,7 @@ class MainView extends GetView<MainController> {
             ),
             const Gap(24),
             CustomTextView(
-              text: 'Project Information',
+              text: loc.projectInformation,
               style: AppTextStyle.bold(size: 18),
             ),
             const Gap(16),
@@ -77,13 +82,54 @@ class MainView extends GetView<MainController> {
                   const Gap(8),
                   CustomTextView(
                     text:
-                        'Bundle ID: ${controller.deviceInfo.packageInfo?.packageName ?? 'N/A'}',
+                        '${loc.bundleId}: ${controller.deviceInfo.packageInfo?.packageName ?? 'N/A'}',
                     style: AppTextStyle.regular(
                       size: 12,
                       color: AppColor.k161A25.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
+              ),
+            ),
+            const Gap(32),
+            CustomCard(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              child: Column(
+                children: [
+                  CustomTextView(
+                    text: loc.pushedButtonManyTimes,
+                    style: AppTextStyle.regular(size: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                  const Gap(8),
+                  Obx(
+                    () => CustomTextView(
+                      text: '${controller.counter.value}',
+                      style: AppTextStyle.bold(
+                        size: 32,
+                        color: AppColor.kPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Gap(32),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () => Get.toNamed(AppRoute.profileView),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColor.kPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: CustomTextView(
+                  text: loc.profile,
+                  style: AppTextStyle.bold(size: 16, color: Colors.white),
+                ),
               ),
             ),
           ],

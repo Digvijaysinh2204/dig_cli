@@ -63,5 +63,42 @@
   "openSettings": "Open settings",
   "showLess": "Show less",
   "readMore": "Read more",
-  "noDataFound": "No data found"
+  "noDataFound": "No data found",
+  "dashboard": "Dashboard",
+  "systemStatus": "System Status",
+  "projectInformation": "Project Information",
+  "bundleId": "Bundle ID",
+  "firebase": "Firebase",
+  "device": "Device",
+  "appVersion": "App Version",
+  "pushedButtonManyTimes": "You have pushed the button this many times:",
+  "profile": "Profile",
+  "fullName": "Full Name",
+  "emailAddress": "Email Address",
+  "phoneNumber": "Phone Number",
+  "saveProfile": "Save Profile",
+  "validationError": "Validation Error",
+  "nameAndEmailRequired": "Name and Email are required.",
+  "success": "Success",
+  "profileSavedSuccessfully": "Profile saved successfully!",
+  "errorTitle": "Error",
+  "failedToPickImage": "Failed to pick image: {error}",
+  "@failedToPickImage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCropImage": "Failed to crop image: {error}",
+  "@failedToCropImage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cropImageTitle": "Crop Image",
+  "selectImageSource": "Select Image Source",
+  "gallery": "Gallery"
 }

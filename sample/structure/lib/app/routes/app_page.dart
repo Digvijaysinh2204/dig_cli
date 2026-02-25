@@ -15,5 +15,10 @@ class AppPage {
       page: () => const MainView(),
       binding: MainBinding(),
     ),
+    GetPage(
+      name: AppRoute.profileView,
+      page: () => const ProfileView(),
+      binding: ProfileBinding(),
+    ),
   ];
 }

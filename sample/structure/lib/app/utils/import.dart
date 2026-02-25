@@ -17,7 +17,7 @@ export 'package:get_storage/get_storage.dart';
 export 'package:image_cropper/image_cropper.dart';
 export 'package:image_picker/image_picker.dart';
 export 'package:path_provider/path_provider.dart';
-export 'package:permission_handler/permission_handler.dart';
+
 export 'package:smooth_page_indicator/smooth_page_indicator.dart';
 export 'package:toastification/toastification.dart';
 
@@ -49,7 +49,7 @@ export '../theme/app_text_style.dart';
 export '../theme/themes.dart';
 export 'firebase_utils.dart';
 export 'formatter.dart';
-export '../utils/permission_services.dart';
+
 export '../utils/toast_service.dart';
 export '../widget/adaptive_action_sheet.dart';
 export '../widget/confirmation_dialog.dart';

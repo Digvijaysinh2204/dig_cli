@@ -2,9 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.6.2] - 2026-02-25
+## [1.6.3] - 2026-02-25
 
-### Fixed
+### Added
+
+- **Profile Screen**: A complete, localized, and adaptive Profile Screen implementation serving as a reference template. Includes handling for `image_picker` and `image_cropper`.
+- **Custom UI Components Integration**: Fully adopted the project's native custom widgets (`CustomScaffold`, `CustomTextView`, `CustomTextField`, `CustomButton`) into the Profile Screen.
+
+### Changed
+
+- **Dependency Management**: Completely removed CocoaPods from both the `structure` and `driver` projects and migrated completely to Swift Package Manager (SPM). Removed `permission_handler` dependency in favor of native UI-triggered permission prompts via `image_picker`.
+
+## [1.6.2] - 2026-02-25
 
 - **Analysis Options**: Resolved `flutter_lints` package resolution error in the project template by proper dependency resolution.
 - **Imports**: Fixed broken imports in `sample/structure` (removed `image_assets.dart` export from `import.dart` and fixed `IconsSvg.icBack` usage in `custom_back_button.dart`).

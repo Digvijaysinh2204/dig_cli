@@ -26,4 +26,10 @@ class MainController extends GetxController {
     if (selectedIndex.value == index) return;
     selectedIndex.value = index;
   }
+
+  RxInt counter = 0.obs;
+
+  void incrementCounter() {
+    counter.value++;
+  }
 }
