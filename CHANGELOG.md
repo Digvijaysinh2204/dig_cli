@@ -4,8 +4,6 @@ All notable changes to this project will be documented in this file.
 
 ## [1.6.2] - 2026-02-25
 
-## [1.6.2] - 2026-02-25
-
 ### Fixed
 
 - **Analysis Options**: Resolved `flutter_lints` package resolution error in the project template by proper dependency resolution.
