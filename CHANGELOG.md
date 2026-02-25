@@ -2,24 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.6.3] - 2026-02-25
+## [1.6.4] - 2026-02-25
 
 ### Added
 
 - **Profile Screen**: A complete, localized, and adaptive Profile Screen implementation serving as a reference template. Includes handling for `image_picker` and `image_cropper`.
 - **Custom UI Components Integration**: Fully adopted the project's native custom widgets (`CustomScaffold`, `CustomTextView`, `CustomTextField`, `CustomButton`) into the Profile Screen.
+- **iOS Scene Support**: Restored `UIApplicationSceneManifest` and `SceneDelegate.swift` to the template with proper `project.pbxproj` integration. The template now fully supports the modern iOS `UIScene` lifecycle by default.
+- **Asset Bundling**: Updated `pubspec.yaml` in the template to include common asset subfolders (`assets/icons/`, `assets/images/`, etc.) by default, preventing common "asset not found" errors for new developers.
 
-### Changed
+### Fixed
 
-- **Dependency Management**: Completely removed CocoaPods from both the `structure` and `driver` projects and migrated completely to Swift Package Manager (SPM). Removed `permission_handler` dependency in favor of native UI-triggered permission prompts via `image_picker`.
-
-## [1.6.2] - 2026-02-25
-
+- **Firebase Robustness**: Completely revamped Firebase initialization in the template. Both native (`AppDelegate.swift`, `build.gradle.kts`) and Flutter (`main.dart`, `AppBindings`) initializers are now provided but commented out with `TODO(Developer)` tags. This ensures a 100% crash-proof initial launch while providing a clear path for developers to enable Firebase.
+- **Notification Service**: Refined `NotificationService` to prevent automatic permission requests and Firebase setup on launch. Initialization is now explicitly controlled via `InitialBindings`.
 - **Analysis Options**: Resolved `flutter_lints` package resolution error in the project template by proper dependency resolution.
 - **Imports**: Fixed broken imports in `sample/structure` (removed `image_assets.dart` export from `import.dart` and fixed `IconsSvg.icBack` usage in `custom_back_button.dart`).
 
 ### Changed
 
+- **Dependency Management**: Completely removed CocoaPods from both the `structure` and `driver` projects and migrated completely to Swift Package Manager (SPM). Removed `permission_handler` dependency in favor of native UI-triggered permission prompts via `image_picker`.
+- **Documentation Overhaul**: Major rewrite of `README.md` and `ASSET_GENERATION_GUIDE.md` for both the CLI and the template. Documentation now features professional styling, clearer setup steps, and better "wowed" aesthetics.
 - **Formatting**: Updated formatting rules across `sample/structure/lib/app/widget/` components for better readability.
 
 
@@ -123,6 +125,8 @@ Complete redesign of asset generation to use folder structure for class names:
 - **Formatting**: Performed a full project-wide code formatting for both the CLI and the project template.
 - **XML Cleanliness**: Optimized `AndroidManifest.xml` and other Android XML resources for better readability and standard indentation.
 
+
+
 ## [1.5.3] - 2026-02-16
 
 ### Fixed
@@ -170,6 +174,7 @@ Complete redesign of asset generation to use folder structure for class names:
 - **Download Manager**: Refactored to a proper `GetxService` (removed singleton instance).
 - **Service Access**: Fixed dependency injection issues in `DownloadManager`.
 - **Initialization**: `DownloadManager` is now properly initialized in `InitialBindings`.
+
 
 ## [1.2.7] - 2026-01-05
 

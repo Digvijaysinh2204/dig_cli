@@ -47,7 +47,7 @@ export '../storage/store_key.dart';
 export '../theme/app_colors.dart';
 export '../theme/app_text_style.dart';
 export '../theme/themes.dart';
-export 'firebase_utils.dart';
+
 export 'formatter.dart';
 
 export '../utils/toast_service.dart';
@@ -70,6 +70,7 @@ export '../widget/custom_text_view.dart';
 export '../widget/global_loader.dart';
 export '../widget/loader.dart';
 export '../widget/network_banner.dart';
+
 export '../../firebase_options.dart';
 export '../../generated/localization_key.dart';
 export '../../generated/assets.dart';

@@ -1,7 +1,7 @@
 import Flutter
 import UIKit
 import flutter_local_notifications
-import Firebase
+// import Firebase
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -9,8 +9,8 @@ import Firebase
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    FirebaseApp.configure()
-    UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
+      // FirebaseApp.configure()
+      UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -21,7 +21,8 @@ import Firebase
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
   }
 
-  @available(iOS 12.0, *)
+  
+   @available(iOS 12.0, *)
   override func userNotificationCenter(
       _ center: UNUserNotificationCenter,
       openSettingsFor notification: UNNotification?

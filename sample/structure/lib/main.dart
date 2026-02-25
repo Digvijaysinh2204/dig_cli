@@ -3,7 +3,8 @@ import 'app/utils/import.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await FirebaseUtils.safeInitialize();
+  // TODO(Developer): Uncomment when you have configured Firebase.
+  // await Firebase.initializeApp(options: AppConfig.firebaseOptions);
   kLog(content: message.toMap(), title: 'BACKGROUND NOTIFICATION');
 }
 
@@ -11,7 +12,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppBindings().dependencies();
 
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // TODO(Developer): Uncomment when you have configured Firebase.
+  // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   runApp(
     const ToastificationWrapper(
