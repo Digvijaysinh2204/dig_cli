@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.2] - 2026-02-25
+
+## [1.6.2] - 2026-02-25
+
+### Fixed
+
+- **Analysis Options**: Resolved `flutter_lints` package resolution error in the project template by proper dependency resolution.
+- **Imports**: Fixed broken imports in `sample/structure` (removed `image_assets.dart` export from `import.dart` and fixed `IconsSvg.icBack` usage in `custom_back_button.dart`).
+
+### Changed
+
+- **Formatting**: Updated formatting rules across `sample/structure/lib/app/widget/` components for better readability.
+
+
 ## [1.6.1] - 2026-02-18
 
 ### Enhancements

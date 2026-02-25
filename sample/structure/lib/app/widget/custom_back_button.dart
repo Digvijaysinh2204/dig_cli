@@ -28,7 +28,7 @@ class CustomBackButton extends StatelessWidget {
           },
           color: color ?? AppColor.k40434C,
           child: SvgPicture.asset(
-            IconAssetSVG.back,
+            IconsSvg.icBack,
             fit: BoxFit.scaleDown,
             width: 20,
             height: 20,

@@ -49,7 +49,6 @@ export '../theme/app_text_style.dart';
 export '../theme/themes.dart';
 export 'firebase_utils.dart';
 export 'formatter.dart';
-export '../utils/image_assets.dart';
 export '../utils/permission_services.dart';
 export '../utils/toast_service.dart';
 export '../widget/adaptive_action_sheet.dart';
