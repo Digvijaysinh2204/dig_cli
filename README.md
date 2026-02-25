@@ -30,7 +30,7 @@ A powerful Flutter CLI tool to automate building, cleaning, packaging, and renam
   - See [ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md) for examples
 - **🛡️ Build Tools**: Release builds with automatic `ProjectName-YYYY-MM-DD` naming.
 - **Deep Clean**: Removes Flutter, Gradle, Xcode, and Pods caches on macOS, Windows, and Linux.
-- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.6.4).
+- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.7.0).
 
 ---
 
