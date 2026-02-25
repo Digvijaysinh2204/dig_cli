@@ -171,8 +171,7 @@ class _SheetBody extends StatelessWidget {
                               : const SizedBox(width: 36)),
                       Expanded(
                         child: Center(
-                          child:
-                              titleWidget ??
+                          child: titleWidget ??
                               (title != null
                                   ? CustomTextView(
                                       text: title!,
