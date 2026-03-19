@@ -306,9 +306,7 @@ String _toConstantName(String fileName) {
     result = part[0].toLowerCase() + part.substring(1);
   } else {
     final first = parts.first.toLowerCase();
-    final rest = parts
-        .skip(1)
-        .map(
+    final rest = parts.skip(1).map(
           (p) => p[0].toUpperCase() + p.substring(1).toLowerCase(),
         );
     result = first + rest.join('');
@@ -428,9 +426,8 @@ String _generateTypeFile(String className, List<_AssetInfo> assets,
 
   for (final asset in assets) {
     // Ensure constant name is a valid Dart identifier
-    final safeName = RegExp(r'^[0-9]').hasMatch(asset.name)
-        ? 'ic${asset.name}'
-        : asset.name;
+    final safeName =
+        RegExp(r'^[0-9]').hasMatch(asset.name) ? 'ic${asset.name}' : asset.name;
     buffer.writeln('  /// ${asset.path}');
     buffer.writeln("  static const String $safeName = '${asset.path}';");
     if (asset != assets.last) buffer.writeln();
@@ -616,11 +613,8 @@ Future<void> _updatePubspec(Directory assetsDir) async {
       }
 
       if (line.startsWith('    -')) {
-        final assetPath = trimmed
-            .substring(1)
-            .trim()
-            .replaceAll("'", "")
-            .replaceAll('"', '');
+        final assetPath =
+            trimmed.substring(1).trim().replaceAll("'", "").replaceAll('"', '');
         existingAssetLines[i] = assetPath;
         lastAssetIndex = i;
       } else if (!line.startsWith('   ')) {
@@ -630,8 +624,7 @@ Future<void> _updatePubspec(Directory assetsDir) async {
       }
     }
 
-    final existingAssets =
-        existingAssetLines.values.toSet();
+    final existingAssets = existingAssetLines.values.toSet();
 
     // Determine which existing entries to remove:
     // Only remove entries that are within the configured assets directory
@@ -647,8 +640,7 @@ Future<void> _updatePubspec(Directory assetsDir) async {
       }
     }
 
-    final assetsToAdd =
-        requiredAssets.difference(existingAssets);
+    final assetsToAdd = requiredAssets.difference(existingAssets);
 
     if (assetsToAdd.isEmpty && staleEntries.isEmpty) {
       return;
