@@ -56,13 +56,14 @@ class InteractiveMenu {
       kLog('\n📦 UTILITIES', type: LogType.info);
       kLog('14) 🗜️  Zip Source Code', type: LogType.info);
       kLog('15) 🚀 Check for Updates', type: LogType.info);
+      kLog('16) 🧪 Beta/Dev Update', type: LogType.info);
 
       kLog('\n---------------------------------------------',
           type: LogType.info);
       kLog('0) 🚪 Exit', type: LogType.info);
       kLog('=============================================', type: LogType.info);
 
-      stdout.write('\nSelect option (0-15): ');
+      stdout.write('\nSelect option (0-16): ');
       final response = stdin.readLineSync()?.trim();
 
       if (response == '0') exit(0);
@@ -119,6 +120,9 @@ class InteractiveMenu {
         case '15':
           await _handleUpdateCheck();
           break;
+        case '16':
+          await _handleBetaUpdateCheck();
+          break;
         default:
           kLog('⚠️ Invalid option. Please try again.', type: LogType.warning);
           break;
@@ -164,6 +168,35 @@ class InteractiveMenu {
             mode: ProcessStartMode.inheritStdio);
         await process.exitCode;
       }
+    }
+  }
+
+  Future<void> _handleBetaUpdateCheck() async {
+    kLog('🔎 Checking for beta/dev updates...', type: LogType.info);
+    await VersionCommand().run();
+
+    final latest = await VersionUtils.getLatestPreReleaseVersion();
+    if (latest != null && VersionUtils.isNewer(latest, kDigCliVersion)) {
+      kLog(
+        '\n🧪 Beta version available: v$latest',
+        type: LogType.success,
+      );
+      stdout.write('\n› Install beta v$latest now? (y/N): ');
+      final response = stdin.readLineSync()?.trim().toLowerCase();
+      if (response == 'y') {
+        kLog('🚀 Installing beta version...', type: LogType.info);
+        final process = await Process.start(
+          'dart',
+          ['pub', 'global', 'activate', 'dig_cli', latest],
+          mode: ProcessStartMode.inheritStdio,
+        );
+        await process.exitCode;
+      }
+    } else {
+      kLog(
+        '\n✅ No newer beta/dev version available.',
+        type: LogType.success,
+      );
     }
   }
 

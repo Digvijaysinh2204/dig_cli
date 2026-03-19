@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.3] - 2026-03-19
+
+### Added
+- **Beta/Dev Update (Option 16):** New interactive menu option to check for and install pre-release (dev/beta) versions directly from the CLI dashboard.
+
+### Fixed
+- **Localization Files Preserved:** Asset generation now only cleans `lib/generated/assets/` instead of the entire `lib/generated/` directory, preserving localization files and other generated code.
+- **Numeric Asset Filenames:** Files starting with a number (e.g., `4.png`) now generate valid Dart constants with `ic` prefix (e.g., `ic4`) instead of producing invalid identifiers that break compilation.
+- **Pubspec Stale Entry Cleanup:** Deleted asset folders are now automatically removed from the `pubspec.yaml` assets section. Only entries within the configured `assets-dir` are managed — `.env`, localization paths, and other manually-added entries are never touched.
+- **Space in Filenames:** Asset filenames containing spaces (e.g., `my image.png`) are properly converted to camelCase constants (`myImage`).
+
 ## [1.7.2] - 2026-03-19
 
 ### Fixed

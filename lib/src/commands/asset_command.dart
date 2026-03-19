@@ -71,10 +71,17 @@ output-dir: lib/gen
 
   final outputDir = config['output-dir'] as String? ?? 'lib/generated';
 
-  // Clean the output directory to remove stale generated files
-  final dir = Directory(outputDir);
-  if (dir.existsSync()) {
-    dir.deleteSync(recursive: true);
+  // Clean only the assets subfolder inside the output directory.
+  // This preserves other generated files (e.g., localization files).
+  final assetsOutputDir = Directory('$outputDir/assets');
+  if (assetsOutputDir.existsSync()) {
+    assetsOutputDir.deleteSync(recursive: true);
+  }
+
+  // Also remove the main assets.dart export file so it gets regenerated
+  final mainExportFile = File('$outputDir/assets.dart');
+  if (mainExportFile.existsSync()) {
+    mainExportFile.deleteSync();
   }
 
   // Get skip/exclude patterns from config
@@ -273,6 +280,7 @@ String _toConstantName(String fileName) {
   // - some-icon.svg -> someIcon
   // - SOmeIcon.svg -> someIcon
   // - MyIcon.svg -> myIcon
+  // - 4.png -> a4
 
   // 1. Remove special chars (parens, brackets, etc.)
   // 2. Convert spaces to underscores
@@ -286,30 +294,32 @@ String _toConstantName(String fileName) {
 
   if (normalized.isEmpty) return 'unknownAsset';
 
-  // Dart variables cannot start with a number. Prepend 'a_' if it does.
-  if (RegExp(r'^[0-9]').hasMatch(normalized)) {
-    normalized = 'a_$normalized';
-  }
-
   // Split by underscore
   var parts = normalized.split('_').where((p) => p.isNotEmpty).toList();
 
-  if (parts.isEmpty) return fileName.toLowerCase();
+  if (parts.isEmpty) return 'unknownAsset';
 
-  // If no underscores/hyphens, check for camelCase or PascalCase
+  String result;
+
   if (parts.length == 1) {
     final part = parts.first;
-    // Convert to proper camelCase (first letter lowercase, rest as-is for readability)
-    return part[0].toLowerCase() + part.substring(1);
+    result = part[0].toLowerCase() + part.substring(1);
+  } else {
+    final first = parts.first.toLowerCase();
+    final rest = parts
+        .skip(1)
+        .map(
+          (p) => p[0].toUpperCase() + p.substring(1).toLowerCase(),
+        );
+    result = first + rest.join('');
   }
 
-  // First part lowercase, rest capitalized properly
-  final first = parts.first.toLowerCase();
-  final rest = parts
-      .skip(1)
-      .map((p) => p[0].toUpperCase() + p.substring(1).toLowerCase());
+  // Dart variables cannot start with a number.
+  if (result.isNotEmpty && RegExp(r'^[0-9]').hasMatch(result)) {
+    result = 'ic$result';
+  }
 
-  return first + rest.join('');
+  return result;
 }
 
 /// Generate multiple files organized by category and type
@@ -417,8 +427,12 @@ String _generateTypeFile(String className, List<_AssetInfo> assets,
   assets.sort((a, b) => a.name.compareTo(b.name));
 
   for (final asset in assets) {
+    // Ensure constant name is a valid Dart identifier
+    final safeName = RegExp(r'^[0-9]').hasMatch(asset.name)
+        ? 'ic${asset.name}'
+        : asset.name;
     buffer.writeln('  /// ${asset.path}');
-    buffer.writeln("  static const String ${asset.name} = '${asset.path}';");
+    buffer.writeln("  static const String $safeName = '${asset.path}';");
     if (asset != assets.last) buffer.writeln();
   }
 
@@ -506,7 +520,11 @@ int _countTotalAssets(Map<String, Map<String, List<_AssetInfo>>> assets) {
   return count;
 }
 
-/// Automatically update pubspec.yaml with asset folders and .env
+/// Automatically update pubspec.yaml with asset folders and .env.
+///
+/// Only manages entries that belong to the configured [assetsDir].
+/// Localization files, `.env`, and other manually-added paths are
+/// preserved and never removed.
 Future<void> _updatePubspec(Directory assetsDir) async {
   final pubspecFile = File('pubspec.yaml');
   if (!pubspecFile.existsSync()) return;
@@ -514,15 +532,17 @@ Future<void> _updatePubspec(Directory assetsDir) async {
   final content = await pubspecFile.readAsString();
   final lines = content.split('\n');
 
-  // 1. Identify folders containing assets and .env
+  // 1. Identify folders containing image/font assets
   final requiredAssets = <String>{};
 
   // Normalize assetsDir path relative to project root
   final baseAssetsPath = p
       .relative(assetsDir.path, from: Directory.current.path)
       .replaceAll('\\', '/');
-  requiredAssets
-      .add(baseAssetsPath.endsWith('/') ? baseAssetsPath : '$baseAssetsPath/');
+  final normalizedBase =
+      baseAssetsPath.endsWith('/') ? baseAssetsPath : '$baseAssetsPath/';
+
+  requiredAssets.add(normalizedBase);
 
   final allEntities = assetsDir.listSync(recursive: true);
   for (final entity in allEntities) {
@@ -583,41 +603,102 @@ Future<void> _updatePubspec(Directory assetsDir) async {
       newLines.insert(insertPos++, '    - $asset');
     }
   } else {
-    // Update existing assets section
-    final existingAssets = <String>{};
+    // Update existing assets section: add new + remove stale
+    final existingAssetLines = <int, String>{};
     int lastAssetIndex = assetsIndex;
+
     for (int i = assetsIndex + 1; i < newLines.length; i++) {
       final line = newLines[i];
       final trimmed = line.trim();
 
       if (trimmed.isEmpty || trimmed.startsWith('#')) {
-        continue; // Skip comments and blank lines
+        continue;
       }
 
       if (line.startsWith('    -')) {
-        // Extract asset path, handling quotes
-        final assetPath =
-            trimmed.substring(1).trim().replaceAll("'", "").replaceAll('"', '');
-        existingAssets.add(assetPath);
+        final assetPath = trimmed
+            .substring(1)
+            .trim()
+            .replaceAll("'", "")
+            .replaceAll('"', '');
+        existingAssetLines[i] = assetPath;
         lastAssetIndex = i;
       } else if (!line.startsWith('   ')) {
-        // If it isn't indented by at least 3 spaces, it must be a sibling like `  fonts:` or a top-level key.
         break;
       } else {
         lastAssetIndex = i;
       }
     }
 
-    final assetsToAdd = requiredAssets.difference(existingAssets);
+    final existingAssets =
+        existingAssetLines.values.toSet();
+
+    // Determine which existing entries to remove:
+    // Only remove entries that are within the configured assets directory
+    // but no longer exist on disk. Do NOT touch .env, localization paths,
+    // or anything outside the assets directory.
+    final staleEntries = <String>{};
+    for (final entry in existingAssets) {
+      final isWithinAssetsDir = entry.startsWith(normalizedBase);
+      if (!isWithinAssetsDir) continue;
+
+      if (!requiredAssets.contains(entry)) {
+        staleEntries.add(entry);
+      }
+    }
+
+    final assetsToAdd =
+        requiredAssets.difference(existingAssets);
+
+    if (assetsToAdd.isEmpty && staleEntries.isEmpty) {
+      return;
+    }
+
+    // Remove stale entries (iterate in reverse to keep indices stable)
+    if (staleEntries.isNotEmpty) {
+      final linesToRemove = existingAssetLines.entries
+          .where((e) => staleEntries.contains(e.value))
+          .map((e) => e.key)
+          .toList()
+        ..sort((a, b) => b.compareTo(a));
+
+      for (final lineIndex in linesToRemove) {
+        newLines.removeAt(lineIndex);
+      }
+
+      if (staleEntries.isNotEmpty) {
+        print(
+          '🗑️  Removed ${staleEntries.length} stale '
+          'asset entries from pubspec.yaml',
+        );
+        for (final entry in staleEntries) {
+          print('    - $entry');
+        }
+      }
+
+      // Recalculate lastAssetIndex after removing lines
+      lastAssetIndex = assetsIndex;
+      for (int i = assetsIndex + 1; i < newLines.length; i++) {
+        final line = newLines[i];
+        final trimmed = line.trim();
+        if (trimmed.isEmpty || trimmed.startsWith('#')) continue;
+        if (line.startsWith('    -')) {
+          lastAssetIndex = i;
+        } else if (!line.startsWith('   ')) {
+          break;
+        } else {
+          lastAssetIndex = i;
+        }
+      }
+    }
+
+    // Add new entries
     if (assetsToAdd.isNotEmpty) {
       int insertPos = lastAssetIndex + 1;
       final sortedAssets = assetsToAdd.toList()..sort();
       for (final asset in sortedAssets) {
         newLines.insert(insertPos++, '    - $asset');
       }
-    } else {
-      // No new assets needed
-      return;
     }
   }
 
