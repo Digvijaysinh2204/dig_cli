@@ -278,6 +278,13 @@ String _toConstantName(String fileName) {
       .replaceAll('-', '_')
       .replaceAll(RegExp(r'_+'), '_');
 
+  if (normalized.isEmpty) return 'unknownAsset';
+
+  // Dart variables cannot start with a number. Prepend 'a_' if it does.
+  if (RegExp(r'^[0-9]').hasMatch(normalized)) {
+    normalized = 'a_$normalized';
+  }
+
   // Split by underscore
   var parts = normalized.split('_').where((p) => p.isNotEmpty).toList();
 
@@ -517,6 +524,7 @@ Future<void> _updatePubspec(Directory assetsDir) async {
       final folderPath = p
           .dirname(p.relative(entity.path, from: Directory.current.path))
           .replaceAll('\\', '/');
+
       requiredAssets.add('$folderPath/');
     }
   }
@@ -574,13 +582,23 @@ Future<void> _updatePubspec(Directory assetsDir) async {
     int lastAssetIndex = assetsIndex;
     for (int i = assetsIndex + 1; i < newLines.length; i++) {
       final line = newLines[i];
-      if (line.trim().startsWith('-')) {
-        final assetPath = line.trim().substring(1).trim();
+      final trimmed = line.trim();
+
+      if (trimmed.isEmpty || trimmed.startsWith('#')) {
+        continue; // Skip comments and blank lines
+      }
+
+      if (line.startsWith('    -')) {
+        // Extract asset path, handling quotes
+        final assetPath =
+            trimmed.substring(1).trim().replaceAll("'", "").replaceAll('"', '');
         existingAssets.add(assetPath);
         lastAssetIndex = i;
-      } else if (line.trim().isNotEmpty && !line.startsWith(' ')) {
-        // End of assets section or end of flutter section
+      } else if (!line.startsWith('   ')) {
+        // If it isn't indented by at least 3 spaces, it must be a sibling like `  fonts:` or a top-level key.
         break;
+      } else {
+        lastAssetIndex = i;
       }
     }
 
