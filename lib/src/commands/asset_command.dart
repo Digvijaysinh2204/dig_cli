@@ -69,7 +69,13 @@ output-dir: lib/gen
     return;
   }
 
-  final outputDir = config['output-dir'] as String? ?? 'lib/gen';
+  final outputDir = config['output-dir'] as String? ?? 'lib/generated';
+
+  // Clean the output directory to remove stale generated files
+  final dir = Directory(outputDir);
+  if (dir.existsSync()) {
+    dir.deleteSync(recursive: true);
+  }
 
   // Get skip/exclude patterns from config
   final skipPatterns = <String>[];
