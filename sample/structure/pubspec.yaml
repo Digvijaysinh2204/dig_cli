@@ -52,6 +52,7 @@ flutter:
     - assets/fonts/inter/
     - assets/icons/
     - assets/icons/svg/
+    - assets/asd/
   generate: true
   uses-material-design: true
   config:

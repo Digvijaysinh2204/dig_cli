@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.7.1] - 2026-03-19
+## [1.7.2] - 2026-03-19
+
+### Fixed
+- **Assets Generation:** Fixed invalid Dart variable generation (e.g. `String 6`) for numeric file names by auto-prepending `a_`.
+- **Assets Cleanup:** Fixed issue where deleted assets caused stale auto-generated Dart code to persist. `lib/generated` is now freshly wiped on each build.
+- **Pubspec Formatter:** Fixed an issue where the asset generator inadvertently skipped the end of the `assets:` section if there were multiple subsections.
+- **Console UI:** Improved readability of the interactive menu on dark terminal backgrounds by changing the main color from blue to cyan.
+
+
 
 ### Added
 - **Categorized Developer Dashboard**: The interactive menu is now organized into a clean 15-item list across 6 logical sections: **BUILD & RELEASE**, **CLEAN & FIX**, **SIGNING & KEYS**, **CONFIGURATION**, **PROJECT MANAGEMENT**, and **UTILITIES**.
