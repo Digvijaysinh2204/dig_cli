@@ -5,7 +5,8 @@ class LanguageService extends GetxService {
 
   @override
   void onInit() {
-    final code = StoreData.readData<String>(StoreKey.languageCode) ??
+    final code =
+        StoreData.readData<String>(StoreKey.languageCode) ??
         AppConstant.defaultLanguage;
     locale = Locale(code);
     super.onInit();

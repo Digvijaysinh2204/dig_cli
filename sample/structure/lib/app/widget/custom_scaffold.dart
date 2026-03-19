@@ -52,10 +52,12 @@ class CustomScaffold extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness:
-            statusBarDarkIcons ? Brightness.dark : Brightness.light,
-        statusBarBrightness:
-            statusBarDarkIcons ? Brightness.light : Brightness.dark,
+        statusBarIconBrightness: statusBarDarkIcons
+            ? Brightness.dark
+            : Brightness.light,
+        statusBarBrightness: statusBarDarkIcons
+            ? Brightness.light
+            : Brightness.dark,
       ),
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,

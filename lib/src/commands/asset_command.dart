@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:yaml/yaml.dart';
+import 'package:watcher/watcher.dart';
+import 'package:path/path.dart' as p;
+import '../utils/logger.dart';
 
 /// Command to generate asset constants from dig.yaml
 class AssetCommand extends Command {
@@ -85,6 +88,9 @@ output-dir: lib/gen
   // Generate all files
   final generatedFiles = _generateMultipleFiles(assets, outputDir);
 
+  // Auto-update pubspec.yaml with asset folders
+  await _updatePubspec(assetsDir);
+
   // Print summary
   print('✅ Generated ${_countTotalAssets(assets)} asset constants\n');
   print('📁 Generated Files:');
@@ -95,29 +101,51 @@ output-dir: lib/gen
 }
 
 Future<void> _watchAssets() async {
-  print('👀 Watching assets directory for changes...\n');
+  // Read configuration from dig.yaml
+  final configFile = File('dig.yaml');
+  String assetsPath = 'assets';
 
-  final assetsDir = Directory('assets');
+  if (configFile.existsSync()) {
+    try {
+      final configContent = configFile.readAsStringSync();
+      final config = loadYaml(configContent);
+      assetsPath = config['assets-dir'] as String? ?? 'assets';
+    } catch (_) {
+      // Use default if yaml is invalid
+    }
+  }
+
+  final assetsDir = Directory(assetsPath);
   if (!assetsDir.existsSync()) {
-    print('❌ Assets directory not found!');
+    print('❌ Assets directory not found: ${assetsDir.path}');
     exit(1);
   }
+
+  print('👀 Watching ${assetsDir.path} directory for changes...\n');
 
   // Generate once on start
   await buildAssets();
 
-  // Watch for changes
-  assetsDir.watch(recursive: true).listen((event) {
+  // Watch for changes using watcher package for robust cross-platform support
+  final watcher = DirectoryWatcher(assetsDir.path);
+  final subscription = watcher.events.listen((event) {
     final path = event.path;
-    if (path.endsWith('.svg') ||
-        path.endsWith('.png') ||
-        path.endsWith('.jpg') ||
-        path.endsWith('.jpeg') ||
-        path.endsWith('.ttf') ||
-        path.endsWith('.otf') ||
-        path.endsWith('.webp') ||
-        path.endsWith('.gif')) {
-      print('\n📁 Detected change: ${path.split(Platform.pathSeparator).last}');
+    final extension = path.split('.').last.toLowerCase();
+
+    const allowedExtensions = {
+      'svg',
+      'png',
+      'jpg',
+      'jpeg',
+      'ttf',
+      'otf',
+      'webp',
+      'gif'
+    };
+
+    if (allowedExtensions.contains(extension)) {
+      final fileName = path.split(Platform.pathSeparator).last;
+      print('\n📁 Detected change (${event.type}): $fileName');
       buildAssets();
     }
   });
@@ -125,8 +153,16 @@ Future<void> _watchAssets() async {
   print('\n🔄 Watching for changes... (Press Ctrl+C to stop)');
 
   // Keep the process running
-  await ProcessSignal.sigint.watch().first;
-  print('\n👋 Stopped watching');
+  try {
+    await ProcessSignal.sigint.watch().first;
+  } catch (_) {
+    // Fallback if SIGINT watch is not supported
+    await Future.delayed(const Duration(days: 365));
+  } finally {
+    await subscription.cancel();
+    print('\n👋 Stopped watching');
+    exit(0);
+  }
 }
 
 /// Scan assets and organize by subfolder and file type
@@ -150,36 +186,43 @@ Map<String, Map<String, List<_AssetInfo>>> _scanAssets(
 
   for (final entity in allFiles) {
     if (entity is File) {
-      final path = entity.path.replaceAll('\\', '/');
-      final extension = path.split('.').last.toLowerCase();
-      final relativePath = path.substring(path.indexOf('assets/'));
+      // Get relative path from assets directory using path package
+      final relativePath = p.relative(entity.path, from: dir.path);
+
+      // Normalize to forward slashes for internal logic and constants
+      final normalizedPath = relativePath.replaceAll('\\', '/');
+      final pathParts = normalizedPath.split('/');
+
+      final extension =
+          p.extension(entity.path).toLowerCase().replaceAll('.', '');
 
       // Check if this path should be skipped
-      if (_shouldSkip(relativePath, skipPatterns)) {
+      // The relative path for skipping should include the base folder if it matches existing logic
+      // But _shouldSkip expects 'assets/...' or '/pattern/'.
+      // This is still a bit brittle, but I'll improve _shouldSkip too.
+      final fullRelativePath =
+          p.join(p.basename(dir.path), normalizedPath).replaceAll('\\', '/');
+
+      if (_shouldSkip(fullRelativePath, skipPatterns)) {
         continue;
       }
 
-      // Extract subfolder name from path
-      // Example: assets/bottom_bar/svg/icon.svg → bottom_bar
-      // Example: assets/icons/home/svg/icon.svg → icons/home
-      final pathParts = relativePath.split('/');
-      if (pathParts.length < 3) continue; // Need at least assets/folder/file
+      // Extract category from subfolders
+      // Example: data/icons/home/svg/icon.svg (where dir is data/)
+      // normalizedPath: icons/home/svg/icon.svg
+      // pathParts: [icons, home, svg, icon.svg]
 
-      // Get all folder parts between 'assets' and the file
-      var subfolders = pathParts.sublist(1, pathParts.length - 1);
+      if (pathParts.length < 2) continue; // Need at least folder/file
+
+      var subfolders = pathParts.sublist(0, pathParts.length - 1);
 
       // If the last subfolder matches the file extension, remove it
-      // This prevents: assets/icons/svg/ + svg → IconsSvgSvg
-      // Instead: assets/icons/ + svg → IconsSvg
       if (subfolders.isNotEmpty && subfolders.last == extension) {
         subfolders = subfolders.sublist(0, subfolders.length - 1);
       }
 
-      // If no subfolders left, skip this file
       if (subfolders.isEmpty) continue;
 
-      // Join subfolders with underscore for nested paths
-      // assets/icons/home/icon.svg → icons_home
       final category = subfolders.join('_');
 
       // Determine file type
@@ -196,14 +239,19 @@ Map<String, Map<String, List<_AssetInfo>>> _scanAssets(
       }
 
       if (fileType != null) {
-        // Initialize category and file type if they don't exist
         assets.putIfAbsent(category, () => {});
         assets[category]!.putIfAbsent(fileType, () => []);
 
-        final fileName = path.split('/').last.split('.').first;
+        final fileName = p.basenameWithoutExtension(entity.path);
         final constantName = _toConstantName(fileName);
+
+        // The path in the constant should be the full path relative to the project root
+        // which is basically p.join(dir.path, relativePath)
+        final projectRelativePath =
+            p.join(dir.path, relativePath).replaceAll('\\', '/');
+
         assets[category]![fileType]!
-            .add(_AssetInfo(constantName, relativePath));
+            .add(_AssetInfo(constantName, projectRelativePath));
       }
     }
   }
@@ -436,6 +484,138 @@ int _countTotalAssets(Map<String, Map<String, List<_AssetInfo>>> assets) {
     }
   }
   return count;
+}
+
+/// Automatically update pubspec.yaml with asset folders and .env
+Future<void> _updatePubspec(Directory assetsDir) async {
+  final pubspecFile = File('pubspec.yaml');
+  if (!pubspecFile.existsSync()) return;
+
+  final content = await pubspecFile.readAsString();
+  final lines = content.split('\n');
+
+  // 1. Identify folders containing assets and .env
+  final requiredAssets = <String>{};
+
+  // Normalize assetsDir path relative to project root
+  final baseAssetsPath = p
+      .relative(assetsDir.path, from: Directory.current.path)
+      .replaceAll('\\', '/');
+  requiredAssets
+      .add(baseAssetsPath.endsWith('/') ? baseAssetsPath : '$baseAssetsPath/');
+
+  final allEntities = assetsDir.listSync(recursive: true);
+  for (final entity in allEntities) {
+    if (entity is File) {
+      final folderPath = p
+          .dirname(p.relative(entity.path, from: Directory.current.path))
+          .replaceAll('\\', '/');
+      requiredAssets.add('$folderPath/');
+    }
+  }
+
+  if (File('.env').existsSync()) {
+    requiredAssets.add('.env');
+  }
+
+  // 2. Find top-level flutter: section
+  int flutterIndex = -1;
+  for (int i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith('flutter:')) {
+      flutterIndex = i;
+      break;
+    }
+  }
+
+  // 3. Find assets: section under flutter:
+  int assetsIndex = -1;
+  if (flutterIndex != -1) {
+    for (int i = flutterIndex + 1; i < lines.length; i++) {
+      final line = lines[i];
+      if (line.startsWith('  assets:')) {
+        assetsIndex = i;
+        break;
+      }
+      // If we hit another top-level key (no leading spaces)
+      if (line.isNotEmpty && !line.startsWith(' ')) break;
+    }
+  }
+
+  // 4. Update or Create sections
+  final newLines = List<String>.from(lines);
+
+  if (flutterIndex == -1) {
+    // Add flutter section at the end if it doesn't exist
+    newLines.add('');
+    newLines.add('flutter:');
+    newLines.add('  assets:');
+    final sorted = requiredAssets.toList()..sort();
+    for (final asset in sorted) {
+      newLines.add('    - $asset');
+    }
+  } else if (assetsIndex == -1) {
+    // Add assets section under flutter
+    newLines.insert(flutterIndex + 1, '  assets:');
+    int insertPos = flutterIndex + 2;
+    final sorted = requiredAssets.toList()..sort();
+    for (final asset in sorted) {
+      newLines.insert(insertPos++, '    - $asset');
+    }
+  } else {
+    // Update existing assets section
+    final existingAssets = <String>{};
+    int lastAssetIndex = assetsIndex;
+    for (int i = assetsIndex + 1; i < newLines.length; i++) {
+      final line = newLines[i];
+      if (line.trim().startsWith('-')) {
+        final assetPath = line.trim().substring(1).trim();
+        existingAssets.add(assetPath);
+        lastAssetIndex = i;
+      } else if (line.trim().isNotEmpty && !line.startsWith(' ')) {
+        // End of assets section or end of flutter section
+        break;
+      }
+    }
+
+    final assetsToAdd = requiredAssets.difference(existingAssets);
+    if (assetsToAdd.isNotEmpty) {
+      int insertPos = lastAssetIndex + 1;
+      final sortedAssets = assetsToAdd.toList()..sort();
+      for (final asset in sortedAssets) {
+        newLines.insert(insertPos++, '    - $asset');
+      }
+    } else {
+      // No new assets needed
+      return;
+    }
+  }
+
+  await pubspecFile.writeAsString(newLines.join('\n'));
+}
+
+/// Helper function for interactive menu to setup assets automatically
+Future<void> handleAssetSetup() async {
+  final configFile = File('dig.yaml');
+  final assetsDir = Directory('assets');
+
+  if (configFile.existsSync() && assetsDir.existsSync()) {
+    kLog('✅ Assets already configured! (dig.yaml & assets/ folder present)',
+        type: LogType.success);
+  } else {
+    if (!configFile.existsSync()) {
+      kLog('📝 Creating default dig.yaml...', type: LogType.info);
+      await configFile.writeAsString('''assets-dir: assets/
+output-dir: lib/generated
+''');
+    }
+
+    if (!assetsDir.existsSync()) {
+      kLog('📁 Creating assets/ directory...', type: LogType.info);
+      await assetsDir.create(recursive: true);
+    }
+  }
+
+  await buildAssets();
 }
 
 /// Check if a path should be skipped based on skip patterns

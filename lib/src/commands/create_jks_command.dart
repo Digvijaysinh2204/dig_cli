@@ -181,7 +181,7 @@ class CreateJksCommand extends Command {
           final propertiesContent = '''storePassword=$storePass
 keyPassword=$keyPass
 keyAlias=$alias
-storeFile=${jksFile.path}''';
+storeFile=${p.basename(jksFile.path)}''';
 
           await keyPropertiesFile.writeAsString(propertiesContent);
 

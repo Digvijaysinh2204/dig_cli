@@ -87,13 +87,12 @@ class CustomButton extends StatelessWidget {
   }
 
   Widget get _loader => Center(
-        child: SizedBox(
-          height: 22,
-          width: 22,
-          child:
-              CircularProgressIndicator(strokeWidth: 2.5, color: _contentColor),
-        ),
-      );
+    child: SizedBox(
+      height: 22,
+      width: 22,
+      child: CircularProgressIndicator(strokeWidth: 2.5, color: _contentColor),
+    ),
+  );
 
   Widget get _textWidget =>
       customTextWidget ??

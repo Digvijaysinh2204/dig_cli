@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.1-dev.1] - 2026-03-19
+
+### Added
+- **Premium Interactive Menu**: Completely redesigned startup screen with ASCII Logo, vibrant colors, and arrow-key navigation.
+- **Firebase Command Suite**: New `dg firebase` command with `login`, `logout`, `configure`, and `check` subcommands.
+- **Firebase Auto-Installer**: Automatic detection and installation of `firebase-tools` and `flutterfire_cli`.
+- **Firebase Account Display**: Interactive menu now shows the currently logged-in Firebase email.
+- **Pubspec Automation**: `dg asset build` now automatically registers new asset folders and `.env` files in `pubspec.yaml`.
+
+### Fixed
+- **Cross-Platform Watching**: Switched to `package:watcher` for reliable asset watching on Ubuntu, Windows, and macOS.
+- **JKS Portability**: `create-jks` now uses relative paths for `storeFile` in `key.properties`.
+
 ## [1.7.0] - 2026-02-25
 
 ### Initial Release

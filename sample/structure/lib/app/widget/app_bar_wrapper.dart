@@ -47,7 +47,8 @@ class AppBarWrapper extends StatelessWidget implements PreferredSizeWidget {
       toolbarHeight: preferredSize.height,
       title: title,
       actions: actions,
-      leading: leading?.paddingOnly(left: 20) ??
+      leading:
+          leading?.paddingOnly(left: 20) ??
           (showBackButton
               ? CustomBackButton(
                   onPressed:
@@ -58,10 +59,12 @@ class AppBarWrapper extends StatelessWidget implements PreferredSizeWidget {
               : null),
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness:
-            statusBarDarkIcons ? Brightness.dark : Brightness.light,
-        statusBarBrightness:
-            statusBarDarkIcons ? Brightness.light : Brightness.dark,
+        statusBarIconBrightness: statusBarDarkIcons
+            ? Brightness.dark
+            : Brightness.light,
+        statusBarBrightness: statusBarDarkIcons
+            ? Brightness.light
+            : Brightness.dark,
       ),
     );
   }
