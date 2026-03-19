@@ -38,16 +38,17 @@ class AppTextStyle {
     TextOverflow? overflow,
     TextDecoration? decoration,
     Color? decorationColor,
-  }) => _base(
-    size: size,
-    fontFamily: FontFamily.regular.value,
-    color: color,
-    height: height,
-    weight: fontWeight,
-    overflow: overflow,
-    decoration: decoration,
-    decorationColor: decorationColor,
-  );
+  }) =>
+      _base(
+        size: size,
+        fontFamily: FontFamily.regular.value,
+        color: color,
+        height: height,
+        weight: fontWeight,
+        overflow: overflow,
+        decoration: decoration,
+        decorationColor: decorationColor,
+      );
 
   static TextStyle medium({
     required double size,
@@ -57,16 +58,17 @@ class AppTextStyle {
     TextOverflow? overflow,
     TextDecoration? decoration,
     Color? decorationColor,
-  }) => _base(
-    size: size,
-    fontFamily: FontFamily.medium.value,
-    color: color,
-    height: height,
-    weight: fontWeight,
-    overflow: overflow,
-    decoration: decoration,
-    decorationColor: decorationColor,
-  );
+  }) =>
+      _base(
+        size: size,
+        fontFamily: FontFamily.medium.value,
+        color: color,
+        height: height,
+        weight: fontWeight,
+        overflow: overflow,
+        decoration: decoration,
+        decorationColor: decorationColor,
+      );
 
   static TextStyle semiBold({
     required double size,
@@ -76,16 +78,17 @@ class AppTextStyle {
     TextOverflow? overflow,
     TextDecoration? decoration,
     Color? decorationColor,
-  }) => _base(
-    size: size,
-    fontFamily: FontFamily.semiBold.value,
-    color: color,
-    height: height,
-    weight: fontWeight,
-    overflow: overflow,
-    decoration: decoration,
-    decorationColor: decorationColor,
-  );
+  }) =>
+      _base(
+        size: size,
+        fontFamily: FontFamily.semiBold.value,
+        color: color,
+        height: height,
+        weight: fontWeight,
+        overflow: overflow,
+        decoration: decoration,
+        decorationColor: decorationColor,
+      );
 
   static TextStyle bold({
     required double size,
@@ -95,19 +98,21 @@ class AppTextStyle {
     TextOverflow? overflow,
     TextDecoration? decoration,
     Color? decorationColor,
-  }) => _base(
-    size: size,
-    fontFamily: FontFamily.bold.value,
-    color: color,
-    height: height,
-    weight: fontWeight,
-    overflow: overflow,
-    decoration: decoration,
-    decorationColor: decorationColor,
-  );
+  }) =>
+      _base(
+        size: size,
+        fontFamily: FontFamily.bold.value,
+        color: color,
+        height: height,
+        weight: fontWeight,
+        overflow: overflow,
+        decoration: decoration,
+        decorationColor: decorationColor,
+      );
 
   static TextStyle appBarTitle({
     double size = 18,
     Color color = AppColor.kWhite,
-  }) => semiBold(size: size, color: color);
+  }) =>
+      semiBold(size: size, color: color);
 }

@@ -282,7 +282,7 @@ class ApiService {
   }
 
   static dynamic Function(Uri, {Map<String, String>? headers, Object? body})
-  _getClientMethod(RequestMethod method) {
+      _getClientMethod(RequestMethod method) {
     switch (method) {
       case RequestMethod.post:
         return _client.post;
@@ -379,15 +379,11 @@ class ApiService {
     }
 
     if (files != null && files.isNotEmpty) {
-      final fileInfo = files
-          .asMap()
-          .entries
-          .map((entry) {
-            final idx = entry.key;
-            final file = entry.value;
-            return 'files[$idx]: ${file.filename ?? 'unnamed'} (${file.length} bytes)';
-          })
-          .join('\n');
+      final fileInfo = files.asMap().entries.map((entry) {
+        final idx = entry.key;
+        final file = entry.value;
+        return 'files[$idx]: ${file.filename ?? 'unnamed'} (${file.length} bytes)';
+      }).join('\n');
       kLog(title: 'FILES', content: fileInfo);
     }
 

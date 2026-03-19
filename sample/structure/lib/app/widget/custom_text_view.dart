@@ -13,18 +13,18 @@ class CustomTextView extends Text {
     bool toUpperCase = false,
     bool toLowerCase = false,
   }) : super(
-         _processText(
-           text,
-           capitalize: capitalize,
-           capitalizeFirst: capitalizeFirst,
-           toUpperCase: toUpperCase,
-           toLowerCase: toLowerCase,
-         ),
-         style: style,
-         maxLines: maxLines,
-         textAlign: textAlign,
-         overflow: overflow,
-       );
+          _processText(
+            text,
+            capitalize: capitalize,
+            capitalizeFirst: capitalizeFirst,
+            toUpperCase: toUpperCase,
+            toLowerCase: toLowerCase,
+          ),
+          style: style,
+          maxLines: maxLines,
+          textAlign: textAlign,
+          overflow: overflow,
+        );
 
   static String _processText(
     String text, {
