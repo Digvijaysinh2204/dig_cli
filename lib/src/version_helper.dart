@@ -2,4 +2,4 @@
 
 // The version is now hardcoded here.
 // Remember to change this manually when you release a new version.
-const String kDigCliVersion = '1.7.1-dev.1';
+const String kDigCliVersion = '1.7.1';

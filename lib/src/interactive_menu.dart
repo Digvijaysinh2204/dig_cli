@@ -1,202 +1,240 @@
+import 'dart:convert';
 import 'dart:io';
-import 'package:ansicolor/ansicolor.dart';
 import 'package:args/command_runner.dart';
+import 'package:path/path.dart' as p;
 import 'commands/asset_command.dart';
 import 'commands/firebase_command.dart';
 import 'commands/build_command.dart';
+import 'commands/ios_build_command.dart';
+import 'commands/sha_keys_command.dart';
+import 'commands/hash_key_command.dart';
+import 'commands/create_jks_command.dart';
+import 'commands/create_module_command.dart';
+import 'commands/create_project_command.dart';
 import 'commands/clean_command.dart';
 import 'commands/zip_command.dart';
 import 'commands/rename_command.dart';
+import 'commands/version_command.dart';
+import 'utils/version_utils.dart';
+import 'version_helper.dart';
+import 'utils/logger.dart';
 
 class InteractiveMenu {
-  final AnsiPen titlePen = AnsiPen()..cyan(bold: true);
-  final AnsiPen highlightPen = AnsiPen()..green(bold: true);
-  final AnsiPen grayPen = AnsiPen()..gray();
-  final AnsiPen accentPen = AnsiPen()..magenta(bold: true);
+  Future<void> show() async {
+    while (true) {
+      print('\x1B[2J\x1B[0;0H'); // Clear console
+      kLog('================= 🚀 DIG CLI =================',
+          type: LogType.info);
+      kLog('   🚀 Made with ❤️  by Digvijaysinh Chauhan 🚀   ',
+          type: LogType.success);
+      kLog('=============================================\n',
+          type: LogType.info);
 
-  int _selectedIndex = 0;
+      kLog('📦 BUILD & RELEASE', type: LogType.info);
+      kLog('1) 🏗️  Build APK', type: LogType.info);
+      kLog('2) 📦 Build App Bundle (AAB)', type: LogType.info);
+      kLog('3) 🍎 Build iOS (IPA)', type: LogType.info);
 
-  List<Map<String, dynamic>> get _options => [
-        {
-          'label': '🎨 Setup Assets (Auto-detect & Generate)',
-          'icon': '✨',
-          'action': () => handleAssetSetup(),
-        },
-        {
-          'label': '🔥 Firebase Setup & Configuration',
-          'icon': '⚡',
-          'action': () async {
-            final email = await _getFirebaseEmail();
-            final displayTitle =
-                email != null ? 'FIREBASE SETUP ($email)' : 'FIREBASE SETUP';
-            final subMenu = InteractiveMenu();
-            await subMenu.show(
-              title: displayTitle,
-              options: [
-                {
-                  'label': 'Login',
-                  'icon': '🔑',
-                  'cmd': ['firebase', 'login']
-                },
-                {
-                  'label': 'Logout',
-                  'icon': '🚪',
-                  'cmd': ['firebase', 'logout']
-                },
-                {
-                  'label': 'Configure (flutterfire)',
-                  'icon': '⚙️',
-                  'cmd': ['firebase', 'configure']
-                },
-                {
-                  'label': 'Check Status',
-                  'icon': '🔍',
-                  'cmd': ['firebase', 'check']
-                },
-                {'label': 'Back to Main Menu', 'icon': '⬅️', 'isBack': true},
-              ],
-              isSubMenu: true,
-            );
-          },
-        },
-        {
-          'label': '🏗️ Build Project',
-          'icon': '🚀',
-          'action': () => BuildCommand().run(),
-        },
-        {
-          'label': '🧹 Clean Project',
-          'icon': '🧼',
-          'action': () => CleanCommand().run(),
-        },
-        {
-          'label': '📦 Zip Source Code',
-          'icon': '🗜️',
-          'action': () => ZipCommand().run(),
-        },
-        {
-          'label': '🏷️ Rename Project/Bundle',
-          'icon': '📝',
-          'action': () => RenameCommand().run(),
-        },
-        {
-          'label': '🚪 Exit',
-          'icon': '✖️',
-          'isExit': true,
-          'action': () => exit(0),
-        },
-      ];
+      kLog('\n🧹 CLEAN & FIX', type: LogType.info);
+      kLog('4) 🧼 Clean (flutter clean only)', type: LogType.info);
+      kLog('5) ☢️  Clean & Full Reset (with Nuclear opt)', type: LogType.info);
 
-  void _printLogo() {
-    print('\x1B[2J\x1B[0;0H'); // Clear console
-    print(accentPen('  _____ _____ _____   _____ _      _____ '));
-    print(accentPen(' |  __ \\_   _/ ____| / ____| |    |_   _|'));
-    print(accentPen(' | |  | || || |  __ | |    | |      | |  '));
-    print(accentPen(' | |  | || || | |_ || |    | |      | |  '));
-    print(accentPen(' | |__| |_| || |__| || |____| |____ _| |_ '));
-    print(accentPen(' |_____/|_____\\_____| \\_____|______|_____|'));
-    print('');
-    print(grayPen(' ─── Premium Flutter Developer companion ───'));
-    print('');
-  }
+      kLog('\n🔐 SIGNING & KEYS', type: LogType.info);
+      kLog('6) 🔐 Create JKS (Keystore)', type: LogType.info);
+      kLog('7) 🔑 Generate SHA Keys', type: LogType.info);
+      kLog('8) 🔑 Generate Hash Key (for Facebook)', type: LogType.info);
 
-  Future<void> show({
-    String title = 'MAIN MENU',
-    List<Map<String, dynamic>>? options,
-    bool isSubMenu = false,
-  }) async {
-    final menuOptions = options ?? _options;
-    _selectedIndex = 0;
+      kLog('\n🔥 CONFIGURATION', type: LogType.info);
+      kLog('9) 🔥 Firebase Setup', type: LogType.info);
+      kLog('10) ✨ Setup Assets (Auto)', type: LogType.info);
 
-    // Save current terminal state
-    final originalEchoMode = stdin.echoMode;
-    final originalLineMode = stdin.lineMode;
+      kLog('\n🏗️ PROJECT MANAGEMENT', type: LogType.info);
+      kLog('11) 🧱 Create New Project', type: LogType.info);
+      kLog('12) 📂 Create GetX Module', type: LogType.info);
+      kLog('13) 🏷️ Rename App / Bundle', type: LogType.info);
 
-    try {
-      while (true) {
-        _drawMenu(title, menuOptions);
+      kLog('\n📦 UTILITIES', type: LogType.info);
+      kLog('14) 🗜️  Zip Source Code', type: LogType.info);
+      kLog('15) 🚀 Check for Updates', type: LogType.info);
 
-        stdin.echoMode = false;
-        stdin.lineMode = false;
-        final bytes = stdin.readByteSync();
+      kLog('\n---------------------------------------------',
+          type: LogType.info);
+      kLog('0) 🚪 Exit', type: LogType.info);
+      kLog('=============================================', type: LogType.info);
 
-        if (bytes == 27) {
-          // Escape sequence
-          final b2 = stdin.readByteSync();
-          if (b2 == 91) {
-            final b3 = stdin.readByteSync();
-            if (b3 == 65) {
-              // Up arrow
-              _selectedIndex = (_selectedIndex - 1) % menuOptions.length;
-              if (_selectedIndex < 0) _selectedIndex = menuOptions.length - 1;
-            } else if (b3 == 66) {
-              // Down arrow
-              _selectedIndex = (_selectedIndex + 1) % menuOptions.length;
-            }
-          }
-        } else if (bytes == 13 || bytes == 10) {
-          // Enter key
-          final selected = menuOptions[_selectedIndex];
+      stdout.write('\nSelect option (0-15): ');
+      final response = stdin.readLineSync()?.trim();
 
-          if (selected['isExit'] == true) exit(0);
-          if (selected['isBack'] == true) break;
+      if (response == '0') exit(0);
 
-          // Restore terminal state for command output
-          stdin.echoMode = originalEchoMode;
-          stdin.lineMode = originalLineMode;
+      final runner = CommandRunner('dg', 'temp');
 
-          print('\n');
-          if (selected['cmd'] != null) {
-            final runner = CommandRunner('dg', 'temp')
-              ..addCommand(FirebaseCommand());
-            await runner.run(selected['cmd']);
-          } else if (selected['action'] != null) {
-            await selected['action']();
-          }
-
-          print(grayPen('\n(Press any key to continue...)'));
-          stdin.echoMode = false;
-          stdin.lineMode = false;
-          stdin.readByteSync();
-        }
+      switch (response) {
+        case '1':
+          runner.addCommand(BuildCommand());
+          await runner.run(['create', 'apk']);
+          break;
+        case '2':
+          runner.addCommand(BuildCommand());
+          await runner.run(['create', 'bundle']);
+          break;
+        case '3':
+          await IosBuildCommand().run();
+          break;
+        case '4':
+          kLog('🚀 Running flutter clean...', type: LogType.info);
+          await Process.run('flutter', ['clean']);
+          kLog('✅ Clean complete.', type: LogType.success);
+          break;
+        case '5':
+          await _handleFullReset();
+          break;
+        case '6':
+          await CreateJksCommand().run();
+          break;
+        case '7':
+          await ShaKeysCommand().run();
+          break;
+        case '8':
+          await HashKeyCommand().run();
+          break;
+        case '9':
+          await _showFirebaseSubMenu();
+          break;
+        case '10':
+          await handleAssetSetup();
+          break;
+        case '11':
+          await CreateProjectCommand().run();
+          break;
+        case '12':
+          await CreateModuleCommand().run();
+          break;
+        case '13':
+          await RenameCommand().run();
+          break;
+        case '14':
+          await ZipCommand().run();
+          break;
+        case '15':
+          await _handleUpdateCheck();
+          break;
+        default:
+          kLog('⚠️ Invalid option. Please try again.', type: LogType.warning);
+          break;
       }
-    } finally {
-      stdin.echoMode = originalEchoMode;
-      stdin.lineMode = originalLineMode;
+
+      kLog('\n(Press Enter to continue...)', type: LogType.info);
+      stdin.readLineSync();
     }
   }
 
-  void _drawMenu(String title, List<Map<String, dynamic>> options) {
-    _printLogo();
-    print(titlePen('  $title'));
-    print(grayPen('  ${'─' * (title.length + 2)}'));
-    print('');
+  Future<void> _handleFullReset() async {
+    stdout.write(
+        '☢️  Wipe global build caches too (Xcode DerivedData, Gradle)? (y/N): ');
+    final response = stdin.readLineSync()?.trim().toLowerCase();
 
-    for (int i = 0; i < options.length; i++) {
-      final isSelected = i == _selectedIndex;
-      final option = options[i];
-      final prefix = isSelected ? '  ➤ ' : '    ';
-      final text = option['label'];
-      final icon = option['icon'] ?? '🔹';
+    final runner = CommandRunner('dg', 'temp')..addCommand(CleanCommand());
+    if (response == 'y') {
+      await runner.run(['clean', '--global']);
+    } else {
+      await runner.run(['clean']);
+    }
+  }
 
-      if (isSelected) {
-        print(highlightPen('$prefix$icon $text'));
+  Future<void> _handleUpdateCheck() async {
+    kLog('🔎 Checking for updates...', type: LogType.info);
+    await VersionCommand().run();
+
+    final latest = await VersionUtils.getLatestStableVersion();
+    if (latest != null && VersionUtils.isNewer(latest, kDigCliVersion)) {
+      final isLocal = Platform.script.toFilePath().contains('bin/dig_cli.dart');
+      if (isLocal) {
+        kLog(
+            '\n⚠️  Note: You are running from source code. Updating the global package will not change this local instance.',
+            type: LogType.warning);
+      }
+
+      stdout.write('\n› Update to v$latest now? (y/N): ');
+      final response = stdin.readLineSync()?.trim().toLowerCase();
+      if (response == 'y') {
+        kLog('🚀 Updating DIG CLI...', type: LogType.info);
+        final process = await Process.start(
+            'dart', ['pub', 'global', 'activate', 'dig_cli'],
+            mode: ProcessStartMode.inheritStdio);
+        await process.exitCode;
+      }
+    }
+  }
+
+  Future<void> _showFirebaseSubMenu() async {
+    while (true) {
+      final email = await _getFirebaseEmail();
+      final header =
+          email != null ? '🔥 FIREBASE SETUP ($email)' : '🔥 FIREBASE SETUP';
+
+      kLog('\n$header', type: LogType.info);
+      kLog('------------------------------------------', type: LogType.info);
+
+      final Map<String, List<String>> optionsMap = {};
+      int index = 1;
+
+      if (email == null) {
+        kLog('$index) 🔑 Login', type: LogType.info);
+        optionsMap['$index'] = ['firebase', 'login'];
+        index++;
       } else {
-        print(grayPen('$prefix$icon $text'));
+        kLog('$index) 🚪 Logout', type: LogType.info);
+        optionsMap['$index'] = ['firebase', 'logout'];
+        index++;
+      }
+
+      kLog('$index) ⚙️ Configure (flutterfire)', type: LogType.info);
+      optionsMap['$index'] = ['firebase', 'configure'];
+      index++;
+
+      kLog('$index) 🔍 Check Status', type: LogType.info);
+      optionsMap['$index'] = ['firebase', 'check'];
+      index++;
+
+      kLog('0) ⬅️ Back to Main Menu', type: LogType.info);
+
+      stdout.write('\nSelect option (0-${index - 1}): ');
+      final response = stdin.readLineSync()?.trim();
+      if (response == '0') break;
+
+      final cmd = optionsMap[response];
+
+      if (cmd != null) {
+        final runner = CommandRunner('dg', 'temp')
+          ..addCommand(FirebaseCommand());
+        try {
+          await runner.run(cmd);
+        } catch (e) {
+          kLog('❌ Error: $e', type: LogType.error);
+        }
+        kLog('\n(Press Enter to continue...)', type: LogType.info);
+        stdin.readLineSync();
       }
     }
-    print('');
-    print(grayPen('  (Use ↑/↓ arrows and Press Enter to select)'));
   }
 
   Future<String?> _getFirebaseEmail() async {
     try {
-      final result = await Process.run('firebase', ['login']);
-      final output = result.stdout.toString();
-      if (output.contains('Already logged in as')) {
-        final match = RegExp(r'Already logged in as ([\w.-]+@[\w.-]+\.\w+)')
-            .firstMatch(output);
-        return match?.group(1);
+      final home = Platform.environment['HOME'] ??
+          Platform.environment['USERPROFILE'] ??
+          '';
+      if (home.isNotEmpty) {
+        final configPath =
+            p.join(home, '.config', 'configstore', 'firebase-tools.json');
+        final configFile = File(configPath);
+        if (await configFile.exists()) {
+          final data = json.decode(await configFile.readAsString());
+          final email = data['user']?['email'] ?? data['activeAccount'];
+          if (email != null && email is String && email.contains('@')) {
+            return email;
+          }
+        }
       }
     } catch (_) {}
     return null;

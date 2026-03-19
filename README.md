@@ -1,6 +1,6 @@
 # 🛠️ DIG CLI
 
-A powerful Flutter CLI tool to automate building, cleaning, packaging, and renaming your projects across all platforms.
+A powerful Flutter CLI tool to automate building, cleaning, packaging, and renaming your projects across all platforms. Designed with a premium Developer Dashboard to speed up your daily workflow.
 
 [![pub package](https://img.shields.io/pub/v/dig_cli.svg)](https://pub.dev/packages/dig_cli)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -9,28 +9,37 @@ A powerful Flutter CLI tool to automate building, cleaning, packaging, and renam
 
 ## 🚀 Features
 
-- **Interactive Menu**: Easy navigation; run the tool without commands for a guided experience.
-- **✨ Create Project**: Bootstrap a **"Proper" Flutter Project** (v1.5.0 Standard) with:
-  - **Dynamic App Name**: Auto-injects your app name into `AppConstant` and `AndroidManifest`.
-  - **Download Manager**: Pre-configured `GetxService` for robust background downloads & localization.
-  - **JKS Automation**: Auto-generates unique keystores and configures signing.
-  - **Secure Defaults**: Generates cryptographically secure API keys in `.env`.
-  - **Asset Generation**: Pre-configured with subfolder-based asset structure.
-- **🏷️ Rename App**: Smart renaming for **Android, iOS, macOS, Windows, Linux, and Web**.
-  - Handles Android namespace updates and directory restructuring.
-  - Updates bundle IDs and display names across all platform-specific files.
-- **🏗️ Create Module**: Automated GetX scaffolding (`View`, `Controller`, `Binding`, `Export`) with auto-route registration.
-- **🎨 Asset Generation**: Subfolder-based asset organization
-  - `dg asset build` - Generate once
-  - `dg asset watch` - Auto-regenerate on changes
-  - Folder structure determines class names: `assets/bottom_bar/svg` → `BottomBarSvg`
-  - Smart extension handling prevents redundancy
-  - Skip/exclude folders via `dig.yaml` configuration
-  - Single import: `import 'package:app/generated/assets.dart'`
-  - See [ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md) for examples
-- **🛡️ Build Tools**: Release builds with automatic `ProjectName-YYYY-MM-DD` naming.
-- **Deep Clean**: Removes Flutter, Gradle, Xcode, and Pods caches on macOS, Windows, and Linux.
-- **Auto Update Check**: Checks for new versions on pub.dev (Latest: v1.7.0).
+### 🌟 Categorized Developer Dashboard (v1.7.1)
+Run `dg` to instantly access the 15-item categorized master dashboard:
+
+1. **📦 BUILD & RELEASE**
+   - 🏗️ Build APK
+   - 📦 Build App Bundle (AAB)
+   - 🍎 Build iOS (IPA)
+2. **🧹 CLEAN & FIX**
+   - 🧼 Fast Clean (flutter clean only)
+   - ☢️ Clean & Full Reset (Pub get, Pods, optional Global Cache wipe)
+3. **🔐 SIGNING & KEYS**
+   - 🔐 Create JKS (Keystore with portable relative paths)
+   - 🔑 Generate SHA Keys (SHA1/SHA256)
+   - 🔑 Generate Hash Key (Base64 encoded for Facebook/Google Login)
+4. **🔥 CONFIGURATION**
+   - 🔥 Firebase Setup (Direct config reading, Login/Logout toggle)
+   - ✨ Auto Setup Assets (`pubspec.yaml` auto-registration)
+5. **🏗️ PROJECT MANAGEMENT**
+   - 🧱 Create "Proper" Flutter Project (v1.5.0 Standard with secure defaults)
+   - 📂 Create GetX Module (View, Controller, Binding, Route)
+   - 🏷️ Rename App / Bundle (All 6 Platforms!)
+6. **📦 UTILITIES**
+   - 🗜️ Zip Source Code (Excludes ignored files)
+   - 🚀 Check for Updates (One-click update from pub.dev)
+
+### ✨ Auto Asset Generation (`dg asset build` / `dg asset watch`)
+Subfolder-based asset organization that auto-registers into your `pubspec.yaml`:
+- Folder structure determines class names: `assets/bottom_bar/svg` → `BottomBarSvg`
+- Smart cross-platform watcher prevents redundancy.
+- Single import: `import 'package:app/generated/assets.dart'`
+- See [ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md) for detailed examples.
 
 ---
 
@@ -46,7 +55,7 @@ After installation, use **`dg`** as the command.
 
 ## ⚙️ Usage
 
-### Interactive Menu (Recommended)
+### Interactive Menu (Highly Recommended)
 
 ```bash
 dg
@@ -59,7 +68,7 @@ dg
 - **Rename App**: `dg rename --name "New Name" --bundle-id com.new.id`
 - **Build APK**: `dg create apk`
 - **Build AAB**: `dg create bundle`
-- **Clean Project**: `dg clean`
+- **Clean Project**: `dg clean` (use `--global` for Nuclear mode)
 - **Create ZIP**: `dg zip`
 - **Generate Assets**: `dg asset build`
 - **Watch Assets**: `dg asset watch`
@@ -77,7 +86,7 @@ dg rename --name "Awesome App" --bundle-id com.my.awesome.app
 dg create apk --name MyApp --output ~/Downloads
 
 # Deep clean the project's build artifacts
-dg clean
+dg clean --global
 
 # Generate assets with subfolder-based classes
 dg asset build
@@ -96,8 +105,6 @@ SvgPicture.asset(BottomBarSvg.home);
 // Folder: assets/fonts/inter/bold.ttf
 Text('Hello', style: TextStyle(fontFamily: FontsInterTtf.bold));
 ```
-
-For detailed examples, see [ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md)
 
 ---
 

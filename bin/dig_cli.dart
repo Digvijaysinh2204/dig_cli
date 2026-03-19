@@ -8,6 +8,7 @@ import 'package:dig_cli/src/commands/create_project_command.dart';
 import 'package:dig_cli/src/commands/hash_key_command.dart';
 import 'package:dig_cli/src/commands/ios_build_command.dart';
 import 'package:dig_cli/src/commands/rename_command.dart';
+import 'package:dig_cli/src/commands/sha_keys_command.dart';
 import 'package:dig_cli/src/commands/version_command.dart';
 import 'package:dig_cli/src/commands/zip_command.dart';
 import 'package:dig_cli/src/commands/create_module_command.dart';
@@ -21,6 +22,7 @@ void main(List<String> arguments) async {
     ..addCommand(CleanCommand())
     ..addCommand(ZipCommand())
     ..addCommand(RenameCommand())
+    ..addCommand(ShaKeysCommand())
     ..addCommand(HashKeyCommand())
     ..addCommand(CreateJksCommand())
     ..addCommand(CreateProjectCommand())

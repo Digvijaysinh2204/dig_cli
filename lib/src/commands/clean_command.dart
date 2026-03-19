@@ -76,7 +76,8 @@ class CleanCommand extends Command {
         );
 
         final iosDir = Directory('ios');
-        if (await iosDir.exists()) {
+        final podfile = File(p.join(iosDir.path, 'Podfile'));
+        if (await iosDir.exists() && await podfile.exists()) {
           await _deleteIfExists(p.join(iosDir.path, '.symlinks'));
           await _deleteIfExists(p.join(iosDir.path, 'Podfile.lock'));
           await _deleteIfExists(p.join(iosDir.path, 'Pods'));

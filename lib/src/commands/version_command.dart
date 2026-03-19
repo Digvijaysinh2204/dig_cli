@@ -95,9 +95,10 @@ class VersionCommand extends Command {
     print(borderPen('║') + ' ' * (totalWidth - 2) + borderPen('║'));
 
     // Author
+    final authorPen = AnsiPen()..yellow(bold: true);
     print(borderPen('║') +
         ' ' * ((totalWidth - author.length - 2) / 2).floor() +
-        textPen(author) +
+        authorPen(author) +
         ' ' * ((totalWidth - author.length - 2) / 2).ceil() +
         borderPen('║'));
     print(borderPen(bottomBorder));
