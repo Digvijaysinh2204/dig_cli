@@ -268,8 +268,15 @@ String _toConstantName(String fileName) {
   // - SOmeIcon.svg -> someIcon
   // - MyIcon.svg -> myIcon
 
-  // Replace hyphens with underscores for consistency
-  var normalized = fileName.replaceAll('-', '_');
+  // 1. Remove special chars (parens, brackets, etc.)
+  // 2. Convert spaces to underscores
+  // 3. Convert hyphens to underscores
+  // 4. Merge multiple underscores
+  var normalized = fileName
+      .replaceAll(RegExp(r'[^a-zA-Z0-9\-_ ]'), '')
+      .replaceAll(' ', '_')
+      .replaceAll('-', '_')
+      .replaceAll(RegExp(r'_+'), '_');
 
   // Split by underscore
   var parts = normalized.split('_').where((p) => p.isNotEmpty).toList();
