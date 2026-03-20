@@ -2,12 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.4] - 2026-03-20
+
+### Added
+
+- **`dg pub-cache`:** Register and document the pub cache repair command (`flutter pub cache repair`); it was previously implemented but not wired into the CLI or interactive flow.
+
+### Changed
+
+- **Interactive dashboard:** Category → action navigation with a **single bordered card** per screen (same 50-column style as `dg version`), `╠` divider between header and actions, and prompts outside the box. Submenus use **0 · Back** where appropriate.
+- **Logging / terminals:** `kLog` respects **`NO_COLOR`**, **`TERM=dumb`**, and non-TTY stdout via `kAnsiStdoutEnabled` so output stays readable when piped or in minimal environments.
+
+### Removed
+
+- Stray `lib/src/commands/asset_command.dart.bak` from the repository.
+
 ## [1.7.3] - 2026-03-19
 
 ### Added
+
 - **Beta/Dev Update (Option 16):** New interactive menu option to check for and install pre-release (dev/beta) versions directly from the CLI dashboard.
 
 ### Fixed
+
 - **Localization Files Preserved:** Asset generation now only cleans `lib/generated/assets/` instead of the entire `lib/generated/` directory, preserving localization files and other generated code.
 - **Numeric Asset Filenames:** Files starting with a number (e.g., `4.png`) now generate valid Dart constants with `ic` prefix (e.g., `ic4`) instead of producing invalid identifiers that break compilation.
 - **Pubspec Stale Entry Cleanup:** Deleted asset folders are now automatically removed from the `pubspec.yaml` assets section. Only entries within the configured `assets-dir` are managed — `.env`, localization paths, and other manually-added entries are never touched.
@@ -15,37 +32,35 @@ All notable changes to this project will be documented in this file.
 
 ## [1.7.2] - 2026-03-19
 
-### Fixed
-- **Assets Generation:** Fixed invalid Dart variable generation (e.g. `String 6`) for numeric file names by auto-prepending `a_`.
-- **Assets Cleanup:** Fixed issue where deleted assets caused stale auto-generated Dart code to persist. `lib/generated` is now freshly wiped on each build.
-- **Pubspec Formatter:** Fixed an issue where the asset generator inadvertently skipped the end of the `assets:` section if there were multiple subsections.
-- **Console UI:** Improved readability of the interactive menu on dark terminal backgrounds by changing the main color from blue to cyan.
-
-
-
 ### Added
-- **Categorized Developer Dashboard**: The interactive menu is now organized into a clean 15-item list across 6 logical sections: **BUILD & RELEASE**, **CLEAN & FIX**, **SIGNING & KEYS**, **CONFIGURATION**, **PROJECT MANAGEMENT**, and **UTILITIES**.
-- **Enhanced Author Branding**: Prominent "**Made with ❤️ by Digvijaysinh Chauhan**" branding added to the main dashboard and version command for a premium, personal touch.
-- **Fast Clean (Option 4)**: New dedicated option for a simple `flutter clean` to quickly wipe local build artifacts.
-- **Full Project Reset (Option 5)**: Thorough cleanup command that runs `flutter clean`, `pub get`, and `pod install` (on Mac), with an optional "Nuclear" global cache wipe.
-- **One-click Update (Option 15)**: New helper in the UTILITIES section to check for updates on pub.dev and automatically run `dart pub global activate` if a newer version is available.
-- **Firebase Command Suite**: New `dg firebase` command with `login`, `logout`, `configure`, and `check` subcommands.
-- **Firebase Auto-Installer**: Automatic detection and installation of `firebase-tools` and `flutterfire_cli`.
-- **Hash Key Generation**: New option to generate base64-encoded SHA1 hash keys for Android (required for Facebook/Google Login).
-- **Firebase Account Display**: Interactive menu now shows the currently logged-in Firebase email in the sub-menu header, with dynamic Login/Logout options.
-- **Pubspec Automation**: `dg asset build` now automatically registers new asset folders and `.env` files in `pubspec.yaml`.
+
+- **Categorized Developer Dashboard:** The interactive menu is organized into sections: **BUILD & RELEASE**, **CLEAN & FIX**, **SIGNING & KEYS**, **CONFIGURATION**, **PROJECT MANAGEMENT**, and **UTILITIES**.
+- **Enhanced Author Branding:** Prominent author branding on the main dashboard and version command.
+- **Fast Clean (Option 4):** Dedicated option for a simple `flutter clean`.
+- **Full Project Reset (Option 5):** Thorough cleanup (`flutter clean`, `pub get`, `pod install` on macOS) with an optional global cache wipe.
+- **One-click Update (Option 15):** Check pub.dev and run `dart pub global activate` when a newer stable version exists.
+- **Firebase Command Suite:** `dg firebase` with `login`, `logout`, `configure`, and `check` subcommands.
+- **Firebase Auto-Installer:** Detection and installation of `firebase-tools` and `flutterfire_cli`.
+- **Hash Key Generation:** Base64-encoded SHA1 hash keys for Android (Facebook/Google login flows).
+- **Firebase Account Display:** Interactive Firebase sub-menu shows the logged-in email when available.
+- **Pubspec Automation:** `dg asset build` registers new asset folders and `.env` in `pubspec.yaml`.
 
 ### Fixed
-- **Ultra-Robust Firebase Detection**: The CLI now reads the official Firebase config file directly, ensuring 100% accurate and instantaneous login status detection.
-- **Smart iOS Cleanup**: `Full Project Reset` now explicitly checks for a `Podfile` before attempting CocoaPods operations, ensuring compatibility with SPM-only projects.
-- **Cross-Platform Watching**: Switched to `package:watcher` for reliable asset watching on Ubuntu, Windows, and macOS.
-- **JKS Portability**: `create-jks` now uses relative paths for `storeFile` in `key.properties`.
+
+- **Assets Generation:** Invalid Dart identifiers for numeric file names (e.g. `String 6`) fixed by auto-prefixing.
+- **Assets Cleanup:** Deleted assets no longer leave stale generated Dart code; `lib/generated` is refreshed on each build.
+- **Pubspec Formatter:** Asset generator no longer skips the end of the `assets:` section when multiple subsections exist.
+- **Console UI:** Improved interactive menu readability on dark terminals (blue → cyan).
+- **Ultra-Robust Firebase Detection:** Reads the official Firebase config for login status.
+- **Smart iOS Cleanup:** Full reset checks for a `Podfile` before running CocoaPods.
+- **Cross-Platform Watching:** Uses `package:watcher` for asset watching on Ubuntu, Windows, and macOS.
+- **JKS Portability:** `create-jks` uses relative `storeFile` paths in `key.properties`.
 
 ## [1.7.0] - 2026-02-25
 
 ### Initial Release
 
-- **Smart Scaffolding**: Bootstrap a "Proper" Flutter Project with dynamic app name injection, pre-configured GetX architecture, and best practices.
+- **Smart Scaffolding**: Bootstrap a "Proper" Flutter Project with dynamic app name injection, pre configured GetX architecture, and best practices.
 - **UIScene & SceneDelegate**: Full support for the modern iOS `UIScene` lifecycle by default.
 - **Firebase Robustness**: 100% crash-proof initial launch with pre-configured, commented-out Firebase initializers for easy setup.
 - **Asset Generation**: Subfolder-based, type-safe asset constants generation with `dg asset build/watch`.
@@ -55,4 +70,4 @@ All notable changes to this project will be documented in this file.
 - **Security**: Automatic JKS generation and secure `.env` API key injection.
 - **Deep Clean**: A "nuclear" clean command that wipes caches across all platforms.
 - **Notification Services**: Pre-integrated, align with official best practices, and controllable via bindings.
-- **Documentation**: Professional, "wowed" `README.md` and comprehensive asset generation guides.
+- **Documentation**: Professional `README.md` and comprehensive asset generation guides.

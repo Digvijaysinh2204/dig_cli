@@ -1,136 +1,142 @@
-# 🛠️ DIG CLI
-
-A powerful Flutter CLI tool to automate building, cleaning, packaging, and renaming your projects across all platforms. Designed with a premium Developer Dashboard to speed up your daily workflow.
+# DIG CLI
 
 [![pub package](https://img.shields.io/pub/v/dig_cli.svg)](https://pub.dev/packages/dig_cli)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/github-repo-181717?logo=github)](https://github.com/Digvijaysinh2204/dig_cli)
+
+**DIG CLI** (`dg`) is a command-line helper for Flutter projects: release builds, cleans and resets, Android/iOS signing helpers, Firebase and assets, scaffolding (GetX modules, new projects), rename across platforms, and more. Use **`dg`** with no arguments for an interactive menu, or call subcommands from scripts and CI.
 
 ---
 
-## 🚀 Features
+## Requirements
 
-### 🌟 Categorized Developer Dashboard (v1.7.1)
-Run `dg` to instantly access the 15-item categorized master dashboard:
-
-1. **📦 BUILD & RELEASE**
-   - 🏗️ Build APK
-   - 📦 Build App Bundle (AAB)
-   - 🍎 Build iOS (IPA)
-2. **🧹 CLEAN & FIX**
-   - 🧼 Fast Clean (flutter clean only)
-   - ☢️ Clean & Full Reset (Pub get, Pods, optional Global Cache wipe)
-3. **🔐 SIGNING & KEYS**
-   - 🔐 Create JKS (Keystore with portable relative paths)
-   - 🔑 Generate SHA Keys (SHA1/SHA256)
-   - 🔑 Generate Hash Key (Base64 encoded for Facebook/Google Login)
-4. **🔥 CONFIGURATION**
-   - 🔥 Firebase Setup (Direct config reading, Login/Logout toggle)
-   - ✨ Auto Setup Assets (`pubspec.yaml` auto-registration)
-5. **🏗️ PROJECT MANAGEMENT**
-   - 🧱 Create "Proper" Flutter Project (v1.5.0 Standard with secure defaults)
-   - 📂 Create GetX Module (View, Controller, Binding, Route)
-   - 🏷️ Rename App / Bundle (All 6 Platforms!)
-6. **📦 UTILITIES**
-   - 🗜️ Zip Source Code (Excludes ignored files)
-   - 🚀 Check for Updates (One-click update from pub.dev)
-
-### ✨ Auto Asset Generation (`dg asset build` / `dg asset watch`)
-Subfolder-based asset organization that auto-registers into your `pubspec.yaml`:
-- Folder structure determines class names: `assets/bottom_bar/svg` → `BottomBarSvg`
-- Smart cross-platform watcher prevents redundancy.
-- Single import: `import 'package:app/generated/assets.dart'`
-- See [ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md) for detailed examples.
+- **Dart SDK** 3.0+ (see `pubspec.yaml`).
+- **Flutter** on your `PATH` for builds, clean, pub-cache repair, and most project workflows.
 
 ---
 
-## 📦 Installation
+## Install
 
 ```bash
 dart pub global activate dig_cli
 ```
 
-After installation, use **`dg`** as the command.
-
----
-
-## ⚙️ Usage
-
-### Interactive Menu (Highly Recommended)
+Ensure the pub cache `bin` directory is on your `PATH` (Dart usually prints a hint after `global activate`). Then run:
 
 ```bash
-dg
+dg --version
 ```
 
-### Direct Commands
+---
 
-- **Create Project**: `dg create-project`
-- **Create Module**: `dg create-module auth` (or `dg create-module -n auth`)
-- **Rename App**: `dg rename --name "New Name" --bundle-id com.new.id`
-- **Build APK**: `dg create apk`
-- **Build AAB**: `dg create bundle`
-- **Clean Project**: `dg clean` (use `--global` for Nuclear mode)
-- **Create ZIP**: `dg zip`
-- **Generate Assets**: `dg asset build`
-- **Watch Assets**: `dg asset watch`
-- **Show Version**: `dg --version`
+## Quick start
+
+| Goal | Command |
+|------|---------|
+| Open the interactive UI | `dg` |
+| Show version & update hints | `dg version` or `dg --version` |
+| Command list / help | `dg --help` |
+
+The interactive flow is **category → action** (single bordered panel per screen). Output respects **`NO_COLOR`** and non-TTY environments when possible.
 
 ---
 
-## 🧪 Examples
+## Features (overview)
+
+| Area | What you get |
+|------|----------------|
+| **Build & release** | APK / App Bundle via `dg create …`; iOS IPA via `dg ios`. |
+| **Clean & fix** | `dg clean` (optional `--global`); `dg pub-cache` runs `flutter pub cache repair`. |
+| **Signing & keys** | JKS creation, SHA keys, hash key helpers for Android / login SDKs. |
+| **Configuration** | `dg firebase` (login, configure, check); `dg asset build` / `dg asset watch`. |
+| **Project management** | New Flutter project template, GetX module scaffold, rename app + bundle IDs. |
+| **Utilities** | Zip sources (respecting ignores), stable / pre-release update checks. |
+
+For asset folder layout and generated classes, see **[ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md)**.
+
+---
+
+## Command reference
+
+Run `dg <command> --help` for flags and options.
+
+| Command | Description |
+|---------|-------------|
+| `dg` | Interactive menu (no args). |
+| `dg create apk` | Release APK; optional `-o` / `-n`. |
+| `dg create bundle` | Release App Bundle (AAB). |
+| `dg ios` | iOS IPA build flow. |
+| `dg clean` | Project clean / full reset; `--global` for heavier cache wipe. |
+| `dg pub-cache` | Repair pub cache (`flutter pub cache repair`). |
+| `dg zip` | Zip project sources. |
+| `dg rename` | Rename app + bundle id (multi-platform). |
+| `dg create-jks` | Generate / configure JKS keystore workflow. |
+| `dg sha-keys` | SHA1 / SHA256 fingerprints. |
+| `dg hash-key` | Hash key helper (e.g. Facebook / Google login setup). |
+| `dg create-project` | Scaffold a new Flutter project. |
+| `dg create-module` | GetX module (view / controller / binding / route). |
+| `dg firebase …` | `login`, `logout`, `configure`, `check`. |
+| `dg asset build` | Generate typed asset classes + update `pubspec.yaml`. |
+| `dg asset watch` | Watch asset folders and rebuild. |
+| `dg version` | Version, path, pub.dev latest (same as `--version` entry where applicable). |
+
+---
+
+## Examples
 
 ```bash
-# Rename app and bundle identifier (All Platforms)
-dg rename --name "Awesome App" --bundle-id com.my.awesome.app
+# Interactive dashboard
+dg
 
-# Build an APK with a custom name
+# Rename display name and bundle id
+dg rename --name "Awesome App" --bundle-id com.example.awesome
+
+# APK with custom prefix and output folder
 dg create apk --name MyApp --output ~/Downloads
 
-# Deep clean the project's build artifacts
+# Deep clean (optional global caches — prompts / flags as implemented)
 dg clean --global
 
-# Generate assets with subfolder-based classes
+# Repair global Flutter pub cache
+dg pub-cache
+
+# Regenerate asset registry and Dart classes
 dg asset build
-# Creates: BottomBarSvg, IconsSvg, FontsInterTtf, etc.
 ```
 
-### Asset Generation Example
+Generated assets (illustrative):
 
 ```dart
-// Folder: assets/bottom_bar/svg/home.svg
+// assets/bottom_bar/svg/home.svg
 import 'package:your_app/generated/assets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 SvgPicture.asset(BottomBarSvg.home);
-
-// Folder: assets/fonts/inter/bold.ttf
-Text('Hello', style: TextStyle(fontFamily: FontsInterTtf.bold));
 ```
 
 ---
 
-## 🖥️ Platform-specific Setup (Alias)
+## Optional: shell alias
 
-By default, use `dg` in your terminal. If you prefer a custom command name (alias), you can set it up easily:
-
-### macOS & Linux
+If you want a shorter name, pick something that does not clash with common tools (avoid `df`, etc.):
 
 ```bash
-# Add this to ~/.zshrc or ~/.bashrc
-alias df="dg"
+# ~/.zshrc or ~/.bashrc
+alias mydg='dg'
 ```
 
-### Windows (PowerShell)
-
-```powershell
-Set-Alias df dg
-```
+**Windows (PowerShell):** `Set-Alias mydg dg`
 
 ---
 
-## 📝 License
+## Changelog
 
-Licensed under the [MIT License](LICENSE).
+Release notes: **[CHANGELOG.md](CHANGELOG.md)**.
 
-Made with ❤️ by [Digvijaysinh Chauhan](https://github.com/Digvijaysinh2204)
+---
 
-- **Check out my Flutter packages on [pub.dev](https://pub.dev/packages?q=Digvijaysinh+Chauhan)**
+## License
+
+[MIT](LICENSE).
+
+**Author:** [Digvijaysinh Chauhan](https://github.com/Digvijaysinh2204) — [packages on pub.dev](https://pub.dev/packages?q=Digvijaysinh+Chauhan).
