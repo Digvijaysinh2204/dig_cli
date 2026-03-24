@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 
 - **Rename Command Stability:** Resolved a "Null check operator" crash when invoking the rename command from the interactive dashboard without pre-defined arguments.
 - **Build Output Visibility:** Significantly improved the post-build summary with a **boxed layout**, clear **📁 Location** paths, and **📊 Size** metrics for better user verification.
+- **CI Reliability:** Narrowed down the Analyze and Format tasks to focus on the CLI source code (`lib`, `bin`), resolving package resolution errors (like `flutter_lints`) in the `sample/` directory.
 
 ## [1.7.4] - 2026-03-20
 
