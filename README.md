@@ -37,7 +37,7 @@ dg --version
 | Show version & update hints | `dg version` or `dg --version` |
 | Command list / help | `dg --help` |
 
-The interactive flow is **category → action** (single bordered panel per screen). Output respects **`NO_COLOR`** and non-TTY environments when possible.
+The interactive flow is **category → action** (single bordered panel per screen). Builds now feature an **Intelligent Prompt System** for output paths, custom names, and versioning. Output respects **`NO_COLOR`** and non-TTY environments.
 
 ---
 
@@ -45,7 +45,7 @@ The interactive flow is **category → action** (single bordered panel per scree
 
 | Area | What you get |
 |------|----------------|
-| **Build & release** | APK / App Bundle via `dg create …`; iOS IPA via `dg ios`. |
+| **Build & release** | Interactive APK / App Bundle via `dg create …`; iOS IPA via `dg ios`. Supports custom paths and naming. |
 | **Clean & fix** | `dg clean` (optional `--global`); `dg pub-cache` runs `flutter pub cache repair`. |
 | **Signing & keys** | JKS creation, SHA keys, hash key helpers for Android / login SDKs. |
 | **Configuration** | `dg firebase` (login, configure, check); `dg asset build` / `dg asset watch`. |

@@ -154,6 +154,20 @@ class InteractiveMenu {
     }
   }
 
+  String? _prompt(String label, {String? defaultValue}) {
+    final displayDefault = defaultValue != null && defaultValue.isNotEmpty
+        ? ' [$defaultValue]'
+        : '';
+    final msg = '  $label$displayDefault: ';
+    if (_ansi) {
+      stdout.write(_mutedPen(msg));
+    } else {
+      stdout.write(msg);
+    }
+    final input = stdin.readLineSync()?.trim();
+    return (input == null || input.isEmpty) ? defaultValue : input;
+  }
+
   void _renderMainMenu() {
     print('');
     _boxTop();
@@ -256,17 +270,46 @@ class InteractiveMenu {
       final runner = CommandRunner('dg', 'temp');
       switch (r) {
         case '1':
+          final out = _prompt('Output directory', defaultValue: 'Desktop');
+          final name = _prompt('Custom name prefix (optional)');
+          final ts = _prompt('Include timestamp? (Y/n)', defaultValue: 'y');
+          final args = ['create', 'apk'];
+          if (out != 'Desktop') args.addAll(['--output', out!]);
+          if (name != null && name.isNotEmpty) args.addAll(['--name', name]);
+          if (ts?.toLowerCase() == 'n' || ts?.toLowerCase() == 'no') {
+            // We'll need to support a --no-timestamp flag in BuildCommand
+            args.add('--no-timestamp');
+          }
           runner.addCommand(BuildCommand());
-          await runner.run(['create', 'apk']);
+          await runner.run(args);
           await _pause();
           break;
         case '2':
+          final out = _prompt('Output directory', defaultValue: 'Desktop');
+          final name = _prompt('Custom name prefix (optional)');
+          final ts = _prompt('Include timestamp? (Y/n)', defaultValue: 'y');
+          final args = ['create', 'bundle'];
+          if (out != 'Desktop') args.addAll(['--output', out!]);
+          if (name != null && name.isNotEmpty) args.addAll(['--name', name]);
+          if (ts?.toLowerCase() == 'n' || ts?.toLowerCase() == 'no') {
+            args.add('--no-timestamp');
+          }
           runner.addCommand(BuildCommand());
-          await runner.run(['create', 'bundle']);
+          await runner.run(args);
           await _pause();
           break;
         case '3':
-          await IosBuildCommand().run();
+          final out = _prompt('Output directory', defaultValue: 'Desktop');
+          final name = _prompt('Custom name prefix (optional)');
+          final ts = _prompt('Include timestamp? (Y/n)', defaultValue: 'y');
+          final args = ['ios'];
+          if (out != 'Desktop') args.addAll(['--output', out!]);
+          if (name != null && name.isNotEmpty) args.addAll(['--name', name]);
+          if (ts?.toLowerCase() == 'n' || ts?.toLowerCase() == 'no') {
+            args.add('--no-timestamp');
+          }
+          runner.addCommand(IosBuildCommand());
+          await runner.run(args);
           await _pause();
           break;
         default:
@@ -392,7 +435,18 @@ class InteractiveMenu {
           await _pause();
           break;
         case '3':
-          await RenameCommand().run();
+          final name = _prompt('New app display name (optional)');
+          final bundle = _prompt('New bundle ID (optional)');
+          if (name == null && bundle == null) {
+            kLog('Cancelled.', type: LogType.warning);
+          } else {
+            final args = ['rename'];
+            if (name != null) args.addAll(['--name', name]);
+            if (bundle != null) args.addAll(['--bundle-id', bundle]);
+            final renameRunner = CommandRunner('dg', 'temp')
+              ..addCommand(RenameCommand());
+            await renameRunner.run(args);
+          }
           await _pause();
           break;
         default:

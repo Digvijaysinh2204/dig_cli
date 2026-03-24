@@ -29,14 +29,37 @@ class RenameCommand extends Command {
 
   @override
   Future<void> run() async {
-    final newName = argResults?['name'] as String?;
-    final newBundleId = argResults?['bundle-id'] as String?;
+    String? newName = argResults?['name'] as String?;
+    String? newBundleId = argResults?['bundle-id'] as String?;
 
     if (newName == null && newBundleId == null) {
-      kLog('❗ Please provide at least --name or --bundle-id.',
-          type: LogType.error);
-      print(usage);
-      return;
+      if (stdin.hasTerminal) {
+        kLog('\n🏷️  APP RENAMING', type: LogType.info);
+        stdout.write('Enter new app display name (leave empty to skip): ');
+        final nameInput = stdin.readLineSync()?.trim();
+        if (nameInput != null && nameInput.isNotEmpty) {
+          newName = nameInput;
+        }
+
+        stdout.write(
+            'Enter new bundle ID (e.g., com.example.app, leave empty to skip): ');
+        final bundleInput = stdin.readLineSync()?.trim();
+        if (bundleInput != null && bundleInput.isNotEmpty) {
+          newBundleId = bundleInput;
+        }
+      }
+
+      if (newName == null && newBundleId == null) {
+        kLog('❗ Please provide at least --name or --bundle-id.',
+            type: LogType.error);
+        try {
+          print(usage);
+        } catch (_) {
+          kLog('Usage: dg rename [--name <name>] [--bundle-id <id>]',
+              type: LogType.info);
+        }
+        return;
+      }
     }
 
     if (!await isFlutterProject()) {
@@ -47,32 +70,33 @@ class RenameCommand extends Command {
 
     try {
       if (newName != null) {
-        await runWithSpinner('🏷️  Updating App Name to "$newName"...',
-            () async {
-          await _updateAndroidAppName(newName);
-          await _updateIOSAppName(newName);
-          await _updateMacOSAppName(newName);
-          await _updateWindowsAppName(newName);
-          await _updateLinuxAppName(newName);
-          await _updateWebAppName(newName);
+        final name = newName;
+        await runWithSpinner('🏷️  Updating App Name to "$name"...', () async {
+          await _updateAndroidAppName(name);
+          await _updateIOSAppName(name);
+          await _updateMacOSAppName(name);
+          await _updateWindowsAppName(name);
+          await _updateLinuxAppName(name);
+          await _updateWebAppName(name);
         });
       }
 
       if (newBundleId != null) {
-        if (!_isValidBundleId(newBundleId)) {
+        final bundleId = newBundleId;
+        if (!_isValidBundleId(bundleId)) {
           kLog(
               '❗ Invalid bundle ID format. Expected something like "com.example.app".',
               type: LogType.error);
           return;
         }
 
-        await runWithSpinner('📦 Updating Bundle ID to "$newBundleId"...',
+        await runWithSpinner('📦 Updating Bundle ID to "$bundleId"...',
             () async {
-          await _updateAndroidBundleId(newBundleId);
-          await _updateIOSBundleId(newBundleId);
-          await _updateMacOSBundleId(newBundleId);
-          await _updateWindowsBundleId(newBundleId);
-          await _updateLinuxBundleId(newBundleId);
+          await _updateAndroidBundleId(bundleId);
+          await _updateIOSBundleId(bundleId);
+          await _updateMacOSBundleId(bundleId);
+          await _updateWindowsBundleId(bundleId);
+          await _updateLinuxBundleId(bundleId);
         });
       }
 

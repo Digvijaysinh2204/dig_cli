@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.5] - 2026-03-24
+
+### Added
+
+- **Interactive Build Suite:** `BuildCommand` (APK/Bundle) and `IosBuildCommand` now support a full interactive flow, prompting for output directory, custom name prefix, and timestamp preference if not provided via CLI flags.
+- **Advanced Repository Automation:** Implemented a "Proper" GitHub automation suite including:
+  - **PR Labeler:** Automatic categorization of Pull Requests based on file changes.
+  - **Stale Bot:** Automated maintenance of inactive issues and PRs.
+  - **Modern Issue Forms:** YAML-based Bug Report and Feature Request forms to ensure high-quality, structured feedback with required technical context (logs, version).
+- **Quality Assurance:** Added a structured **Pull Request Template** with a comprehensive quality checklist to maintain project standards.
+
+### Changed
+
+- **Refined Interactive Menu:** Migrated the dashboard to a centralized `CommandRunner` architecture. Updated build prompts to use a **Styled Multi-layer Response** system that clearly separates configuration from execution logs.
+- **CI/CD Standardization:** Migrated all GitHub Actions to the official **`setup-dart@v1.7.2`** and modern **`checkout@v6`**, ensuring native Node 24 support and consistent environment parity.
+
+### Fixed
+
+- **Rename Command Stability:** Resolved a "Null check operator" crash when invoking the rename command from the interactive dashboard without pre-defined arguments.
+- **Build Output Visibility:** Significantly improved the post-build summary with a **boxed layout**, clear **📁 Location** paths, and **📊 Size** metrics for better user verification.
+
 ## [1.7.4] - 2026-03-20
 
 ### Added

@@ -28,17 +28,51 @@ class IosBuildCommand extends Command {
       allowed: ['ad-hoc', 'development', 'enterprise', 'app-store'],
       defaultsTo: 'app-store',
     );
+    argParser.addFlag(
+      'timestamp',
+      defaultsTo: true,
+      help: 'Include date and time in the filename',
+    );
   }
 
   @override
   Future<void> run() async {
-    final outputDir =
-        argResults?['output'] as String? ?? await getDesktopPath();
-    final customName = argResults?['name'] as String?;
-    final method = argResults?['method'] as String? ?? 'app-store';
+    String? outputDir = argResults?['output'] as String?;
+    String? customName = argResults?['name'] as String?;
+    String? method = argResults?['method'] as String?;
+    bool includeTimestamp = argResults?['timestamp'] as bool? ?? true;
+
+    if (stdin.hasTerminal && outputDir == null && customName == null) {
+      kLog('\n🍎 iOS BUILD CONFIGURATION', type: LogType.info);
+      stdout.write('Enter output directory (press enter for Desktop): ');
+      final outInput = stdin.readLineSync()?.trim();
+      if (outInput != null && outInput.isNotEmpty) {
+        outputDir = outInput;
+      }
+
+      stdout.write(
+          'Enter custom name prefix (press enter to use project name): ');
+      final nameInput = stdin.readLineSync()?.trim();
+      if (nameInput != null && nameInput.isNotEmpty) {
+        customName = nameInput;
+      }
+
+      stdout.write('Include date and time in filename? (Y/n): ');
+      final timeInput = stdin.readLineSync()?.trim().toLowerCase();
+      if (timeInput == 'n' || timeInput == 'no') {
+        includeTimestamp = false;
+      }
+    }
+
+    outputDir ??= await getDesktopPath();
+    method ??= 'app-store';
 
     await buildIos(
-        outputDir: outputDir, customName: customName, method: method);
+      outputDir: outputDir,
+      customName: customName,
+      method: method,
+      includeTimestamp: includeTimestamp,
+    );
   }
 }
 
@@ -46,6 +80,7 @@ Future<void> buildIos({
   String? outputDir,
   String? customName,
   String method = 'app-store',
+  bool includeTimestamp = true,
 }) async {
   // Check if running on macOS
   if (!Platform.isMacOS) {
@@ -73,17 +108,25 @@ Future<void> buildIos({
       return;
     }
 
-    final now = DateTime.now();
-    final date =
-        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final hour = now.hour.toString().padLeft(2, '0');
-    final minute = now.minute.toString().padLeft(2, '0');
-    final filename = '$projectName-$date-$hour-$minute.ipa';
+    String filename;
+    if (includeTimestamp) {
+      final now = DateTime.now();
+      final date =
+          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final hour = now.hour.toString().padLeft(2, '0');
+      final minute = now.minute.toString().padLeft(2, '0');
+      filename = '$projectName-$date-$hour-$minute.ipa';
 
-    kLog('\n🍎 iOS BUILD', type: LogType.info);
-    kLog('📱 APP PREFIX: $projectName');
-    kLog('📅 Date: $date @ $hour:$minute');
-    kLog('🛠️  METHOD: $method');
+      kLog('\n🍎 iOS BUILD', type: LogType.info);
+      kLog('📱 APP PREFIX: $projectName');
+      kLog('📅 Date: $date @ $hour:$minute');
+      kLog('🛠️  METHOD: $method');
+    } else {
+      filename = '$projectName.ipa';
+      kLog('\n🍎 iOS BUILD', type: LogType.info);
+      kLog('📱 APP PREFIX: $projectName');
+      kLog('🛠️  METHOD: $method');
+    }
 
     final projectRoot = findProjectRoot();
     if (projectRoot == null) {
@@ -157,8 +200,10 @@ Future<void> buildIos({
     final sizeInMB = (fileSize / (1024 * 1024)).toStringAsFixed(2);
 
     kLog('\n✅ iOS IPA created successfully!', type: LogType.success);
-    kLog('📁 Location: ${destFile.path}', type: LogType.info);
+    kLog('-------------------------------------------');
+    kLog('📁 Location: ${destFile.path}', type: LogType.success);
     kLog('📊 Size: ${sizeInMB}MB', type: LogType.info);
+    kLog('-------------------------------------------\n');
 
     kLog('\n📲 To install on device:', type: LogType.info);
     kLog('   1. Connect your iPhone to this Mac.', type: LogType.info);

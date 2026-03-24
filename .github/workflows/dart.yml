@@ -1,0 +1,40 @@
+name: Dart
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dart-lang/setup-dart@v1.7.2
+      #
+      # This workflow is part of a larger set of GitHub Actions for the project.
+      # Here's a quick overview of other related automation:
+      #
+      # - Publish (publish.yml): The release magic! When you push a tag (e.g., `v1.7.5`),
+      #   it compiles native binaries for all platforms, creates a GitHub Release,
+      #   and publishes to pub.dev.
+      # - PR & Issue Management:
+      #   - Labeler: Automatically labels PRs based on file changes.
+      #   - Stale: Automatically manages inactive issues and PRs.
+      #   - Issue Forms: New Bug Report and Feature Request forms ensure high-quality feedback.
+      #   - Issue Automation: Automatically labels bug reports for better tracking.
+      # - Fixed: Standardized all workflows to use official `@v1` of `setup-dart`
+      #   and modern `v6` checkout actions.
+      #
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze project source
+        run: dart analyze
+
+      # - name: Run tests
+      #   run: dart test

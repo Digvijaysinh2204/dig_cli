@@ -124,13 +124,14 @@ class ScrollableAnimatedTabBar extends StatefulWidget {
   final Gradient? unselectedGradient;
 
   final BoxDecoration Function(bool isSelected, int index, bool isEnabled)?
-      decorationBuilder;
+  decorationBuilder;
   final Widget Function(
     TabItemData tab,
     bool isSelected,
     int index,
     bool isEnabled,
-  )? tabBuilder;
+  )?
+  tabBuilder;
 
   final bool enableHapticFeedback;
   final double? tabMinWidth;
@@ -316,13 +317,14 @@ class _ScrollableAnimatedTabBarState extends State<ScrollableAnimatedTabBar> {
           : null,
       color: isSelected
           ? (widget.selectedGradient == null
-              ? widget.selectedBackgroundColor
-              : null)
+                ? widget.selectedBackgroundColor
+                : null)
           : (widget.unselectedGradient == null
-              ? widget.unselectedBackgroundColor
-              : null),
-      gradient:
-          isSelected ? widget.selectedGradient : widget.unselectedGradient,
+                ? widget.unselectedBackgroundColor
+                : null),
+      gradient: isSelected
+          ? widget.selectedGradient
+          : widget.unselectedGradient,
       boxShadow: isSelected ? widget.selectedShadow : widget.unselectedShadow,
     );
   }
@@ -345,17 +347,17 @@ class _ScrollableAnimatedTabBarState extends State<ScrollableAnimatedTabBar> {
 
     return isSelected
         ? widget.selectedTextStyle ??
-            AppTextStyle.semiBold(
-              size: 16,
-              fontWeight: FontWeight.w600,
-              color: widget.selectedTextColor,
-            )
+              AppTextStyle.semiBold(
+                size: 16,
+                fontWeight: FontWeight.w600,
+                color: widget.selectedTextColor,
+              )
         : widget.unselectedTextStyle ??
-            AppTextStyle.regular(
-              size: 16,
-              fontWeight: FontWeight.w600,
-              color: widget.unselectedTextColor,
-            );
+              AppTextStyle.regular(
+                size: 16,
+                fontWeight: FontWeight.w600,
+                color: widget.unselectedTextColor,
+              );
   }
 
   Widget _buildTabContent(TabItemData tab, bool isSelected, bool isEnabled) {
@@ -459,7 +461,8 @@ class _ScrollableAnimatedTabBarState extends State<ScrollableAnimatedTabBar> {
     return SingleChildScrollView(
       controller: _scrollController,
       scrollDirection: Axis.horizontal,
-      physics: widget.scrollPhysics ??
+      physics:
+          widget.scrollPhysics ??
           (widget.shrinkWrap
               ? const NeverScrollableScrollPhysics()
               : const ClampingScrollPhysics()),

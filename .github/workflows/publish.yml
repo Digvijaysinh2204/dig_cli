@@ -12,7 +12,7 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
-# setup-dart@v1.7.1 still declares node20; this SHA is main after Node 24 migration — use a tag when > v1.7.1.
+# setup-dart@v1.7.2 supports Node 24 natively.
 # softprops/action-gh-release may still warn (action.yml node20) until upstream updates.
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
           ref: ${{ github.ref }}
           fetch-depth: 0
 
-      - uses: dart-lang/setup-dart@6e0ff0bc3a029a9532ae6a86b1ea4906038921bc
+      - uses: dart-lang/setup-dart@v1.7.2
 
       - name: 'Install dependencies'
         run: dart pub get
@@ -49,7 +49,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - uses: dart-lang/setup-dart@6e0ff0bc3a029a9532ae6a86b1ea4906038921bc
+      - uses: dart-lang/setup-dart@v1.7.2
 
       - name: 'Cache Pub Session'
         uses: actions/cache@v5
@@ -105,7 +105,7 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v6
-      - uses: dart-lang/setup-dart@6e0ff0bc3a029a9532ae6a86b1ea4906038921bc
+      - uses: dart-lang/setup-dart@v1.7.2
 
       - name: 'Publish to pub.dev'
         run: dart pub publish --force

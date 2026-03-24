@@ -21,20 +21,50 @@ class BuildCommand extends Command {
       abbr: 'n',
       help: 'Custom name prefix for the output file',
     );
+    argParser.addFlag(
+      'timestamp',
+      defaultsTo: true,
+      help: 'Include date and time in the filename',
+    );
   }
 
   @override
   Future<void> run() async {
     final buildType =
         argResults?.rest.isNotEmpty == true ? argResults!.rest.first : 'apk';
-    final outputDir =
-        argResults?['output'] as String? ?? await getDesktopPath();
-    final customName = argResults?['name'] as String?;
+    String? outputDir = argResults?['output'] as String?;
+    String? customName = argResults?['name'] as String?;
+    bool includeTimestamp = argResults?['timestamp'] as bool? ?? true;
+
+    if (stdin.hasTerminal && outputDir == null && customName == null) {
+      kLog('\n🏗️  BUILD CONFIGURATION', type: LogType.info);
+      stdout.write('Enter output directory (press enter for Desktop): ');
+      final outInput = stdin.readLineSync()?.trim();
+      if (outInput != null && outInput.isNotEmpty) {
+        outputDir = outInput;
+      }
+
+      stdout.write(
+          'Enter custom name prefix (press enter to use project name): ');
+      final nameInput = stdin.readLineSync()?.trim();
+      if (nameInput != null && nameInput.isNotEmpty) {
+        customName = nameInput;
+      }
+
+      stdout.write('Include date and time in filename? (Y/n): ');
+      final timeInput = stdin.readLineSync()?.trim().toLowerCase();
+      if (timeInput == 'n' || timeInput == 'no') {
+        includeTimestamp = false;
+      }
+    }
+
+    outputDir ??= await getDesktopPath();
 
     if (buildType == 'apk' || buildType == 'build') {
       await _runBuildProcess(
         outputDir: outputDir,
         customName: customName,
+        includeTimestamp: includeTimestamp,
         buildDisplayType: 'APK',
         buildArgs: ['build', 'apk', '--release'],
         sourcePath: p.join(
@@ -50,6 +80,7 @@ class BuildCommand extends Command {
       await _runBuildProcess(
         outputDir: outputDir,
         customName: customName,
+        includeTimestamp: includeTimestamp,
         buildDisplayType: 'App Bundle',
         buildArgs: ['build', 'appbundle', '--release'],
         sourcePath: p.join(
@@ -74,6 +105,7 @@ class BuildCommand extends Command {
   Future<void> _runBuildProcess({
     required String outputDir,
     String? customName,
+    bool includeTimestamp = true,
     required String buildDisplayType,
     required List<String> buildArgs,
     required String sourcePath,
@@ -97,15 +129,20 @@ class BuildCommand extends Command {
         exit(1);
       }
 
-      final now = DateTime.now();
-      final date =
-          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-      final hour = now.hour.toString().padLeft(2, '0');
-      final minute = now.minute.toString().padLeft(2, '0');
-      final filename = '$projectName-$date-$hour-$minute.$fileExtension';
+      String filename;
+      if (includeTimestamp) {
+        final now = DateTime.now();
+        final date =
+            '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        final hour = now.hour.toString().padLeft(2, '0');
+        final minute = now.minute.toString().padLeft(2, '0');
+        filename = '$projectName-$date-$hour-$minute.$fileExtension';
+        kLog('📅 Date: $date @ $hour:$minute');
+      } else {
+        filename = '$projectName.$fileExtension';
+      }
 
       kLog('📱 APP PREFIX: $projectName');
-      kLog('📅 Date: $date @ $hour:$minute');
 
       final result = await runWithSpinner(
         '🚧 Building $buildDisplayType (release)...',
@@ -134,9 +171,12 @@ class BuildCommand extends Command {
       final fileSize = await destFile.length();
       final sizeInMB = (fileSize / (1024 * 1024)).toStringAsFixed(2);
 
-      kLog('✅ $buildDisplayType created successfully!', type: LogType.success);
-      kLog('📁 Location: ${destFile.path}', type: LogType.info);
+      kLog('\n✅ $buildDisplayType created successfully!',
+          type: LogType.success);
+      kLog('-------------------------------------------');
+      kLog('📁 Location: ${destFile.path}', type: LogType.success);
       kLog('📊 Size: ${sizeInMB}MB', type: LogType.info);
+      kLog('-------------------------------------------\n');
     } catch (e) {
       kLog(
         '❌ An unexpected error occurred during the build: $e',

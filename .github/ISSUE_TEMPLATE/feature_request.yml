@@ -1,0 +1,22 @@
+name: 🚀 Feature Request
+description: Suggest an idea or new feature for the CLI.
+labels: ["type: feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We'd love to hear your ideas!
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggestion
+      description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Use Case / Context
+      description: Why is this feature useful? How would it help you?
+    validations:
+      required: true

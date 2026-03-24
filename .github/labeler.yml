@@ -1,0 +1,18 @@
+# .github/labeler.yml
+# Labels are applied based on the files changed in the PR
+
+'type: feature':
+  - changed-files:
+    - any-glob-to-any-file: 'lib/src/commands/**/*'
+
+'type: fix':
+  - changed-files:
+    - any-glob-to-any-file: 'lib/src/utils/**/*'
+
+'type: ci':
+  - changed-files:
+    - any-glob-to-any-file: '.github/workflows/**/*'
+
+'type: documentation':
+  - changed-files:
+    - any-glob-to-any-file: '**/*.md'
