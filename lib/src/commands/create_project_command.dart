@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:math';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
+import 'package:http/http.dart' as http;
+import 'package:archive/archive.dart';
 import '../utils/logger.dart';
 import '../utils/project_utils.dart';
 import '../utils/spinner.dart';
@@ -11,6 +12,9 @@ import 'asset_command.dart';
 import 'create_jks_command.dart';
 
 class CreateProjectCommand extends Command {
+  String _githubRepo = 'Digvijaysinh2204/dig_template';
+  String _githubBranch = 'main';
+
   @override
   final name = 'create-project';
   @override
@@ -27,11 +31,27 @@ class CreateProjectCommand extends Command {
         abbr: 'b', help: 'The bundle ID/package name (e.g., com.example.app)');
     argParser.addOption('output',
         abbr: 'o', help: 'The directory where the project should be created');
+    argParser.addFlag('github',
+        abbr: 'g',
+        help:
+            'Fetch the template from GitHub (always gets the latest version).',
+        defaultsTo: false);
+    argParser.addOption('github-repo',
+        help: 'GitHub repository to fetch template from (user/repo)',
+        defaultsTo: 'Digvijaysinh2204/dig_template');
+    argParser.addOption('github-branch',
+        help: 'Branch to fetch template from', defaultsTo: 'main');
   }
 
   @override
   Future<void> run() async {
     kLog('\n🚀 CREATE PROJECT FROM TEMPLATE', type: LogType.info);
+
+    _githubRepo = argResults?['github-repo'] ?? 'Digvijaysinh2204/dig_template';
+    _githubBranch = argResults?['github-branch'] ?? 'main';
+
+    // No longer prompting for y/n since local is gone.
+    // If they want to use a specific branch/repo, they use flags.
 
     // 1. Get Project Details
     String? projectName = argResults?['name'] as String?;
@@ -224,46 +244,70 @@ class CreateProjectCommand extends Command {
   }
 
   Future<String?> _findTemplatePath() async {
-    try {
-      final uri = await Isolate.resolvePackageUri(Uri.parse(
-          'package:dig_cli/src/commands/create_project_command.dart'));
-      if (uri != null) {
-        final filePath = uri.toFilePath();
-        final packageRoot =
-            p.dirname(p.dirname(p.dirname(p.dirname(filePath))));
-        final templatePath = p.join(packageRoot, 'sample', 'structure');
-        if (await Directory(templatePath).exists()) {
-          return templatePath;
-        }
-      }
-    } catch (_) {}
+    // Only GitHub templates are supported now as local templates have been removed.
+    return await _downloadTemplateFromGithub();
+  }
 
+  Future<String?> _downloadTemplateFromGithub() async {
     try {
-      final templatePubspecUri = await Isolate.resolvePackageUri(
-          Uri.parse('package:dig_cli/../../sample/structure/pubspec.yaml'));
-      if (templatePubspecUri != null) {
-        final pubspecPath = templatePubspecUri.toFilePath();
-        final templatePath = p.dirname(pubspecPath);
-        if (await Directory(templatePath).exists()) {
-          return templatePath;
-        }
-      }
-    } catch (_) {}
+      final repo = _githubRepo;
+      final branch = _githubBranch;
+      final url =
+          Uri.parse('https://github.com/$repo/archive/refs/heads/$branch.zip');
 
-    try {
-      final scriptPath = Platform.script.toFilePath();
-      if (scriptPath.endsWith('.dart') || scriptPath.endsWith('.snapshot')) {
-        Directory current = File(scriptPath).parent;
-        for (int i = 0; i < 5; i++) {
-          final templatePath = p.join(current.path, 'sample', 'structure');
-          if (await Directory(templatePath).exists()) {
-            return templatePath;
+      return await runWithSpinner(
+          '🌐 Downloading latest template from GitHub ($repo)...', () async {
+        final response = await http.get(url);
+        if (response.statusCode != 200) {
+          throw Exception(
+              'Failed to download template. Status: ${response.statusCode}');
+        }
+
+        final bytes = response.bodyBytes;
+        final archive = ZipDecoder().decodeBytes(bytes);
+
+        final tempDir =
+            await Directory.systemTemp.createTemp('dig_cli_template_');
+
+        for (final file in archive) {
+          final filename = file.name;
+          if (file.isFile) {
+            final data = file.content as List<int>;
+            File(p.join(tempDir.path, filename))
+              ..createSync(recursive: true)
+              ..writeAsBytesSync(data);
+          } else {
+            Directory(p.join(tempDir.path, filename))
+                .createSync(recursive: true);
           }
-          current = current.parent;
         }
-      }
-    } catch (_) {}
-    return null;
+
+        // GitHub zip has a root folder named {repo_name}-{branch_name}
+        // Inside it, the code is now at the root
+        final rootFolderName = archive.first.name.split('/').first;
+        final templatePath = p.join(tempDir.path, rootFolderName);
+
+        if (await Directory(p.join(templatePath, 'pubspec.yaml')).exists()) {
+          return templatePath;
+        } else {
+          // Fallback search if rootFolderName logic fails
+          final contents = Directory(tempDir.path).listSync();
+          for (var entity in contents) {
+            if (entity is Directory) {
+              if (await Directory(p.join(entity.path, 'pubspec.yaml'))
+                  .exists()) {
+                return entity.path;
+              }
+            }
+          }
+          throw Exception(
+              'Template structure not found in the downloaded archive.');
+        }
+      });
+    } catch (e) {
+      kLog('❌ Error downloading template: $e', type: LogType.error);
+      return null;
+    }
   }
 
   Future<void> _overlayTemplateFiles(
