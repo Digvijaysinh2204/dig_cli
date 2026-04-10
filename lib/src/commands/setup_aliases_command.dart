@@ -21,27 +21,38 @@ class SetupAliasesCommand extends Command {
       return;
     }
 
-    final zshrc = File(p.join(home, '.zshrc'));
-    final bashrc = File(p.join(home, '.bashrc'));
-    final bashProfile = File(p.join(home, '.bash_profile'));
-
     File? targetProfile;
+    String profileName = '';
 
-    if (await zshrc.exists()) {
-      targetProfile = zshrc;
-    } else if (await bashrc.exists()) {
-      targetProfile = bashrc;
-    } else if (await bashProfile.exists()) {
-      targetProfile = bashProfile;
-    }
+    if (Platform.isWindows) {
+      // Windows PowerShell Profile
+      final psProfileDir = p.join(home, 'Documents', 'PowerShell');
+      final psProfile = File(p.join(psProfileDir, 'Microsoft.PowerShell_profile.ps1'));
+      
+      if (!await Directory(psProfileDir).exists()) {
+        await Directory(psProfileDir).create(recursive: true);
+      }
+      
+      targetProfile = psProfile;
+      profileName = 'PowerShell Profile';
+    } else {
+      // Unix-like (MacOS / Linux)
+      final zshrc = File(p.join(home, '.zshrc'));
+      final bashrc = File(p.join(home, '.bashrc'));
+      final bashProfile = File(p.join(home, '.bash_profile'));
 
-    if (targetProfile == null) {
-      kLog(
-          '❗ Could not find .zshrc, .bashrc, or .bash_profile to inject aliases.',
-          type: LogType.warning);
-      // Create .zshrc as fallback on fresh macs
-      targetProfile = File(p.join(home, '.zshrc'));
-      kLog('  Creating new ~/.zshrc file.', type: LogType.info);
+      if (await zshrc.exists()) {
+        targetProfile = zshrc;
+      } else if (await bashrc.exists()) {
+        targetProfile = bashrc;
+      } else if (await bashProfile.exists()) {
+        targetProfile = bashProfile;
+      } else {
+        // Fallback to .zshrc on Mac or .bashrc on Linux
+        targetProfile = Platform.isMacOS ? zshrc : bashrc;
+        kLog('  Creating new profile file: ${p.basename(targetProfile.path)}', type: LogType.info);
+      }
+      profileName = p.basename(targetProfile.path);
     }
 
     // Prompt for custom prefix
@@ -49,7 +60,23 @@ class SetupAliasesCommand extends Command {
     final input = stdin.readLineSync()?.trim();
     final String prefix = (input == null || input.isEmpty) ? 'dg' : input;
 
-    final aliasesBlock = '''
+    String aliasesBlock = '';
+    
+    if (Platform.isWindows) {
+      aliasesBlock = '''
+
+# --- DIG CLI Custom Aliases ---
+function ${prefix}p { dg create-project \$args }
+function ${prefix}m { dg create-module \$args }
+function ${prefix}rm { dg remove-module \$args }
+function ${prefix}c { dg clean \$args }
+function ${prefix}a { dg asset build \$args }
+function ${prefix}i { dg ios \$args }
+function ${prefix}apk { dg create apk \$args }
+# ------------------------------
+''';
+    } else {
+      aliasesBlock = '''
 
 # --- DIG CLI Custom Aliases ---
 alias ${prefix}p="dg create-project"
@@ -61,6 +88,7 @@ alias ${prefix}i="dg ios"
 alias ${prefix}apk="dg create apk"
 # ------------------------------
 ''';
+    }
 
     String content = '';
     if (await targetProfile.exists()) {
@@ -68,9 +96,8 @@ alias ${prefix}apk="dg create apk"
     }
 
     if (content.contains('# --- DIG CLI Custom Aliases ---')) {
-      kLog(
-          '✅ DIG CLI aliases are already installed in ${p.basename(targetProfile.path)}',
-          type: LogType.success);
+      kLog('✅ DIG CLI aliases are already installed in $profileName', 
+           type: LogType.success);
       return;
     }
 
@@ -79,14 +106,17 @@ alias ${prefix}apk="dg create apk"
     final painter = BoxPainter();
     print('');
     painter.drawHeader('ALIASES INSTALLED SUCCESSFULLY', width: 50);
-    painter.drawRow('Profile', p.basename(targetProfile.path), width: 50);
+    painter.drawRow('Profile', profileName, width: 50);
     painter.drawRow('Prefix', prefix, width: 50);
     painter.drawRow('Example', '${prefix}m (create-module)', width: 50);
     painter.drawRow('Example', '${prefix}p (create-project)', width: 50);
     painter.drawFooter(width: 50);
 
-    kLog(
-        '\n🚀 Run "source ~/${p.basename(targetProfile.path)}" to activate them immediately.',
-        type: LogType.info);
+    if (Platform.isWindows) {
+      kLog('\n🚀 Restart PowerShell or run ". \$PROFILE" to activate them.', type: LogType.info);
+    } else {
+      kLog('\n🚀 Run "source ~/$profileName" to activate them immediately.', type: LogType.info);
+    }
   }
 }
+
