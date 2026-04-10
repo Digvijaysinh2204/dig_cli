@@ -166,17 +166,32 @@ class RemoveModuleCommand extends Command {
       startIndex--;
     }
 
-    // 3. Find the end of this GetPage block (the first '),' after the name)
-    int endIndex = content.indexOf('),', nameIndex);
-    if (endIndex == -1) {
-      // Fallback to just ')' if no trailing comma
-      endIndex = content.indexOf(')', nameIndex);
-    } else {
-      endIndex += 2; // Include the ', '
+    // 3. Find the end of this GetPage block by counting parentheses
+    int endIndex = -1;
+    int counter = 0;
+    bool foundStart = false;
+
+    for (int i = startIndex; i < content.length; i++) {
+      if (content[i] == '(') {
+        counter++;
+        foundStart = true;
+      } else if (content[i] == ')') {
+        counter--;
+      }
+
+      // When counter returns to 0 after we've seen at least one '(', we've found the end
+      if (foundStart && counter == 0) {
+        endIndex = i;
+        // Include trailing comma if present
+        if (i + 1 < content.length && content[i + 1] == ',') {
+          endIndex++;
+        }
+        break;
+      }
     }
 
     if (endIndex != -1 && endIndex > startIndex) {
-      final removedBlock = content.substring(startIndex, endIndex);
+      final removedBlock = content.substring(startIndex, endIndex + 1);
       content = content.replaceFirst(removedBlock, '');
 
       // Clean up multiple newlines or leading spaces left behind
