@@ -44,12 +44,13 @@ dg --version
 
 ---
 
-## 2. ⚡ CLI Alias Configuration (Tips)
-
-To maximize your speed, we highly recommend adding custom aliases to your shell profile (`~/.zshrc` or `~/.bash_profile`) so you don't have to type out full commands:
+To maximize your speed, we highly recommend adding custom aliases to your shell profile (`~/.zshrc`, `~/.zshenv` or `~/.bash_profile`):
 
 ```bash
-# Add these lines to your ~/.zshrc or ~/.bash_profile
+# Set 'dig' as a main command alias
+alias dig='dg'
+
+# Common shortcuts
 alias dgm="dg create-module"
 alias dgp="dg create-project"
 alias dgapk="dg create apk"
@@ -57,6 +58,32 @@ alias dgcb="dg clean"
 alias dga="dg asset build"
 ```
 After saving, simply run `source ~/.zshrc`. Now you can instantly scaffold a feature by just typing `dgm -n auth`!
+
+---
+
+## 💻 Professional Environment Setup (MacOS)
+
+For a seamless enterprise experience on Mac (M1/M2/M3), ensure your shell environment is strictly configured. We recommend adding these to your `~/.zshenv`:
+
+```bash
+# Locale settings
+export LANG=en_US.UTF-8
+export LANGUAGE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+# Homebrew & Pub Cache
+eval "$(/opt/homebrew/bin/brew shellenv)"
+export PATH="$PATH:$HOME/.pub-cache/bin"
+
+# Android Studio & Java (Crucial for builds)
+export PATH="$PATH:/Applications/Android Studio.app/Contents/MacOS"
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+
+# FVM (If using Flutter Version Manager)
+export PATH="$PATH:$HOME/fvm/default/bin"
+```
+
 
 ---
 
