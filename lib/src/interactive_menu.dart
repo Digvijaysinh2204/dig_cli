@@ -9,6 +9,8 @@ import 'commands/sha_keys_command.dart';
 import 'commands/hash_key_command.dart';
 import 'commands/create_jks_command.dart';
 import 'commands/create_module_command.dart';
+import 'commands/remove_module_command.dart';
+import 'commands/setup_aliases_command.dart';
 import 'commands/create_project_command.dart';
 import 'commands/clean_command.dart';
 import 'commands/zip_command.dart';
@@ -295,11 +297,12 @@ class InteractiveMenu {
       _clearScreen();
       _painter.drawHeader('UTILITIES', width: _width);
       _painter.drawMenuItem('1', 'Zip Source Code', width: _width);
-      _painter.drawMenuItem('2', 'Check For Updates', width: _width);
-      _painter.drawMenuItem('3', 'Beta Channel Update', width: _width);
+      _painter.drawMenuItem('2', 'Setup Shell Aliases', width: _width);
+      _painter.drawMenuItem('3', 'Check For Updates', width: _width);
+      _painter.drawMenuItem('4', 'Beta Channel Update', width: _width);
       _painter.drawFooter(width: _width);
 
-      _drawPrompt('1-3');
+      _drawPrompt('1-4');
       final r = stdin.readLineSync()?.trim();
       if (r == '0' || r == null || r.isEmpty) return;
 
@@ -311,10 +314,15 @@ class InteractiveMenu {
           await _pause();
           break;
         case '2':
-          await _handleUpdateCheck(false);
+          runner.addCommand(SetupAliasesCommand());
+          await runner.run(['setup-aliases']);
           await _pause();
           break;
         case '3':
+          await _handleUpdateCheck(false);
+          await _pause();
+          break;
+        case '4':
           await _handleUpdateCheck(true);
           await _pause();
           break;

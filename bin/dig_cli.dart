@@ -13,6 +13,7 @@ import 'package:dig_cli/src/commands/version_command.dart';
 import 'package:dig_cli/src/commands/zip_command.dart';
 import 'package:dig_cli/src/commands/create_module_command.dart';
 import 'package:dig_cli/src/commands/remove_module_command.dart';
+import 'package:dig_cli/src/commands/setup_aliases_command.dart';
 import 'package:dig_cli/src/commands/asset_command.dart';
 import 'package:dig_cli/src/commands/pub_cache_command.dart';
 import 'package:dig_cli/src/interactive_menu.dart';
@@ -29,6 +30,7 @@ void main(List<String> arguments) async {
     ..addCommand(CreateProjectCommand())
     ..addCommand(CreateModuleCommand())
     ..addCommand(RemoveModuleCommand())
+    ..addCommand(SetupAliasesCommand())
     ..addCommand(IosBuildCommand())
     ..addCommand(AssetCommand())
     ..addCommand(PubCacheCommand())
