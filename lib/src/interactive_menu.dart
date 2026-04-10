@@ -61,10 +61,7 @@ class InteractiveMenu {
       _painter.drawRow('Version', 'v$kDigCliVersion', width: _width);
       _painter.drawRow('Status', statusPen(status), width: _width);
       _painter.drawRow('Developer', 'Digvijaysinh Chauhan', width: _width);
-      _painter.drawFooter(width: _width);
-
-      print('');
-      _painter.drawSimpleBox('MAIN CATEGORIES', width: _width);
+      _painter.drawDivider('MAIN CATEGORIES', width: _width);
       _painter.drawMenuItem('1', 'Build & Release', width: _width);
       _painter.drawMenuItem('2', 'Clean & Fix', width: _width);
       _painter.drawMenuItem('3', 'Signing & Keys', width: _width);
