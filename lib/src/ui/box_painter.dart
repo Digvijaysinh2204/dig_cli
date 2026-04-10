@@ -24,7 +24,9 @@ class BoxPainter {
 
   void drawRow(String key, String value, {int width = 50}) {
     final labelWidth = 15;
-    final contentWidth = width - labelWidth - 5;
+    // 2 (borders) + 2 (left space) + 15 (label) + 2 (colon space) + 1 (right space) = 22 fixed characters.
+    // So dynamic content is: width - 22
+    final contentWidth = width - 22;
 
     final label = key.padRight(labelWidth);
 
