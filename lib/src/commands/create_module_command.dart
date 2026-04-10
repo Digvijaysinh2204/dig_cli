@@ -135,7 +135,6 @@ class ${className}View extends GetView<${className}Controller> {
   @override
   Widget build(BuildContext context) {
     return CustomScaffold(
-      isAppBar: true,
       title: CustomTextView(
         text: '$className',
         style: AppTextStyle.appBarTitle(),
