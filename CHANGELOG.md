@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-04-10
+
+### Added
+
+- **Smart Context-Aware Dashboard:** The interactive menu now dynamically detects Flutter projects. If outside a project, it hides unrelated categories (Build, Signing, Configuration), presenting a clean "Project Creation" focus.
+- **Universal Shell Automation:** Upgraded `dg setup-aliases` to be fully cross-platform. It now automatically detects and configures PowerShell (Windows), Zsh (macOS), and Bash (Linux) with a single command.
+- **Deep ZIP Extraction:** Upgraded project creation logic with a recursive search engine that finds the template root regardless of GitHub's nested archive structure.
+
+### Changed
+
+- **Surgical Module Removal:** Completely refactored `RemoveModuleCommand` to use a **Parenthesis-Tracking Engine**. This ensures 100% syntactical integrity when deleting GetX pages from `app_page.dart`, eliminating trailing commas or dangling code fragments.
+- **Template Reliability:** Fixed a critical bug where project creation failed because it incorrectly checked `pubspec.yaml` as a directory instead of a file.
+
+### Fixed
+
+- **Interactive Menu Stability:** Resolved a premature class closure bug that caused syntax errors in the interactive dashboard.
+- **Cross-Platform Pathing:** Optimized environment variable injection for Android Studio and FVM paths on Windows and Unix systems.
+
 ## [1.7.5] - 2026-03-24
 
 ### Added
@@ -10,7 +28,7 @@ All notable changes to this project will be documented in this file.
 - **Advanced Repository Automation:** Implemented a "Proper" GitHub automation suite including:
   - **PR Labeler:** Automatic categorization of Pull Requests based on file changes.
   - **Stale Bot:** Automated maintenance of inactive issues and PRs.
-  - **Modern Issue Forms:** YAML-based Bug Report and Feature Request forms to ensure high-quality, structured feedback with required technical context (logs, version).
+  - **Modern Issue Forms:** YAML-based Bug Report and Feature Request forms to ensure high-quality, structured feedback with required technical context (logs, version: 1.8.0)
 - **Quality Assurance:** Added a structured **Pull Request Template** with a comprehensive quality checklist to maintain project standards.
 
 ### Changed

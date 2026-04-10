@@ -312,7 +312,6 @@ class CreateProjectCommand extends Command {
           }
         }
 
-
         if (detectedPath != null) {
           return detectedPath;
         } else {
@@ -325,7 +324,6 @@ class CreateProjectCommand extends Command {
       return null;
     }
   }
-
 
   Future<void> _overlayTemplateFiles(
       Directory source, Directory destination) async {
