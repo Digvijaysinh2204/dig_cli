@@ -64,40 +64,63 @@ class InteractiveMenu {
       _painter.drawRow('Status', statusPen(status), width: _width);
       _painter.drawRow('Developer', 'Digvijaysinh Chauhan', width: _width);
       _painter.drawDivider('MAIN CATEGORIES', width: _width);
-      _painter.drawMenuItem('1', 'Build & Release', width: _width);
-      _painter.drawMenuItem('2', 'Clean & Fix', width: _width);
-      _painter.drawMenuItem('3', 'Signing & Keys', width: _width);
-      _painter.drawMenuItem('4', 'Configuration', width: _width);
-      _painter.drawMenuItem('5', 'Project Management', width: _width);
-      _painter.drawMenuItem('6', 'Utilities', width: _width);
-      _painter.drawFooter(width: _width);
 
-      _drawPrompt('1-6');
+      if (isFlutter) {
+        _painter.drawMenuItem('1', 'Build & Release', width: _width);
+        _painter.drawMenuItem('2', 'Clean & Fix', width: _width);
+        _painter.drawMenuItem('3', 'Signing & Keys', width: _width);
+        _painter.drawMenuItem('4', 'Configuration', width: _width);
+        _painter.drawMenuItem('5', 'Project Management', width: _width);
+        _painter.drawMenuItem('6', 'Utilities', width: _width);
+        _painter.drawFooter(width: _width);
+
+        _drawPrompt('1-6');
+      } else {
+        _painter.drawMenuItem('1', 'Project Management (Create)', width: _width);
+        _painter.drawMenuItem('2', 'Utilities', width: _width);
+        _painter.drawFooter(width: _width);
+
+        _drawPrompt('1-2');
+      }
+
       final response = stdin.readLineSync()?.trim();
+      if (response == '0') exit(0);
+      if (response == null || response.isEmpty) continue;
 
-      switch (response) {
-        case '0':
-          exit(0);
-        case '1':
-          await _buildReleaseMenu();
-          break;
-        case '2':
-          await _cleanFixMenu();
-          break;
-        case '3':
-          await _signingMenu();
-          break;
-        case '4':
-          await _configurationMenu();
-          break;
-        case '5':
-          await _projectMenu();
-          break;
-        case '6':
-          await _utilitiesMenu();
-          break;
-        default:
-          if (response != null && response.isNotEmpty) {
+      if (isFlutter) {
+        switch (response) {
+          case '1':
+            await _buildReleaseMenu();
+            break;
+          case '2':
+            await _cleanFixMenu();
+            break;
+          case '3':
+            await _signingMenu();
+            break;
+          case '4':
+            await _configurationMenu();
+            break;
+          case '5':
+            await _projectMenu();
+            break;
+          case '6':
+            await _utilitiesMenu();
+            break;
+        }
+      } else {
+        switch (response) {
+          case '1':
+            await _projectMenu();
+            break;
+          case '2':
+            await _utilitiesMenu();
+            break;
+        }
+      }
+    }
+  }
+
             kLog('  Invalid option.', type: LogType.warning);
             await Future.delayed(const Duration(milliseconds: 500));
           }
@@ -237,60 +260,80 @@ class InteractiveMenu {
   Future<void> _projectMenu() async {
     while (true) {
       _clearScreen();
-      _painter.drawHeader('PROJECT MANAGEMENT', width: _width);
-      _painter.drawMenuItem('1', 'Create From Template', width: _width);
-      _painter.drawMenuItem('2', 'Create GetX Module', width: _width);
-      _painter.drawMenuItem('3', 'Remove GetX Module', width: _width);
-      _painter.drawMenuItem('4', 'Rename / Rebrand App', width: _width);
-      _painter.drawFooter(width: _width);
+      final isFlutter = await isFlutterProject();
 
-      _drawPrompt('1-4');
+      _painter.drawHeader('PROJECT MANAGEMENT', width: _width);
+      if (isFlutter) {
+        _painter.drawMenuItem('1', 'Create From Template', width: _width);
+        _painter.drawMenuItem('2', 'Create GetX Module', width: _width);
+        _painter.drawMenuItem('3', 'Remove GetX Module', width: _width);
+        _painter.drawMenuItem('4', 'Rename / Rebrand App', width: _width);
+        _painter.drawFooter(width: _width);
+        _drawPrompt('1-4');
+      } else {
+        _painter.drawMenuItem('1', 'Create From Template', width: _width);
+        _painter.drawFooter(width: _width);
+        _drawPrompt('1');
+      }
+
       final r = stdin.readLineSync()?.trim();
       if (r == '0' || r == null || r.isEmpty) return;
 
       final runner = CommandRunner('dg', 'temp');
-      switch (r) {
-        case '1':
+      
+      if (isFlutter) {
+        switch (r) {
+          case '1':
+            final name = _promptUser('New Project Name');
+            if (name == null || name.isEmpty) break;
+            runner.addCommand(CreateProjectCommand());
+            await runner.run(['create-project', '--name', name]);
+            await _pause();
+            break;
+          case '2':
+            final name = _promptUser('New Module Name');
+            if (name == null || name.isEmpty) break;
+            runner.addCommand(CreateModuleCommand());
+            await runner.run(['create-module', '--name', name]);
+            await _pause();
+            break;
+          case '3':
+            final name = _promptUser('Module Name to Remove');
+            if (name == null || name.isEmpty) break;
+            runner.addCommand(RemoveModuleCommand());
+            await runner.run(['remove-module', '--name', name]);
+            await _pause();
+            break;
+          case '4':
+            final name = _promptUser('New display name (optional)');
+            final bundle = _promptUser('New bundle ID (optional)');
+            final args = ['rename'];
+            if (name != null && name.isNotEmpty) args.addAll(['--name', name]);
+            if (bundle != null && bundle.isNotEmpty) {
+              args.addAll(['--bundle-id', bundle]);
+            }
+
+            if (args.length == 1) {
+              kLog('  No changes provided.', type: LogType.warning);
+            } else {
+              runner.addCommand(RenameCommand());
+              await runner.run(args);
+              await _pause();
+            }
+            break;
+        }
+      } else {
+        if (r == '1') {
           final name = _promptUser('New Project Name');
           if (name == null || name.isEmpty) break;
           runner.addCommand(CreateProjectCommand());
           await runner.run(['create-project', '--name', name]);
           await _pause();
-          break;
-        case '2':
-          final name = _promptUser('New Module Name');
-          if (name == null || name.isEmpty) break;
-          runner.addCommand(CreateModuleCommand());
-          await runner.run(['create-module', '--name', name]);
-          await _pause();
-          break;
-        case '3':
-          final name = _promptUser('Module Name to Remove');
-          if (name == null || name.isEmpty) break;
-          runner.addCommand(RemoveModuleCommand());
-          await runner.run(['remove-module', '--name', name]);
-          await _pause();
-          break;
-        case '4':
-          final name = _promptUser('New display name (optional)');
-          final bundle = _promptUser('New bundle ID (optional)');
-          final args = ['rename'];
-          if (name != null && name.isNotEmpty) args.addAll(['--name', name]);
-          if (bundle != null && bundle.isNotEmpty) {
-            args.addAll(['--bundle-id', bundle]);
-          }
-
-          if (args.length == 1) {
-            kLog('  No changes provided.', type: LogType.warning);
-          } else {
-            runner.addCommand(RenameCommand());
-            await runner.run(args);
-          }
-          await _pause();
-          break;
+        }
       }
     }
   }
+
 
   Future<void> _utilitiesMenu() async {
     while (true) {
