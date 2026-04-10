@@ -76,7 +76,8 @@ class InteractiveMenu {
 
         _drawPrompt('1-6');
       } else {
-        _painter.drawMenuItem('1', 'Project Management (Create)', width: _width);
+        _painter.drawMenuItem('1', 'Project Management (Create)',
+            width: _width);
         _painter.drawMenuItem('2', 'Utilities', width: _width);
         _painter.drawFooter(width: _width);
 
@@ -119,7 +120,6 @@ class InteractiveMenu {
         }
       }
     }
-  }
   }
 
   Future<void> _buildReleaseMenu() async {
@@ -274,7 +274,7 @@ class InteractiveMenu {
       if (r == '0' || r == null || r.isEmpty) return;
 
       final runner = CommandRunner('dg', 'temp');
-      
+
       if (isFlutter) {
         switch (r) {
           case '1':
@@ -327,7 +327,6 @@ class InteractiveMenu {
       }
     }
   }
-
 
   Future<void> _utilitiesMenu() async {
     while (true) {
