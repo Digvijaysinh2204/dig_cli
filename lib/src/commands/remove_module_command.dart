@@ -137,17 +137,58 @@ class RemoveModuleCommand extends Command {
       return;
     }
 
-    // Improved regex to handle various formatting of GetPage block
-    final blockRegex = RegExp(
-        r'\s*GetPage\(\s*name:\s*AppRoute\.' + routeName + r',[\s\S]*?\),?',
+    // A more robust approach: Find the start of the block and find the end marker.
+    // We look for GetPage that has our specific route name.
+    final blockId = 'AppRoute.$routeName';
+    final lines = content.split('\n');
+    int startLineIdx = -1;
+    
+    for (int i = 0; i < lines.length; i++) {
+      if (lines[i].contains('GetPage(') && lines[i].contains(blockId)) {
+        startLineIdx = i;
+        break;
+      }
+      // Or if GetPage is on one line and name is on next
+      if (lines[i].contains('GetPage(')) {
+        if (i + 1 < lines.length && lines[i+1].contains(blockId)) {
+          startLineIdx = i;
+          break;
+        }
+      }
+    }
+
+    if (startLineIdx != -1) {
+      // Find the end of the GetPage block. We look for a line that has '),'.
+      int endLineIdx = -1;
+      for (int i = startLineIdx; i < lines.length; i++) {
+        if (lines[i].trim().endsWith('),') || lines[i].trim().endsWith(')')) {
+          // Verify it's not the end of the list
+          if (!lines[i].contains('];')) {
+             endLineIdx = i;
+             break;
+          }
+        }
+      }
+
+      if (endLineIdx != -1) {
+        lines.removeRange(startLineIdx, endLineIdx + 1);
+        await file.writeAsString(lines.join('\n'));
+        kLog('  - Successfully surgically removed GetPage block from app_page.dart', type: LogType.success);
+        return;
+      }
+    }
+    
+    // Fallback to a safer multiline regex if line-by-line fails
+    final fallbackRegex = RegExp(
+        r'\s*GetPage\(\s*name:\s*AppRoute\.' + routeName + r',[^]*?\),',
         multiLine: true);
 
-    if (blockRegex.hasMatch(content)) {
-      content = content.replaceAll(blockRegex, '');
+    if (fallbackRegex.hasMatch(content)) {
+      content = content.replaceFirst(fallbackRegex, '');
       await file.writeAsString(content);
-      kLog('  - Removed GetPage block from app_page.dart', type: LogType.success);
+      kLog('  - Removed GetPage block via fallback regex', type: LogType.success);
     } else {
-      kLog('  - Could not match GetPage block structure for $routeName', type: LogType.warning);
+      kLog('  - Could not safely target the GetPage block for $routeName', type: LogType.warning);
     }
   }
 
