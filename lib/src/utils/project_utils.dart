@@ -54,3 +54,38 @@ Future<String> getDesktopPath() async {
   if (home == null) throw Exception('Could not find home directory.');
   return p.join(home, 'Desktop');
 }
+
+/// Gets the current Android bundle ID (applicationId) from build.gradle
+Future<String?> getBundleId() async {
+  final root = findProjectRoot();
+  if (root == null) return null;
+
+  File? gradleFile;
+  final groovy = File(p.join(root.path, 'android/app/build.gradle'));
+  final kotlin = File(p.join(root.path, 'android/app/build.gradle.kts'));
+
+  if (await kotlin.exists()) {
+    gradleFile = kotlin;
+  } else if (await groovy.exists()) {
+    gradleFile = groovy;
+  }
+  if (gradleFile == null) return null;
+
+  final content = await gradleFile.readAsString();
+  final match = RegExp(r'applicationId\s*[=]?\s*"([^"]+)"').firstMatch(content);
+  return match?.group(1);
+}
+
+/// Gets the current App Label from AndroidManifest
+Future<String?> getAppLabel() async {
+  final root = findProjectRoot();
+  if (root == null) return null;
+
+  final manifest =
+      File(p.join(root.path, 'android/app/src/main/AndroidManifest.xml'));
+  if (!await manifest.exists()) return null;
+
+  final content = await manifest.readAsString();
+  final match = RegExp(r'android:label="([^"]*)"').firstMatch(content);
+  return match?.group(1);
+}

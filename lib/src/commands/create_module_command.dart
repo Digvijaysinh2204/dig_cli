@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import '../utils/logger.dart';
 import '../utils/project_utils.dart';
 import '../utils/spinner.dart';
+import '../ui/box_painter.dart';
 
 class CreateModuleCommand extends Command {
   @override
@@ -42,10 +43,11 @@ class CreateModuleCommand extends Command {
 
     final String finalModuleName = moduleName;
 
-    // Strip suffixes
+    // Clean up module name (e.g., 'AuthView' -> 'Auth', 'user_module' -> 'user')
     final String cleanModuleName = finalModuleName
         .replaceAll(
-            RegExp(r'(View|Controller|Binding|Module)$', caseSensitive: false),
+            RegExp(r'_?(View|Controller|Binding|Module)$',
+                caseSensitive: false),
             '')
         .trim();
 
@@ -77,8 +79,15 @@ class CreateModuleCommand extends Command {
       await _registerPage(className, slug);
     });
 
-    kLog('✅ Module $className created successfully!', type: LogType.success);
-    kLog('💡 Route: AppRoute.${_toCamelCase(slug)}View', type: LogType.info);
+    final painter = BoxPainter();
+    print('');
+    painter.drawHeader('MODULE CREATED SUCCESSFULLY', width: 50);
+    painter.drawRow('Module', className, width: 50);
+    painter.drawRow('Route', 'AppRoute.${_toCamelCase(slug)}', width: 50);
+    painter.drawRow('Files', 'Scaffolded in lib/app/module/$slug/', width: 50);
+    painter.drawFooter(width: 50);
+
+    kLog('\n✅ Module $className is ready to use!', type: LogType.success);
   }
 
   Future<void> _createController(
@@ -99,8 +108,8 @@ class ${className}Controller extends GetxController {
       Directory dir, String className, String slug) async {
     final file = File(p.join(dir.path, 'binding', '${slug}_binding.dart'));
     final content = '''
-import '../controller/${slug}_controller.dart';
 import '../../../utils/import.dart';
+import '../controller/${slug}_controller.dart';
 
 class ${className}Binding extends Bindings {
   @override
@@ -148,8 +157,8 @@ class ${className}View extends GetView<${className}Controller> {
     final file = File(p.join(dir.path, '${slug}_export.dart'));
     final content = '''
 export 'binding/${slug}_binding.dart';
-export 'view/${slug}_view.dart';
 export 'controller/${slug}_controller.dart';
+export 'view/${slug}_view.dart';
 ''';
     await file.writeAsString(content);
   }
@@ -157,44 +166,112 @@ export 'controller/${slug}_controller.dart';
   Future<void> _registerModuleExport(String slug) async {
     final exportFile =
         File(p.join('lib', 'app', 'module', 'module_export.dart'));
-    if (!await exportFile.exists()) return;
+    if (!await exportFile.exists()) {
+      await exportFile.parent.create(recursive: true);
+      await exportFile.writeAsString('''
+// ignore_for_file: directives_ordering
+
+/// This file exports all modular components (Views, Controllers, Bindings).
+/// It is automatically updated by the DIG CLI.
+
+export 'splash/splash_export.dart';
+''');
+    }
 
     final content = await exportFile.readAsString();
     final exportLine = "export '$slug/${slug}_export.dart';";
     if (content.contains(exportLine)) return;
-    await exportFile.writeAsString('$content$exportLine\n');
+
+    final lines = content.split('\n');
+    lines.add(exportLine);
+
+    // Header and non-export lines
+    final headerLines =
+        lines.where((l) => !l.trim().startsWith('export')).toList();
+    final exportLines =
+        lines.where((l) => l.trim().startsWith('export')).toList();
+    exportLines.sort();
+
+    final newContent =
+        "${[...headerLines, ...exportLines].join('\n').trim()}\n";
+    await exportFile.writeAsString(newContent);
   }
 
   Future<void> _registerRoute(String className, String slug) async {
     final file = File(p.join('lib', 'app', 'routes', 'app_route.dart'));
-    if (!await file.exists()) return;
+    if (!await file.exists()) {
+      await file.parent.create(recursive: true);
+      await file.writeAsString('''
+abstract class AppRoute {
+  AppRoute._();
+  static const String splash = '/';
+}
+''');
+    }
 
     final content = await file.readAsString();
     final routeName = _toCamelCase(slug);
-    if (content.contains('${routeName}View =')) return;
+    if (content.contains('$routeName =')) return;
 
-    final updatedContent = content.replaceFirst(
-        '}', "  static const ${routeName}View = '/${className}View';\n}");
+    // Find the last closing brace of the AppRoute class
+    final lastBraceIndex = content.lastIndexOf('}');
+    if (lastBraceIndex == -1) return;
+
+    final updatedContent = "${content.substring(0, lastBraceIndex)}"
+        "  static const String $routeName = '/$className';\n"
+        "${content.substring(lastBraceIndex)}";
+
     await file.writeAsString(updatedContent);
   }
 
   Future<void> _registerPage(String className, String slug) async {
     final file = File(p.join('lib', 'app', 'routes', 'app_page.dart'));
-    if (!await file.exists()) return;
+    if (!await file.exists()) {
+      await file.parent.create(recursive: true);
+      await file.writeAsString('''
+import '../module/module_export.dart';
+import '../utils/import.dart';
+
+abstract class AppPage {
+  AppPage._();
+  static const String initial = AppRoute.splash;
+  static final List<GetPage> routes = [
+    GetPage(
+      name: AppRoute.splash,
+      page: () => const SplashView(),
+      binding: SplashBinding(),
+    ),
+  ];
+}
+''');
+    }
 
     String content = await file.readAsString();
     final routeName = _toCamelCase(slug);
 
-    if (!content.contains('AppRoute.${routeName}View')) {
+    // Ensure module_export.dart is imported
+    if (!content.contains("import '../module/module_export.dart';")) {
+      content = "import '../module/module_export.dart';\n$content";
+    }
+
+    if (!content.contains('AppRoute.$routeName')) {
       final newPage = '''
     GetPage(
-      name: AppRoute.${routeName}View,
+      name: AppRoute.$routeName,
       page: () => const ${className}View(),
       binding: ${className}Binding(),
     ),''';
-      content = content.replaceFirst('];', '$newPage\n  ];');
+
+      // Look for the end of the static final List<GetPage> routes
+      final listEndIndex = content.lastIndexOf('];');
+      if (listEndIndex == -1) return;
+
+      final updatedContent = "${content.substring(0, listEndIndex)}"
+          "$newPage"
+          "${content.substring(listEndIndex)}";
+
+      await file.writeAsString(updatedContent);
     }
-    await file.writeAsString(content);
   }
 
   String _toSnakeCase(String input) {
@@ -206,15 +283,19 @@ export 'controller/${slug}_controller.dart';
   }
 
   String _toPascalCase(String input) {
+    if (input.isEmpty) return '';
     final snake = _toSnakeCase(input);
     return snake
         .split('_')
+        .where((s) => s.isNotEmpty)
         .map((s) => s[0].toUpperCase() + s.substring(1))
         .join();
   }
 
   String _toCamelCase(String input) {
+    if (input.isEmpty) return '';
     final pascal = _toPascalCase(input);
+    if (pascal.isEmpty) return '';
     return pascal[0].toLowerCase() + pascal.substring(1);
   }
 }

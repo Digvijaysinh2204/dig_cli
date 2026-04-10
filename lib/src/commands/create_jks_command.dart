@@ -206,29 +206,7 @@ storeFile=${p.basename(jksFile.path)}''';
   }
 
   Future<String?> _detectPackageId(String projectPath) async {
-    final appDir = p.join(projectPath, 'android', 'app');
-    File? buildGradleFile;
-    if (await File(p.join(appDir, 'build.gradle.kts')).exists()) {
-      buildGradleFile = File(p.join(appDir, 'build.gradle.kts'));
-    } else if (await File(p.join(appDir, 'build.gradle')).exists()) {
-      buildGradleFile = File(p.join(appDir, 'build.gradle'));
-    }
-
-    if (buildGradleFile == null) return null;
-
-    final content = await buildGradleFile.readAsString();
-
-    // Try applicationId
-    final appIdMatch =
-        RegExp(r'applicationId\s*[=]?\s*"([^"]+)"').firstMatch(content);
-    if (appIdMatch != null) return appIdMatch.group(1);
-
-    // Try namespace
-    final namespaceMatch =
-        RegExp(r'namespace\s*[=]?\s*"([^"]+)"').firstMatch(content);
-    if (namespaceMatch != null) return namespaceMatch.group(1);
-
-    return null;
+    return await getBundleId();
   }
 
   Future<void> _updateBuildGradle(String projectPath) async {

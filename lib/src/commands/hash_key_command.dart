@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
 import '../utils/logger.dart';
+import '../utils/project_utils.dart';
 import '../utils/spinner.dart';
 
 class HashKeyCommand extends Command {
@@ -64,23 +65,48 @@ class HashKeyCommand extends Command {
         alias == null ||
         storepass == null ||
         keypass == null) {
-      kLog('\n🔑 Release Key Details Required', type: LogType.warning);
+      // Auto-detect project key.properties
+      final projectConfig = await _tryReadProjectKeyProperties();
+      if (projectConfig != null && projectConfig.containsKey('storeFile')) {
+        final stFile = projectConfig['storeFile'];
+        kLog('\n✨ Found key.properties in current project.',
+            type: LogType.success);
+        kLog('   Keystore: $stFile', type: LogType.info);
+        kLog('   Alias: ${projectConfig['keyAlias']}', type: LogType.info);
 
-      if (keystore == null) {
-        stdout.write('Enter keystore path (e.g., /path/to/my.jks): ');
-        keystore = stdin.readLineSync()?.trim();
+        stdout.write('\nUse this project release key? (Y/n): ');
+        final ans = stdin.readLineSync()?.trim().toLowerCase();
+        if (ans == null || ans.isEmpty || ans == 'y') {
+          keystore = stFile;
+          alias = projectConfig['keyAlias'];
+          storepass = projectConfig['storePassword'];
+          keypass = projectConfig['keyPassword'];
+        }
       }
-      if (alias == null) {
-        stdout.write('Enter key alias: ');
-        alias = stdin.readLineSync()?.trim();
-      }
-      if (storepass == null) {
-        stdout.write('Enter store password: ');
-        storepass = stdin.readLineSync()?.trim();
-      }
-      if (keypass == null) {
-        stdout.write('Enter key password: ');
-        keypass = stdin.readLineSync()?.trim();
+
+      // If user declined or not fully resolved via key.properties, ask manually
+      if (keystore == null ||
+          alias == null ||
+          storepass == null ||
+          keypass == null) {
+        kLog('\n🔑 Release Key Details Required', type: LogType.warning);
+
+        if (keystore == null) {
+          stdout.write('Enter keystore path (e.g., /path/to/my.jks): ');
+          keystore = stdin.readLineSync()?.trim();
+        }
+        if (alias == null) {
+          stdout.write('Enter key alias: ');
+          alias = stdin.readLineSync()?.trim();
+        }
+        if (storepass == null) {
+          stdout.write('Enter store password: ');
+          storepass = stdin.readLineSync()?.trim();
+        }
+        if (keypass == null) {
+          stdout.write('Enter key password: ');
+          keypass = stdin.readLineSync()?.trim();
+        }
       }
     }
 
@@ -187,8 +213,7 @@ class HashKeyCommand extends Command {
         }
         kLog('\n✅ $label Hash Key (Base64):', type: LogType.success);
         kLog('   $hash', type: LogType.success);
-        kLog(
-            '\n💡 This is used for Google Sign-In, Firebase, and Facebook Login.',
+        kLog('\n💡 This is used for Google Sign-In and Facebook Login.',
             type: LogType.info);
       } else {
         kLog('❗ Failed to generate hash key.', type: LogType.error);
@@ -197,6 +222,41 @@ class HashKeyCommand extends Command {
     } catch (e) {
       kLog('❌ An error occurred: $e', type: LogType.error);
     }
+  }
+
+  Future<Map<String, String>?> _tryReadProjectKeyProperties() async {
+    final projectRoot = findProjectRoot();
+    if (projectRoot == null) return null;
+
+    final keyPropFile =
+        File(p.join(projectRoot.path, 'android', 'key.properties'));
+    if (!await keyPropFile.exists()) return null;
+
+    final config = <String, String>{};
+    final lines = await keyPropFile.readAsLines();
+    for (final line in lines) {
+      if (line.trim().isEmpty || line.startsWith('#')) continue;
+      final parts = line.split('=');
+      if (parts.length >= 2) {
+        config[parts[0].trim()] = parts.sublist(1).join('=').trim();
+      }
+    }
+
+    if (config.containsKey('storeFile')) {
+      final storeFile = config['storeFile']!;
+      if (!p.isAbsolute(storeFile)) {
+        final appDir = p.join(projectRoot.path, 'android', 'app');
+        final androidDir = p.join(projectRoot.path, 'android');
+        if (File(p.join(appDir, storeFile)).existsSync()) {
+          config['storeFile'] = p.normalize(p.join(appDir, storeFile));
+        } else if (File(p.join(androidDir, storeFile)).existsSync()) {
+          config['storeFile'] = p.normalize(p.join(androidDir, storeFile));
+        } else {
+          // Unresolvable relative path fallback
+        }
+      }
+    }
+    return config;
   }
 }
 

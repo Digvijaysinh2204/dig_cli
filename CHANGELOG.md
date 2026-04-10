@@ -18,6 +18,11 @@ All notable changes to this project will be documented in this file.
 - **Refined Interactive Menu:** Migrated the dashboard to a centralized `CommandRunner` architecture. Updated build prompts to use a **Styled Multi-layer Response** system that clearly separates configuration from execution logs.
 - **CI/CD Standardization:** Migrated all GitHub Actions to the official **`setup-dart@v1.7.2`** and modern **`checkout@v6`**, ensuring native Node 24 support and consistent environment parity.
 
+### Removed
+
+- **Firebase Command Suite:** Removed `dg firebase` and associated interactive menu options due to stability issues with external dependencies.
+
+
 ### Fixed
 
 - **Rename Command Stability:** Resolved a "Null check operator" crash when invoking the rename command from the interactive dashboard without pre-defined arguments.

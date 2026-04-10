@@ -169,10 +169,9 @@ void _parseAndDisplaySigningReport(String output) {
   }
 
   kLog('\n💡 Tips:', type: LogType.info);
-  kLog('   • Use SHA1 for Google Sign-In, Maps API, Firebase, etc.',
-      type: LogType.info);
+  kLog('   • Use SHA1 for Google Sign-In, Maps API, etc.', type: LogType.info);
   kLog('   • Use SHA256 for App Links and Play Integrity.', type: LogType.info);
-  kLog('   • Add both debug & release keys to Firebase/Google Console.',
+  kLog('   • Add both debug & release keys to Google Console.',
       type: LogType.info);
 }
 

@@ -1,142 +1,121 @@
-# DIG CLI
+# 🚀 DIG CLI
 
 [![pub package](https://img.shields.io/pub/v/dig_cli.svg)](https://pub.dev/packages/dig_cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/github-repo-181717?logo=github)](https://github.com/Digvijaysinh2204/dig_cli)
 
-**DIG CLI** (`dg`) is a command-line helper for Flutter projects: release builds, cleans and resets, Android/iOS signing helpers, Firebase and assets, scaffolding (GetX modules, new projects), rename across platforms, and more. Use **`dg`** with no arguments for an interactive menu, or call subcommands from scripts and CI.
+**DIG CLI** (`dg`) is a premium, enterprise-grade command-line tool designed for Flutter developers. It automates your daily workflows with an intuitive **Interactive Dashboard** and a powerful set of low-level commands. From rebuilding your entire architecture to generating robust boilerplate code, `dg` is the ultimate Flutter companion.
 
 ---
 
-## Requirements
+## ✨ Why DIG CLI?
 
-- **Dart SDK** 3.0+ (see `pubspec.yaml`).
-- **Flutter** on your `PATH` for builds, clean, pub-cache repair, and most project workflows.
+- **Interactive Dashboard UI**: Forget complex terminal arguments. Just type `dg` and follow the beautiful, colorful prompts.
+- **Flawless Modularity**: Generate GetX features (View, Controller, Binding, Exports) seamlessly integrated into standard routing architectures.
+- **Smart Asset Generation**: Automatically watch and build asset classes, keeping string typos out of your codebase.
+- **Frictionless Release**: Instantly build APKs, AABs, and IPAs, or automate secure keystore (JKS) and SHA keys generation.
+- **Deep Clean**: Flush hidden caches and repair pub packages with strict zero-fail tools.
 
 ---
 
-## Install
+## ⚙️ Requirements
+- **Dart SDK**: `>=3.0.0`
+- **Flutter**: Ensure `flutter` is perfectly configured in your system `PATH`.
 
+---
+
+## 📦 Installation
+
+**1. Stable Release (via pub.dev)**
+To globally activate the stable version of the CLI using Dart:
 ```bash
 dart pub global activate dig_cli
 ```
 
-Ensure the pub cache `bin` directory is on your `PATH` (Dart usually prints a hint after `global activate`). Then run:
+**2. Bleeding-Edge Release (via GitHub Source)**
+If you want direct access to the latest, unreleased features, you can install directly from the GitHub repository:
+```bash
+dart pub global activate -sgit https://github.com/Digvijaysinh2204/dig_cli.git
+```
 
+**Executable Alias (`dg`)**
+The `dig_cli` package registers a global alias named **`dg`**. Ensure your global pub cache is embedded in your system's `PATH`.
+
+Once configured, verify the alias installation is active:
 ```bash
 dg --version
 ```
 
 ---
 
-## Quick start
+## ⚡ Quick Start: The Interactive Dashboard
 
-| Goal | Command |
-|------|---------|
-| Open the interactive UI | `dg` |
-| Show version & update hints | `dg version` or `dg --version` |
-| Command list / help | `dg --help` |
-
-The interactive flow is **category → action** (single bordered panel per screen). Builds now feature an **Intelligent Prompt System** for output paths, custom names, and versioning. Output respects **`NO_COLOR`** and non-TTY environments.
-
----
-
-## Features (overview)
-
-| Area | What you get |
-|------|----------------|
-| **Build & release** | Interactive APK / App Bundle via `dg create …`; iOS IPA via `dg ios`. Supports custom paths and naming. |
-| **Clean & fix** | `dg clean` (optional `--global`); `dg pub-cache` runs `flutter pub cache repair`. |
-| **Signing & keys** | JKS creation, SHA keys, hash key helpers for Android / login SDKs. |
-| **Configuration** | `dg firebase` (login, configure, check); `dg asset build` / `dg asset watch`. |
-| **Project management** | New Flutter project template, GetX module scaffold, rename app + bundle IDs. |
-| **Utilities** | Zip sources (respecting ignores), stable / pre-release update checks. |
-
-For asset folder layout and generated classes, see **[ASSET_GENERATION_GUIDE.md](ASSET_GENERATION_GUIDE.md)**.
-
----
-
-## Command reference
-
-Run `dg <command> --help` for flags and options.
-
-| Command | Description |
-|---------|-------------|
-| `dg` | Interactive menu (no args). |
-| `dg create apk` | Release APK; optional `-o` / `-n`. |
-| `dg create bundle` | Release App Bundle (AAB). |
-| `dg ios` | iOS IPA build flow. |
-| `dg clean` | Project clean / full reset; `--global` for heavier cache wipe. |
-| `dg pub-cache` | Repair pub cache (`flutter pub cache repair`). |
-| `dg zip` | Zip project sources. |
-| `dg rename` | Rename app + bundle id (multi-platform). |
-| `dg create-jks` | Generate / configure JKS keystore workflow. |
-| `dg sha-keys` | SHA1 / SHA256 fingerprints. |
-| `dg hash-key` | Hash key helper (e.g. Facebook / Google login setup). |
-| `dg create-project` | Scaffold a new Flutter project. |
-| `dg create-module` | GetX module (view / controller / binding / route). |
-| `dg firebase …` | `login`, `logout`, `configure`, `check`. |
-| `dg asset build` | Generate typed asset classes + update `pubspec.yaml`. |
-| `dg asset watch` | Watch asset folders and rebuild. |
-| `dg version` | Version, path, pub.dev latest (same as `--version` entry where applicable). |
-
----
-
-## Examples
+The easiest way to use Dig CLI is to just type `dg`. You will be instantly greeted by a clean, premium terminal UI covering all commands.
 
 ```bash
-# Interactive dashboard
 dg
-
-# Rename display name and bundle id
-dg rename --name "Awesome App" --bundle-id com.example.awesome
-
-# APK with custom prefix and output folder
-dg create apk --name MyApp --output ~/Downloads
-
-# Deep clean (optional global caches — prompts / flags as implemented)
-dg clean --global
-
-# Repair global Flutter pub cache
-dg pub-cache
-
-# Regenerate asset registry and Dart classes
-dg asset build
 ```
 
-Generated assets (illustrative):
+**What you will see:**
+- `Build & Release`: Generate APKs, AABs, IPAs with auto-naming.
+- `Clean & Repair`: Powerful wipes to reset a stuck iOS/Android build space.
+- `Keys & Security`: Pull SHA1/SHA256 data, setup auto-JKS for signings.
+- `Configuration`: Automated Asset scaffolding.
+- `Project Management`: Instantiate entire GetX Template Projects or drop-in robust GetX Modules into your existing app.
 
+---
+
+## 🛠️ Command Reference
+
+For users who want to utilize the CLI within CI/CD pipelines, here is the full suite of headless terminal commands. (Run `dg <command> --help` for deeper flags).
+
+| Command Area | Syntax | Description |
+|---|---|---|
+| **Build System** | `dg create apk` | Compile a Release APK. Optional `-o` (output) and `-n` (name). |
+| | `dg create bundle` | Compile an Android App Bundle (AAB). |
+| | `dg ios` | Complete iOS IPA build pipeline. |
+| **Maintenance** | `dg clean` | Full framework reset (handles CocoaPods, Xcode, build caches). |
+| | `dg pub-cache` | Runs `flutter pub cache repair`. |
+| **Security** | `dg create-jks` | Generate & hook a secure Android keystore. |
+| | `dg sha-keys` | Display formatted SHA1 and SHA256 fingerprints. |
+| | `dg hash-key` | Extract hash keys (great for Facebook/Google Logins). |
+| **Scaffolding** | `dg create-project` | Instantiates our premium template from the Digvijaysinh repo. |
+| | `dg create-module` | Fully scaffolds a routed GetX feature (Binding, Controller, View). |
+| **Asset Engine** | `dg asset build` | Injects strongly typed Asset classes into Dart. |
+| | `dg asset watch` | Watches for real-time asset changes in your workspace. |
+| **System** | `dg rename` | Renames Application Display Name & Global Bundle ID. |
+| | `dg zip` | Compress project files (respecting `.gitignore`). |
+
+---
+
+## 💡 Examples
+
+### 1. Rename Your App
+A complete cross-platform rename (modifies iOS `Info.plist`, Android `build.gradle`, etc.):
+```bash
+dg rename --name "Stock Sarthi" --bundle-id com.dig.stocksarthi
+```
+
+### 2. Scaffold a Feature
+Add a new robust page (creates routing, bindings, variables, layout):
+```bash
+dg create-module --name "Profile Page"
+```
+
+### 3. Generate Type-Safe Assets
+```bash
+dg asset build
+```
+Generates output you can use directly:
 ```dart
-// assets/bottom_bar/svg/home.svg
-import 'package:your_app/generated/assets.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
 SvgPicture.asset(BottomBarSvg.home);
 ```
 
 ---
 
-## Optional: shell alias
+## 👨‍💻 Author & License
 
-If you want a shorter name, pick something that does not clash with common tools (avoid `df`, etc.):
+- **Author**: [Digvijaysinh Chauhan](https://github.com/Digvijaysinh2204)
+- **License**: [MIT](LICENSE)
 
-```bash
-# ~/.zshrc or ~/.bashrc
-alias mydg='dg'
-```
-
-**Windows (PowerShell):** `Set-Alias mydg dg`
-
----
-
-## Changelog
-
-Release notes: **[CHANGELOG.md](CHANGELOG.md)**.
-
----
-
-## License
-
-[MIT](LICENSE).
-
-**Author:** [Digvijaysinh Chauhan](https://github.com/Digvijaysinh2204) — [packages on pub.dev](https://pub.dev/packages?q=Digvijaysinh+Chauhan).
+> *"Efficiency through Automation."*
