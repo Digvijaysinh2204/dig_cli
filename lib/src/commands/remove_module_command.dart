@@ -57,9 +57,14 @@ class RemoveModuleCommand extends Command {
       return;
     }
 
-    await runWithSpinner('🗑️  Removing $className module...', () async {
+    await runWithSpinner('🗑️  Removing $className module components...', () async {
       // 1. Delete Module Directory
-      await moduleDir.delete(recursive: true);
+      if (await moduleDir.exists()) {
+        await moduleDir.delete(recursive: true);
+        kLog('  - Deleted module directory: ${moduleDir.path}', type: LogType.success);
+      } else {
+        kLog('  - Module directory already gone: ${moduleDir.path}', type: LogType.warning);
+      }
 
       // 2. Unregister Module Export
       await _unregisterModuleExport(slug);
@@ -73,13 +78,14 @@ class RemoveModuleCommand extends Command {
 
     final painter = BoxPainter();
     print('');
-    painter.drawHeader('MODULE REMOVED SUCCESSFULLY', width: 50);
+    painter.drawHeader('MODULE REMOVAL SUMMARY', width: 50);
     painter.drawRow('Module', className, width: 50);
+    painter.drawRow('Slug', slug, width: 50);
     painter.drawRow('Route', 'AppRoute.${_toCamelCase(slug)}', width: 50);
-    painter.drawRow('Status', 'Cleaned up all code blocks', width: 50);
     painter.drawFooter(width: 50);
 
     kLog('\n✅ Module $className has been completely removed!', type: LogType.success);
+    kLog('💡 Note: You may need to run "flutter pub get" if imports are lingering.', type: LogType.info);
   }
 
   Future<void> _unregisterModuleExport(String slug) async {
@@ -89,11 +95,16 @@ class RemoveModuleCommand extends Command {
 
     final content = await exportFile.readAsString();
     final exportLine = "export '$slug/${slug}_export.dart';";
-    if (!content.contains(exportLine)) return;
+    
+    if (!content.contains(exportLine)) {
+      kLog('  - Export line not found in module_export.dart', type: LogType.warning);
+      return;
+    }
 
     final lines = content.split('\n');
     lines.removeWhere((l) => l.trim() == exportLine);
     await exportFile.writeAsString(lines.join('\n'));
+    kLog('  - Removed export from module_export.dart', type: LogType.success);
   }
 
   Future<void> _unregisterRoute(String className, String slug) async {
@@ -103,9 +114,15 @@ class RemoveModuleCommand extends Command {
     final content = await file.readAsString();
     final routeName = _toCamelCase(slug);
 
+    if (!content.contains(routeName)) {
+      kLog('  - Route definition not found in app_route.dart', type: LogType.warning);
+      return;
+    }
+
     final lines = content.split('\n');
     lines.removeWhere((l) => l.contains('static const String $routeName ='));
     await file.writeAsString(lines.join('\n'));
+    kLog('  - Removed static route from app_route.dart', type: LogType.success);
   }
 
   Future<void> _unregisterPage(String className, String slug) async {
@@ -115,14 +132,23 @@ class RemoveModuleCommand extends Command {
     String content = await file.readAsString();
     final routeName = _toCamelCase(slug);
 
+    if (!content.contains('AppRoute.$routeName')) {
+      kLog('  - GetPage block not found in app_page.dart', type: LogType.warning);
+      return;
+    }
+
+    // Improved regex to handle various formatting of GetPage block
     final blockRegex = RegExp(
-        r'\s*GetPage\([\s\S]*?name:\s*AppRoute\.' +
-            routeName +
-            r',[\s\S]*?\),?',
+        r'\s*GetPage\(\s*name:\s*AppRoute\.' + routeName + r',[\s\S]*?\),?',
         multiLine: true);
 
-    content = content.replaceAll(blockRegex, '');
-    await file.writeAsString(content);
+    if (blockRegex.hasMatch(content)) {
+      content = content.replaceAll(blockRegex, '');
+      await file.writeAsString(content);
+      kLog('  - Removed GetPage block from app_page.dart', type: LogType.success);
+    } else {
+      kLog('  - Could not match GetPage block structure for $routeName', type: LogType.warning);
+    }
   }
 
   String _toSnakeCase(String input) {
