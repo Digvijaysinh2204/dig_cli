@@ -1,115 +1,130 @@
-# 🚀 DIG CLI
+# 🚀 DIG CLI - The Ultimate Flutter Companion
 
 [![pub package](https://img.shields.io/pub/v/dig_cli.svg)](https://pub.dev/packages/dig_cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/github-repo-181717?logo=github)](https://github.com/Digvijaysinh2204/dig_cli)
 
-**DIG CLI** (`dg`) is a premium, enterprise-grade command-line tool designed for Flutter developers. It automates your daily workflows with an intuitive **Interactive Dashboard** and a powerful set of low-level commands. From rebuilding your entire architecture to generating robust boilerplate code, `dg` is the ultimate Flutter companion.
+**DIG CLI** (`dg`) is a premium, enterprise-grade command-line tool designed for Flutter developers. It automates your daily workflows with an intuitive **Interactive Dashboard** and a powerful set of low-level commands. From rebuilding your entire architecture to generating robust boilerplate code, `dg` is the absolute authority on Flutter project management.
 
 ---
 
-## ✨ Why DIG CLI?
-
-- **Interactive Dashboard UI**: Forget complex terminal arguments. Just type `dg` and follow the beautiful, colorful prompts.
-- **Flawless Modularity**: Generate GetX features (View, Controller, Binding, Exports) seamlessly integrated into standard routing architectures.
-- **Smart Asset Generation**: Automatically watch and build asset classes, keeping string typos out of your codebase.
-- **Frictionless Release**: Instantly build APKs, AABs, and IPAs, or automate secure keystore (JKS) and SHA keys generation.
-- **Deep Clean**: Flush hidden caches and repair pub packages with strict zero-fail tools.
+## 📑 Table of Contents
+1. [Installation & Setup](#1-installation--setup)
+2. [CLI Alias Configuration](#2-cli-alias-configuration-tips)
+3. [The Interactive Dashboard](#3-the-interactive-dashboard-ui)
+4. [Full Command Reference](#4-full-command-reference)
+5. [Feature Deep Dive](#5-feature-deep-dive)
+6. [Architecture Standards](#6-architecture-standards)
 
 ---
 
-## ⚙️ Requirements
+## 1. 📦 Installation & Setup
+
+### **Requirements:**
 - **Dart SDK**: `>=3.0.0`
 - **Flutter**: Ensure `flutter` is perfectly configured in your system `PATH`.
 
----
-
-## 📦 Installation
-
-**1. Stable Release (via pub.dev)**
+### **Standard Installation (Stable)**
 To globally activate the stable version of the CLI using Dart:
 ```bash
 dart pub global activate dig_cli
 ```
 
-**2. Bleeding-Edge Release (via GitHub Source)**
-If you want direct access to the latest, unreleased features, you can install directly from the GitHub repository:
+### **Bleeding-Edge Installation (GitHub Source)**
+If you want direct access to the latest, unreleased features, you can install directly from the GitHub repository source path:
 ```bash
 dart pub global activate -sgit https://github.com/Digvijaysinh2204/dig_cli.git
 ```
 
-**Executable Alias (`dg`)**
-The `dig_cli` package registers a global alias named **`dg`**. Ensure your global pub cache is embedded in your system's `PATH`.
-
-Once configured, verify the alias installation is active:
+### **Executable Alias (`dg`)**
+The `dig_cli` package registers a global alias named **`dg`**. Ensure your global pub cache is embedded in your system's `PATH`. Run this to verify the installation:
 ```bash
 dg --version
 ```
 
 ---
 
-## ⚡ Quick Start: The Interactive Dashboard
+## 2. ⚡ CLI Alias Configuration (Tips)
 
-The easiest way to use Dig CLI is to just type `dg`. You will be instantly greeted by a clean, premium terminal UI covering all commands.
+To maximize your speed, we highly recommend adding custom aliases to your shell profile (`~/.zshrc` or `~/.bash_profile`) so you don't have to type out full commands:
 
+```bash
+# Add these lines to your ~/.zshrc or ~/.bash_profile
+alias dgm="dg create-module"
+alias dgp="dg create-project"
+alias dgapk="dg create apk"
+alias dgcb="dg clean"
+alias dga="dg asset build"
+```
+After saving, simply run `source ~/.zshrc`. Now you can instantly scaffold a feature by just typing `dgm -n auth`!
+
+---
+
+## 3. 🖥️ The Interactive Dashboard UI
+
+The easiest way to use Dig CLI is to simply launch the visual dashboard setup. Forget writing complex arguments; just type:
 ```bash
 dg
 ```
 
-**What you will see:**
-- `Build & Release`: Generate APKs, AABs, IPAs with auto-naming.
-- `Clean & Repair`: Powerful wipes to reset a stuck iOS/Android build space.
-- `Keys & Security`: Pull SHA1/SHA256 data, setup auto-JKS for signings.
-- `Configuration`: Automated Asset scaffolding.
-- `Project Management`: Instantiate entire GetX Template Projects or drop-in robust GetX Modules into your existing app.
+**Inside the Dashboard:**
+- **`[1] Build & Release`**: Auto-generate APKs, App Bundles, and iOS IPAs with smart timestamping.
+- **`[2] Clean & Repair`**: Safely wipe CocoaPods, Xcode caches, Gradle, and `pub-cache`.
+- **`[3] Signing & Keys`**: Seamlessly generate SHA1/SHA256 data or automate JKS File setups.
+- **`[4] Configuration`**: Fast Asset and Font scaffolding setup.
+- **`[5] Project Management`**: Download GetX boilerplates directly from GitHub or rebrand an existing app.
 
 ---
 
-## 🛠️ Command Reference
+## 4. 🛠️ Full Command Reference
 
-For users who want to utilize the CLI within CI/CD pipelines, here is the full suite of headless terminal commands. (Run `dg <command> --help` for deeper flags).
+If you prefer scripting or CI/CD pipelines, use the headless terminal commands:
 
 | Command Area | Syntax | Description |
 |---|---|---|
-| **Build System** | `dg create apk` | Compile a Release APK. Optional `-o` (output) and `-n` (name). |
+| **Build System** | `dg create apk` | Compile a Release APK. Optional `-o` (dir) and `-n` (name). |
 | | `dg create bundle` | Compile an Android App Bundle (AAB). |
 | | `dg ios` | Complete iOS IPA build pipeline. |
-| **Maintenance** | `dg clean` | Full framework reset (handles CocoaPods, Xcode, build caches). |
-| | `dg pub-cache` | Runs `flutter pub cache repair`. |
-| **Security** | `dg create-jks` | Generate & hook a secure Android keystore. |
-| | `dg sha-keys` | Display formatted SHA1 and SHA256 fingerprints. |
-| | `dg hash-key` | Extract hash keys (great for Facebook/Google Logins). |
-| **Scaffolding** | `dg create-project` | Instantiates our premium template from the Digvijaysinh repo. |
-| | `dg create-module` | Fully scaffolds a routed GetX feature (Binding, Controller, View). |
-| **Asset Engine** | `dg asset build` | Injects strongly typed Asset classes into Dart. |
-| | `dg asset watch` | Watches for real-time asset changes in your workspace. |
-| **System** | `dg rename` | Renames Application Display Name & Global Bundle ID. |
-| | `dg zip` | Compress project files (respecting `.gitignore`). |
+| **Maintenance** | `dg clean` | Full framework reset (CocoaPods, Xcode, builds). |
+| | `dg pub-cache` | Runs intensive `flutter pub cache repair`. |
+| **Keys/Security** | `dg create-jks` | Generate & hook a secure Android keystore cleanly. |
+| | `dg sha-keys` | Display your Gradle SHA1/SHA256 outputs cleanly. |
+| | `dg hash-key` | Fast Facebook/Google Hash Key generator. |
+| **Scaffolding**| `dg create-project` | Clones our enterprise template mapped directly from GitHub. |
+| | `dg create-module` | Fully scaffolds a modular GetX setup. |
+| **Asset Engine** | `dg asset build` | Generates strict type-safe assets matching `dig.yaml`. |
+| | `dg asset watch` | Real-time Daemon analyzing asset injections. |
+| **System** | `dg rename` | Renames Android/iOS Display Name & Global Bundle IDs. |
+| | `dg zip` | Compress project without garbage files (`.gitignore` safe). |
 
 ---
 
-## 💡 Examples
+## 5. 🔍 Feature Deep Dive
 
-### 1. Rename Your App
-A complete cross-platform rename (modifies iOS `Info.plist`, Android `build.gradle`, etc.):
+### **Scaffold an Entire Project**
+`dg create-project`
+*This command pulls the absolute latest production template from `https://github.com/Digvijaysinh2204/dig_template`, overrides standard Flutter configurations, generates Secure ENV keys natively, handles Android Keystore linking immediately, and integrates GetX logic out of the box.*
+
+### **Scaffold a GetX Module**
 ```bash
-dg rename --name "Stock Sarthi" --bundle-id com.dig.stocksarthi
+dg create-module --name auth_screen
 ```
+*Creates `AuthScreenView`, `AuthScreenController`, `AuthScreenBinding`, registers them natively into `AppRoute.authScreen`, and auto-exports the module. We parse all internal casing dynamically!*
 
-### 2. Scaffold a Feature
-Add a new robust page (creates routing, bindings, variables, layout):
-```bash
-dg create-module --name "Profile Page"
-```
-
-### 3. Generate Type-Safe Assets
+### **Asset Safety Engine**
 ```bash
 dg asset build
 ```
-Generates output you can use directly:
-```dart
-SvgPicture.asset(BottomBarSvg.home);
-```
+*Parses all localized PNG/SVG/TTF graphics and outputs generated paths. You can instantly start writing `SvgPicture.asset(BottomBarSvg.home);` without any fear of naming typos.*
+
+---
+
+## 6. 🏗️ Architecture Standards
+
+By using DIG CLI, you automatically adopt industry-leading architectural norms:
+- **Feature-First**: All screens operate inside dedicated `module/` bundles entirely abstracted from external logic.
+- **Dependency Injections**: Automated `Binding` linking via routes prevents memory leaks and manages GetX lifetimes natively.
+- **Secure Handling**: Debug logic separates `key.properties` from Git environments automatically.
 
 ---
 
@@ -119,3 +134,4 @@ SvgPicture.asset(BottomBarSvg.home);
 - **License**: [MIT](LICENSE)
 
 > *"Efficiency through Automation."*
+
