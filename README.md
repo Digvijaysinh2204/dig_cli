@@ -84,6 +84,39 @@ export PATH="$JAVA_HOME/bin:$PATH"
 export PATH="$PATH:$HOME/fvm/default/bin"
 ```
 
+---
+
+## 🪟 Windows Setup (PowerShell)
+
+To use `dg` and custom aliases on Windows, add these to your Microsoft.PowerShell_profile.ps1:
+
+```powershell
+# Set path for Global Pub Cache
+$env:Path += ";$env:USERPROFILE\.pub-cache\bin"
+
+# Custom Aliases
+function dgm { dg create-module @args }
+function dgp { dg create-project @args }
+function dga { dg asset build @args }
+```
+
+---
+
+## 🐧 Ubuntu / Linux Setup (Bash)
+
+Add these to your `~/.bashrc`:
+
+```bash
+# Path for Global Pub Cache
+export PATH="$PATH":"$HOME/.pub-cache/bin"
+
+# Custom Aliases
+alias dig='dg'
+alias dgm='dg create-module'
+alias dgp='dg create-project'
+alias dga='dg asset build'
+```
+Run `source ~/.bashrc` to apply.
 
 ---
 
