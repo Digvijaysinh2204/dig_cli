@@ -295,22 +295,27 @@ class CreateProjectCommand extends Command {
 
         // GitHub zip has a root folder named {repo_name}-{branch_name}
         // Inside it, the code is now at the root
+        // GitHub zip has a root folder named {repo_name}-{branch_name}
         final rootFolderName = archive.first.name.split('/').first;
         final templatePath = p.join(tempDir.path, rootFolderName);
 
-        if (await Directory(p.join(templatePath, 'pubspec.yaml')).exists()) {
-          return templatePath;
+        String? detectedPath;
+        if (await File(p.join(templatePath, 'pubspec.yaml')).exists()) {
+          detectedPath = templatePath;
         } else {
-          // Fallback search if rootFolderName logic fails
-          final contents = Directory(tempDir.path).listSync();
-          for (var entity in contents) {
-            if (entity is Directory) {
-              if (await Directory(p.join(entity.path, 'pubspec.yaml'))
-                  .exists()) {
-                return entity.path;
-              }
+          // Fallback search: Look for the first directory that contains pubspec.yaml
+          await for (var entity in tempDir.list(recursive: true)) {
+            if (entity is File && p.basename(entity.path) == 'pubspec.yaml') {
+              detectedPath = p.dirname(entity.path);
+              break;
             }
           }
+        }
+
+
+        if (detectedPath != null) {
+          return detectedPath;
+        } else {
           throw Exception(
               'Template structure not found in the downloaded archive.');
         }
@@ -320,6 +325,7 @@ class CreateProjectCommand extends Command {
       return null;
     }
   }
+
 
   Future<void> _overlayTemplateFiles(
       Directory source, Directory destination) async {
