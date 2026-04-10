@@ -9,12 +9,15 @@
 ---
 
 ## 📑 Table of Contents
-1. [Installation & Setup](#1-installation--setup)
-2. [CLI Alias Configuration](#2-cli-alias-configuration-tips)
-3. [The Interactive Dashboard](#3-the-interactive-dashboard-ui)
-4. [Full Command Reference](#4-full-command-reference)
-5. [Feature Deep Dive](#5-feature-deep-dive)
-6. [Architecture Standards](#6-architecture-standards)
+1. [📦 Installation & Setup](#1--installation--setup)
+2. [⚡ CLI Alias configuration](#-cli-alias-configuration-tips)
+3. [💻 MacOS Professional Setup](#-professional-environment-setup-macos)
+4. [🪟 Windows Setup](#-windows-setup-powershell)
+5. [🐧 Ubuntu / Linux Setup](#-ubuntu--linux-setup-bash)
+6. [🖥️ The Interactive Dashboard](#3--the-interactive-dashboard-ui)
+7. [🛠️ Full Command Reference](#4--full-command-reference)
+8. [🔍 Feature Deep Dive](#5--feature-deep-dive)
+9. [🏗️ Architecture Standards](#6--architecture-standards)
 
 ---
 

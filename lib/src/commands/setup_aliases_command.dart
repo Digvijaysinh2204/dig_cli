@@ -27,12 +27,13 @@ class SetupAliasesCommand extends Command {
     if (Platform.isWindows) {
       // Windows PowerShell Profile
       final psProfileDir = p.join(home, 'Documents', 'PowerShell');
-      final psProfile = File(p.join(psProfileDir, 'Microsoft.PowerShell_profile.ps1'));
-      
+      final psProfile =
+          File(p.join(psProfileDir, 'Microsoft.PowerShell_profile.ps1'));
+
       if (!await Directory(psProfileDir).exists()) {
         await Directory(psProfileDir).create(recursive: true);
       }
-      
+
       targetProfile = psProfile;
       profileName = 'PowerShell Profile';
     } else {
@@ -50,7 +51,8 @@ class SetupAliasesCommand extends Command {
       } else {
         // Fallback to .zshrc on Mac or .bashrc on Linux
         targetProfile = Platform.isMacOS ? zshrc : bashrc;
-        kLog('  Creating new profile file: ${p.basename(targetProfile.path)}', type: LogType.info);
+        kLog('  Creating new profile file: ${p.basename(targetProfile.path)}',
+            type: LogType.info);
       }
       profileName = p.basename(targetProfile.path);
     }
@@ -61,7 +63,7 @@ class SetupAliasesCommand extends Command {
     final String prefix = (input == null || input.isEmpty) ? 'dg' : input;
 
     String aliasesBlock = '';
-    
+
     if (Platform.isWindows) {
       aliasesBlock = '''
 
@@ -96,8 +98,8 @@ alias ${prefix}apk="dg create apk"
     }
 
     if (content.contains('# --- DIG CLI Custom Aliases ---')) {
-      kLog('✅ DIG CLI aliases are already installed in $profileName', 
-           type: LogType.success);
+      kLog('✅ DIG CLI aliases are already installed in $profileName',
+          type: LogType.success);
       return;
     }
 
@@ -113,10 +115,11 @@ alias ${prefix}apk="dg create apk"
     painter.drawFooter(width: 50);
 
     if (Platform.isWindows) {
-      kLog('\n🚀 Restart PowerShell or run ". \$PROFILE" to activate them.', type: LogType.info);
+      kLog('\n🚀 Restart PowerShell or run ". \$PROFILE" to activate them.',
+          type: LogType.info);
     } else {
-      kLog('\n🚀 Run "source ~/$profileName" to activate them immediately.', type: LogType.info);
+      kLog('\n🚀 Run "source ~/$profileName" to activate them immediately.',
+          type: LogType.info);
     }
   }
 }
-
