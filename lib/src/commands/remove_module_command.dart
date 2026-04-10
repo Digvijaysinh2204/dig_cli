@@ -57,13 +57,16 @@ class RemoveModuleCommand extends Command {
       return;
     }
 
-    await runWithSpinner('🗑️  Removing $className module components...', () async {
+    await runWithSpinner('🗑️  Removing $className module components...',
+        () async {
       // 1. Delete Module Directory
       if (await moduleDir.exists()) {
         await moduleDir.delete(recursive: true);
-        kLog('  - Deleted module directory: ${moduleDir.path}', type: LogType.success);
+        kLog('  - Deleted module directory: ${moduleDir.path}',
+            type: LogType.success);
       } else {
-        kLog('  - Module directory already gone: ${moduleDir.path}', type: LogType.warning);
+        kLog('  - Module directory already gone: ${moduleDir.path}',
+            type: LogType.warning);
       }
 
       // 2. Unregister Module Export
@@ -84,8 +87,11 @@ class RemoveModuleCommand extends Command {
     painter.drawRow('Route', 'AppRoute.${_toCamelCase(slug)}', width: 50);
     painter.drawFooter(width: 50);
 
-    kLog('\n✅ Module $className has been completely removed!', type: LogType.success);
-    kLog('💡 Note: You may need to run "flutter pub get" if imports are lingering.', type: LogType.info);
+    kLog('\n✅ Module $className has been completely removed!',
+        type: LogType.success);
+    kLog(
+        '💡 Note: You may need to run "flutter pub get" if imports are lingering.',
+        type: LogType.info);
   }
 
   Future<void> _unregisterModuleExport(String slug) async {
@@ -95,9 +101,10 @@ class RemoveModuleCommand extends Command {
 
     final content = await exportFile.readAsString();
     final exportLine = "export '$slug/${slug}_export.dart';";
-    
+
     if (!content.contains(exportLine)) {
-      kLog('  - Export line not found in module_export.dart', type: LogType.warning);
+      kLog('  - Export line not found in module_export.dart',
+          type: LogType.warning);
       return;
     }
 
@@ -115,7 +122,8 @@ class RemoveModuleCommand extends Command {
     final routeName = _toCamelCase(slug);
 
     if (!content.contains(routeName)) {
-      kLog('  - Route definition not found in app_route.dart', type: LogType.warning);
+      kLog('  - Route definition not found in app_route.dart',
+          type: LogType.warning);
       return;
     }
 
@@ -131,64 +139,55 @@ class RemoveModuleCommand extends Command {
 
     String content = await file.readAsString();
     final routeName = _toCamelCase(slug);
+    final blockId = 'AppRoute.$routeName';
 
-    if (!content.contains('AppRoute.$routeName')) {
-      kLog('  - GetPage block not found in app_page.dart', type: LogType.warning);
+    if (!content.contains(blockId)) {
+      kLog('  - GetPage block not found in app_page.dart',
+          type: LogType.warning);
       return;
     }
 
-    // A more robust approach: Find the start of the block and find the end marker.
-    // We look for GetPage that has our specific route name.
-    final blockId = 'AppRoute.$routeName';
-    final lines = content.split('\n');
-    int startLineIdx = -1;
-    
-    for (int i = 0; i < lines.length; i++) {
-      if (lines[i].contains('GetPage(') && lines[i].contains(blockId)) {
-        startLineIdx = i;
-        break;
-      }
-      // Or if GetPage is on one line and name is on next
-      if (lines[i].contains('GetPage(')) {
-        if (i + 1 < lines.length && lines[i+1].contains(blockId)) {
-          startLineIdx = i;
-          break;
-        }
-      }
+    // 1. Find the occurrence of the route name
+    final int nameIndex = content.indexOf(blockId);
+    if (nameIndex == -1) return;
+
+    // 2. Find the start of this specific GetPage block (the closest 'GetPage(' before the name)
+    int startIndex = content.lastIndexOf('GetPage(', nameIndex);
+    if (startIndex == -1) return;
+
+    // Move startIndex back to include potential leading whitespace/indentation on that line
+    while (startIndex > 0 &&
+        (content[startIndex - 1] == ' ' || content[startIndex - 1] == '\t')) {
+      startIndex--;
     }
 
-    if (startLineIdx != -1) {
-      // Find the end of the GetPage block. We look for a line that has '),'.
-      int endLineIdx = -1;
-      for (int i = startLineIdx; i < lines.length; i++) {
-        if (lines[i].trim().endsWith('),') || lines[i].trim().endsWith(')')) {
-          // Verify it's not the end of the list
-          if (!lines[i].contains('];')) {
-             endLineIdx = i;
-             break;
-          }
-        }
-      }
-
-      if (endLineIdx != -1) {
-        lines.removeRange(startLineIdx, endLineIdx + 1);
-        await file.writeAsString(lines.join('\n'));
-        kLog('  - Successfully surgically removed GetPage block from app_page.dart', type: LogType.success);
-        return;
-      }
+    // Also include a leading newline if it exists to prevent empty lines
+    if (startIndex > 0 && content[startIndex - 1] == '\n') {
+      startIndex--;
     }
-    
-    // Fallback to a safer multiline regex if line-by-line fails
-    final fallbackRegex = RegExp(
-        r'\s*GetPage\(\s*name:\s*AppRoute\.' + routeName + r',[^]*?\),',
-        multiLine: true);
 
-    if (fallbackRegex.hasMatch(content)) {
-      content = content.replaceFirst(fallbackRegex, '');
-      await file.writeAsString(content);
-      kLog('  - Removed GetPage block via fallback regex', type: LogType.success);
+    // 3. Find the end of this GetPage block (the first '),' after the name)
+    int endIndex = content.indexOf('),', nameIndex);
+    if (endIndex == -1) {
+      // Fallback to just ')' if no trailing comma
+      endIndex = content.indexOf(')', nameIndex);
     } else {
-      kLog('  - Could not safely target the GetPage block for $routeName', type: LogType.warning);
+      endIndex += 2; // Include the ', '
+    }
+
+    if (endIndex != -1 && endIndex > startIndex) {
+      final removedBlock = content.substring(startIndex, endIndex);
+      content = content.replaceFirst(removedBlock, '');
+
+      // Clean up multiple newlines or leading spaces left behind
+      content = content.replaceAll(RegExp(r'\n\s*\n'), '\n');
+
+      await file.writeAsString(content);
+      kLog('  - Surgically removed GetPage block from app_page.dart',
+          type: LogType.success);
+    } else {
+      kLog('  - Could not safely calculate block bounds for $routeName',
+          type: LogType.warning);
     }
   }
 
