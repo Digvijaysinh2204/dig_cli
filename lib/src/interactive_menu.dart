@@ -120,12 +120,6 @@ class InteractiveMenu {
       }
     }
   }
-
-            kLog('  Invalid option.', type: LogType.warning);
-            await Future.delayed(const Duration(milliseconds: 500));
-          }
-      }
-    }
   }
 
   Future<void> _buildReleaseMenu() async {
