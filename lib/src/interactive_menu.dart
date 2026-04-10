@@ -238,10 +238,11 @@ class InteractiveMenu {
       _painter.drawHeader('PROJECT MANAGEMENT', width: _width);
       _painter.drawMenuItem('1', 'Create From Template', width: _width);
       _painter.drawMenuItem('2', 'Create GetX Module', width: _width);
-      _painter.drawMenuItem('3', 'Rename / Rebrand App', width: _width);
+      _painter.drawMenuItem('3', 'Remove GetX Module', width: _width);
+      _painter.drawMenuItem('4', 'Rename / Rebrand App', width: _width);
       _painter.drawFooter(width: _width);
 
-      _drawPrompt('1-3');
+      _drawPrompt('1-4');
       final r = stdin.readLineSync()?.trim();
       if (r == '0' || r == null || r.isEmpty) return;
 
@@ -262,6 +263,13 @@ class InteractiveMenu {
           await _pause();
           break;
         case '3':
+          final name = _promptUser('Module Name to Remove');
+          if (name == null || name.isEmpty) break;
+          runner.addCommand(RemoveModuleCommand());
+          await runner.run(['remove-module', '--name', name]);
+          await _pause();
+          break;
+        case '4':
           final name = _promptUser('New display name (optional)');
           final bundle = _promptUser('New bundle ID (optional)');
           final args = ['rename'];

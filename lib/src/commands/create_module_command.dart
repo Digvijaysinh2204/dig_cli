@@ -10,6 +10,8 @@ class CreateModuleCommand extends Command {
   @override
   final name = 'create-module';
   @override
+  final aliases = ['add-module'];
+  @override
   final description =
       'Creates a new GetX module (View, Controller, Binding) and registers routes.';
 
